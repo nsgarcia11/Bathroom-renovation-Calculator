@@ -1,0 +1,13 @@
+import { Layout } from '@/components/Layout';
+import { AuthGuard } from '@/components/auth/AuthGuard';
+import { HomePage } from '@/components/pages/HomePage';
+
+export default function Home() {
+  return (
+    <Layout showBottomNav={false}>
+      <AuthGuard>
+        <HomePage />
+      </AuthGuard>
+    </Layout>
+  );
+}
