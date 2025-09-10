@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Renovation Calculator - Estimate</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Apply Inter font to the body */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            overflow-y: auto; /* Ensure vertical scrolling is enabled */
+        }
+        
+        /* Custom styles for form elements */
+        .form-input, .form-select {
+            background-color: #f8fafc; /* slate-50 */
+            border-color: #93c5fd; /* blue-300 */
+            border-width: 1px;
+            transition: all 0.2s ease-in-out;
+        }
+        .form-input:focus, .form-select:focus {
+            --tw-ring-color: #3b82f6; /* blue-500 */
+            border-color: #3b82f6; /* blue-500 */
+            background-color: white;
+            box-shadow: 0 0 0 1px #3b82f6;
+        }
+        
+        .form-select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%233b82f6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+        
+        /* Transition for accordion content */
+        .accordion-content, .sub-accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Card styles */
+        .card {
+            background-color: white;
+            border-radius: 1rem; /* 16px */
+            border: 1px solid #e2e8f0; /* slate-200 */
+            box-shadow: 0 4px 12px rgb(0 0 0 / 0.05);
+            overflow: hidden;
+        }
+        
+        /* Pill selector styles */
+        .pill-selector .pill {
+            cursor: pointer;
+            padding: 0.375rem 1rem; /* py-1.5 px-4 */
+            font-size: 0.875rem; /* text-sm */
+            border-radius: 9999px;
+            background-color: #f1f5f9; /* slate-100 */
+            color: #475569; /* slate-600 */
+            transition: all 0.2s ease-in-out;
+            font-weight: 500;
+        }
+        .pill-selector .pill.active {
+            background-color: #2563eb; /* blue-600 */
+            color: white;
+            box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
+        }
+        
+        /* Custom scrollbar for tab bar */
+        .tab-scrollbar::-webkit-scrollbar {
+            height: 4px;
+        }
+        .tab-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #e2e8f0; /* slate-200 */
+            border-radius: 10px;
+        }
+        .tab-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        /* Hide number input spinners */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Screen transition */
+        .screen-content.hidden, .module-content.hidden {
+            display: none;
+        }
+        
+        /* Custom style for underline input */
+        .form-input-underline {
+            background-color: transparent;
+            border-width: 0;
+            border-bottom-width: 2px;
+            border-color: #93c5fd; /* blue-300 */
+            border-radius: 0;
+            padding: 0.25rem 0.1rem; /* p-1ish */
+            transition: all 0.2s ease-in-out;
+            -webkit-appearance: none;
+        }
+        .form-input-underline:focus {
+            outline: none;
+            box-shadow: none;
+            --tw-ring-color: transparent;
+            background-color: #f8fafc; /* slate-50 */
+            border-color: #3b82f6; /* blue-500 */
+        }
+
+        /* Style to handle safe area for bottom navigation on mobile */
+        .safe-area-padding {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Top tab styles */
+        .top-tab .tab-button {
+             background-color: #f1f5f9; /* slate-100 */
+             color: #475569; /* slate-600 */
+        }
+        .top-tab .tab-button.active {
+            background-color: white;
+            color: #2563eb; /* blue-600 */
+            box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
+            border: 2px solid #3b82f6; /* blue-500 */
+        }
+        
+        /* Modal styles */
+        .modal-backdrop {
+            background-color: rgba(15, 23, 42, 0.6); /* slate-900 with opacity */
+            transition: opacity 0.3s ease-in-out;
+        }
+        .modal-content {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        .modal.hidden .modal-backdrop {
+            opacity: 0;
+        }
+        .modal.hidden .modal-content {
+            opacity: 0;
+            transform: translateY(1rem) scale(0.95);
+        }
+
+        @media print {
+            body {
+                background-color: white;
+            }
+            .no-print {
+                display: none;
+            }
+            .proposal-card {
+                box-shadow: none;
+                border: 1px solid #e2e8f0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <!-- Fixed Tab Bar -->
+    <div class="fixed top-0 left-0 right-0 z-20 bg-white/80 backdrop-blur-sm shadow-sm px-4 sm:px-6 no-print">
+        <div class="max-w-xl mx-auto">
+            <div id="top-nav-bar" class="tab-scrollbar flex space-x-4 overflow-x-auto py-3">
+                <a href="#" class="top-tab flex-shrink-0" data-module="demolition">
+                    <div class="tab-button flex flex-col items-center justify-center w-24 h-20 rounded-xl hover:bg-slate-200 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1.5"><path d="m15 12-9.373 9.373a1 1 0 0 1-3.001-3L12 9"/><path d="m18 15 4-4"/><path d="m21.5 11.5-1.914-1.914A2 2 0 0 1 19 8.172v-.344a2 2 0 0 0-.586-1.414l-1.657-1.657A6 6 0 0 0 12.516 3H9l1.243 1.243A6 6 0 0 1 12 8.485V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5"/></svg>
+                        <span class="text-xs font-medium">Demolition</span>
+                    </div>
+                </a>
+                <a href="#" class="top-tab flex-shrink-0 active" data-module="showerBase">
+                    <div class="tab-button flex flex-col items-center justify-center w-24 h-20 rounded-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>
+                        <span class="text-xs font-medium">Shower Base</span>
+                    </div>
+                </a>
+                <a href="#" class="top-tab flex-shrink-0" data-module="showerWalls">
+                    <div class="tab-button flex flex-col items-center justify-center w-24 h-20 rounded-xl hover:bg-slate-200 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1.5"><path d="m4 4 2.5 2.5"/><path d="M13.5 6.5a4.95 4.95 0 0 0-7 7"/><path d="M15 5 5 15"/><path d="M14 17v.01"/><path d="M10 16v.01"/><path d="M13 13v.01"/><path d="M16 10v.01"/><path d="M11 20v.01"/><path d="M17 14v.01"/><path d="M20 11v.01"/></svg>
+                        <span class="text-xs font-medium">Shower Walls</span>
+                    </div>
+                </a>
+                <a href="#" class="top-tab flex-shrink-0" data-module="floors">
+                    <div class="tab-button flex flex-col items-center justify-center w-24 h-20 rounded-xl hover:bg-slate-200 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                        <span class="text-xs font-medium">Floors</span>
+                    </div>
+                </a>
+                 <a href="#" class="top-tab flex-shrink-0" data-module="finishings">
+                    <div class="tab-button flex flex-col items-center justify-center w-24 h-20 rounded-xl hover:bg-slate-200 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1.5"><path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/></svg>
+                        <span class="text-xs font-medium">Finishings</span>
+                    </div>
+                </a>
+                 <a href="#" class="top-tab flex-shrink-0" data-module="structural">
+                    <div class="tab-button flex flex-col items-center justify-center w-24 h-20 rounded-xl hover:bg-slate-200 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1.5"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M9 12h6"/></svg>
+                        <span class="text-xs font-medium">Structural</span>
+                    </div>
+                </a>
+                <a href="#" class="top-tab flex-shrink-0" data-module="trades">
+                    <div class="tab-button flex flex-col items-center justify-center w-24 h-20 rounded-xl hover:bg-slate-200 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1.5"><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M14 6a6 6 0 0 1 6 6v3"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><rect x="2" y="15" width="20" height="4" rx="1"/></svg>
+                        <span class="text-xs font-medium">Trades</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 sm:px-6 pt-32 pb-28">
+        <div class="max-w-xl mx-auto">
+
+            <!-- Header -->
+            <div class="text-left pt-2 pb-6 no-print">
+                <h1 id="screen-title" class="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-500 transition-all duration-300">
+                    Shower Base
+                </h1>
+            </div>
+
+            <!-- Main Content Screens -->
+            <div id="design-screen" class="screen-content space-y-5">
+
+                <!-- MODULE: SHOWER BASE -->
+                <div id="shower-base-module" class="module-content space-y-5">
+                    <!-- Accordion 1: Base Measurements -->
+                    <div class="card">
+                        <div class="accordion-header flex items-center justify-between p-5 cursor-pointer border-b border-slate-200">
+                            <h2 class="text-lg font-bold text-slate-800">Measurements</h2>
+                            <div class="flex items-center gap-4">
+                                <span id="sq-ft-badge" class="text-lg font-bold text-blue-600">0.00 sq/ft</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="p-5 pt-4 space-y-4">
+                                <p class="text-sm text-slate-500">Enter the base dimensions to calculate materials and labor.</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="base-width" class="block text-sm font-medium text-slate-600 mb-1.5">Width (in)</label>
+                                        <input type="number" id="base-width" name="base-width" placeholder="e.g., 32" class="form-input block w-full px-3 py-2 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-1">
+                                    </div>
+                                    <div>
+                                        <label for="base-length" class="block text-sm font-medium text-slate-600 mb-1.5">Length (in)</label>
+                                        <input type="number" id="base-length" name="base-length" placeholder="e.g., 60" class="form-input block w-full px-3 py-2 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accordion 2: Design -->
+                    <div class="card" data-card-id="design">
+                        <div class="accordion-header flex items-center justify-between p-5 cursor-pointer border-b border-slate-200">
+                             <h2 class="text-lg font-bold text-slate-800">Shower Base</h2>
+                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="p-5 pt-4 space-y-6">
+                                <div>
+                                    <label for="base-type" class="block text-sm font-medium text-slate-600 mb-1.5">Base Type</label>
+                                    <select id="base-type" name="base-type" class="form-select mt-1 block w-full pl-3 py-2.5 focus:outline-none focus:ring-1 sm:text-sm rounded-lg">
+                                        <option value="">Select a Base Type...</option>
+                                        <option value="Tub">Tub</option>
+                                        <option value="Acrylic Base">Acrylic Base</option>
+                                        <option value="Tiled Base">Tiled Base</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Options for Tub or Acrylic Base -->
+                                <div id="prefabricated-base-options" class="hidden space-y-4">
+                                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <label class="text-sm font-medium text-slate-600">Will the client supply the base?</label>
+                                            <div class="pill-selector flex space-x-2" data-group="client-supplies-base">
+                                                <div class="pill active" data-value="no">No</div>
+                                                <div class="pill" data-value="yes">Yes</div>
+                                            </div>
+                                        </div>
+                                        <hr class="border-slate-100">
+                                        <div class="flex items-center justify-between">
+                                            <label class="text-sm font-medium text-slate-600">Installation By:</label>
+                                            <div class="pill-selector flex space-x-2" data-group="base-installation-by">
+                                                <div class="pill active" data-value="me">Me</div>
+                                                <div class="pill" data-value="trade">Trade</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="client-supplies-note" class="info-tip hidden flex items-start gap-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 9 6c0 1.3.5 2.6 1.5 3.5.7.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+                                        <p class="text-xs text-orange-500 flex-grow">
+                                            <span class="font-semibold">Note:</span> Base will be removed from the Materials screen.
+                                        </p>
+                                    </div>
+                                    <div id="trade-install-note" class="info-tip hidden flex items-start gap-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 9 6c0 1.3.5 2.6 1.5 3.5.7.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+                                        <p class="text-xs text-orange-500 flex-grow">
+                                            <span class="font-semibold">Note:</span> The cost for installation by a trade professional should be added on the Trades screen.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Options for Tiled Base -->
+                                <div id="tiled-base-options" class="hidden space-y-6">
+                                    <div>
+                                        <label for="tiled-base-system" class="block text-sm font-medium text-slate-600 mb-1.5">Tiled Base System</label>
+                                        <select id="tiled-base-system" name="tiled-base-system" class="form-select mt-1 block w-full pl-3 py-2.5 focus:outline-none focus:ring-1 sm:text-sm rounded-lg">
+                                            <option value="">Select a system...</option>
+                                            <option value="Schluter">Schluter</option>
+                                            <option value="Mortar Bed">Mortar Bed</option>
+                                            <option value="Wedi">Wedi</option>
+                                            <option value="Laticrete">Laticrete</option>
+                                        </select>
+                                    </div>
+                                    <div class="space-y-3 pt-1 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                        <div class="grid grid-cols-3 items-center gap-4">
+                                            <label class="text-sm font-medium text-slate-600 col-span-1">Entry</label>
+                                            <div class="pill-selector flex space-x-2 justify-end col-span-2" data-group="entry-type">
+                                                <div class="pill active" data-value="curb">Curb</div>
+                                                <div class="pill" data-value="curbless">Curbless</div>
+                                            </div>
+                                        </div>
+                                        <hr class="border-slate-100">
+                                        <div class="grid grid-cols-3 items-center gap-4">
+                                            <label class="text-sm font-medium text-slate-600 col-span-1">Drain Type</label>
+                                            <div class="pill-selector flex space-x-2 justify-end col-span-2" data-group="drain-type">
+                                                <div class="pill active" data-value="regular">Regular</div>
+                                                <div class="pill" data-value="linear">Linear</div>
+                                            </div>
+                                        </div>
+                                        <hr class="border-slate-100">
+                                        <div class="grid grid-cols-3 items-center gap-4">
+                                            <label class="text-sm font-medium text-slate-600 col-span-1">Drain Location</label>
+                                            <div class="pill-selector flex space-x-2 justify-end col-span-2" data-group="drain-location">
+                                                <div class="pill" data-value="left">Left</div>
+                                                <div class="pill active" data-value="center">Center</div>
+                                                <div class="pill" data-value="right">Right</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pt-2">
+                                    <div class="sub-accordion-header flex items-center justify-between cursor-pointer border-b pb-2">
+                                        <h3 class="text-sm font-medium text-blue-500 hover:text-blue-600 transition-colors">Notes</h3>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </div>
+                                    <div class="sub-accordion-content">
+                                        <div class="pt-3">
+                                            <textarea id="base-design-notes" name="base-design-notes" rows="3" placeholder="e.g., Client wants a specific tile..." class="form-input block w-full px-3 py-2 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-1"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accordion 3: Construction -->
+                    <div class="card" data-card-id="construction">
+                        <div class="accordion-header flex items-center justify-between p-5 cursor-pointer border-b border-slate-200">
+                            <h2 class="text-lg font-bold text-slate-800">Construction</h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="p-5 pt-4 space-y-4">
+                                <div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg">
+                                    <label class="text-sm font-medium text-slate-700">Repair Subfloor</label>
+                                    <div class="pill-selector flex space-x-2" data-group="repair-subfloor">
+                                        <div class="pill active" data-value="no">No</div>
+                                        <div class="pill" data-value="yes">Yes</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg">
+                                    <label class="text-sm font-medium text-slate-700">Modify Floor Joists</label>
+                                    <div class="pill-selector flex space-x-2" data-group="modify-joists">
+                                        <div class="pill active" data-value="no">No</div>
+                                        <div class="pill" data-value="yes">Yes</div>
+                                    </div>
+                                </div>
+                                <div class="pt-2">
+                                    <div class="sub-accordion-header flex items-center justify-between cursor-pointer border-b pb-2">
+                                        <h3 class="text-sm font-medium text-blue-500 hover:text-blue-600 transition-colors">Notes</h3>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </div>
+                                    <div class="sub-accordion-content">
+                                        <div class="pt-3">
+                                            <textarea id="base-construction-notes" name="base-construction-notes" rows="3" placeholder="e.g., Subfloor is rotten..." class="form-input block w-full px-3 py-2 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-1"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE: SHOWER WALLS -->
+                <div id="shower-walls-module" class="module-content hidden space-y-5">
+                     <!-- Accordion 1: Wall Measurements -->
+                     <div class="card">
+                        <div class="accordion-header flex items-center justify-between p-5 cursor-pointer border-b border-slate-200">
+                            <h2 class="text-lg font-bold text-slate-800">Measurements</h2>
+                            <div class="flex items-center gap-4">
+                                <span id="wall-sq-ft-badge" class="text-lg font-bold text-blue-600">0.00 sq/ft</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="p-5 pt-4 space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="wall-height" class="block text-sm font-medium text-slate-600 mb-1.5">Height (in)</label>
+                                        <input type="number" id="wall-height" placeholder="e.g., 96" class="form-input block w-full px-3 py-2 rounded-lg text-sm shadow-sm">
+                                    </div>
+                                    <div class="flex items-center justify-end pt-6">
+                                        <label class="flex items-center text-sm font-medium text-slate-600">
+                                            <input type="checkbox" id="is-corner-shower" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                                            2-Wall Corner Shower?
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label for="wall-1-length" class="block text-sm font-medium text-slate-600 mb-1.5">Wall 1 Length (in)</label>
+                                        <input type="number" id="wall-1-length" placeholder="e.g., 60" class="form-input block w-full px-3 py-2 rounded-lg text-sm shadow-sm">
+                                    </div>
+                                    <div>
+                                        <label for="wall-2-length" class="block text-sm font-medium text-slate-600 mb-1.5">Wall 2 Length (in)</label>
+                                        <input type="number" id="wall-2-length" placeholder="e.g., 32" class="form-input block w-full px-3 py-2 rounded-lg text-sm shadow-sm">
+                                    </div>
+                                    <div id="wall-3-container">
+                                        <label for="wall-3-length" class="block text-sm font-medium text-slate-600 mb-1.5">Wall 3 Length (in)</label>
+                                        <input type="number" id="wall-3-length" placeholder="e.g., 60" class="form-input block w-full px-3 py-2 rounded-lg text-sm shadow-sm">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Accordion 2: Wall Design -->
+                    <div class="card">
+                        <div class="accordion-header flex items-center justify-between p-5 cursor-pointer border-b border-slate-200">
+                             <h2 class="text-lg font-bold text-slate-800">Shower Base</h2>
+                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="p-5 pt-4 space-y-5">
+                                 <div>
+                                    <label for="wall-finish-type" class="block text-sm font-medium text-slate-600 mb-1.5">Wall Finish</label>
+                                    <select id="wall-finish-type" class="form-select mt-1 block w-full pl-3 py-2.5 rounded-lg">
+                                        <option value="">Select a finish...</option>
+                                        <option value="Tiled">Tiled</option>
+                                        <option value="Solid Panel">Solid Panel</option>
+                                        <option value="Stone Slab">Stone Slab</option>
+                                    </select>
+                                </div>
+                                <div id="tiled-wall-options" class="hidden space-y-4">
+                                     <label for="waterproofing-system" class="block text-sm font-medium text-slate-600">Waterproofing System</label>
+                                     <select id="waterproofing-system" class="form-select mt-1 block w-full pl-3 py-2.5 rounded-lg">
+                                         <option value="">Select a system...</option>
+                                         <option value="Kerdi-Board">Kerdi-Board</option>
+                                         <option value="Liquid Membrane">Liquid Membrane</option>
+                                         <option value="DensShield">DensShield</option>
+                                     </select>
+                                </div>
+                                <div class="space-y-3 pt-1 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                    <div class="flex items-center justify-between">
+                                        <label class="text-sm font-medium text-slate-600">Add Niche</label>
+                                        <div class="pill-selector flex space-x-2" data-group="add-niche">
+                                            <div class="pill active" data-value="no">No</div>
+                                            <div class="pill" data-value="yes">Yes</div>
+                                        </div>
+                                    </div>
+                                    <div id="niche-options" class="hidden space-y-3 pt-3 border-t">
+                                        <div class="flex items-center justify-between">
+                                            <label class="text-sm font-medium text-slate-600">Niche Size</label>
+                                            <select id="niche-size" class="form-select text-sm py-1.5 rounded-md w-40">
+                                                <option>12 x 12</option>
+                                                <option>12 x 24</option>
+                                                <option>Custom</option>
+                                            </select>
+                                        </div>
+                                         <div class="flex items-center justify-between">
+                                            <label class="text-sm font-medium text-slate-600">Add Shelf to Niche</label>
+                                            <div class="pill-selector flex space-x-2" data-group="add-niche-shelf">
+                                                <div class="pill active" data-value="no">No</div>
+                                                <div class="pill" data-value="yes">Yes</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr class="border-slate-100">
+                                    <div class="flex items-center justify-between">
+                                        <label class="text-sm font-medium text-slate-600">Add Bench</label>
+                                        <div class="pill-selector flex space-x-2" data-group="add-bench">
+                                            <div class="pill active" data-value="no">No</div>
+                                            <div class="pill" data-value="corner">Corner</div>
+                                            <div class="pill" data-value="floating">Floating</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                 <div class="pt-2">
+                                    <div class="sub-accordion-header flex items-center justify-between cursor-pointer border-b pb-2">
+                                        <h3 class="text-sm font-medium text-blue-500 hover:text-blue-600 transition-colors">Notes</h3>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </div>
+                                    <div class="sub-accordion-content">
+                                        <div class="pt-3">
+                                            <textarea id="walls-design-notes" rows="3" placeholder="e.g., Tile pattern, niche location..." class="form-input block w-full px-3 py-2 rounded-lg text-sm shadow-sm"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                     <!-- Accordion 3: Wall Construction -->
+                     <div class="card">
+                        <div class="accordion-header flex items-center justify-between p-5 cursor-pointer border-b border-slate-200">
+                            <h2 class="text-lg font-bold text-slate-800">Construction</h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="p-5 pt-4 space-y-4">
+                               <div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg">
+                                    <label class="text-sm font-medium text-slate-700">Repair Wall Studs</label>
+                                    <div class="pill-selector flex space-x-2" data-group="repair-studs">
+                                        <div class="pill active" data-value="no">No</div>
+                                        <div class="pill" data-value="yes">Yes</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg">
+                                    <label class="text-sm font-medium text-slate-700">Add Blocking</label>
+                                    <div class="pill-selector flex space-x-2" data-group="add-blocking">
+                                        <div class="pill active" data-value="no">No</div>
+                                        <div class="pill" data-value="yes">Yes</div>
+                                    </div>
+                                </div>
+                                <div class="pt-2">
+                                    <div class="sub-accordion-header flex items-center justify-between cursor-pointer border-b pb-2">
+                                        <h3 class="text-sm font-medium text-blue-500 hover:text-blue-600 transition-colors">Notes</h3>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </div>
+                                    <div class="sub-accordion-content">
+                                        <div class="pt-3">
+                                            <textarea id="walls-construction-notes" rows="3" placeholder="e.g., Blocking for grab bar at 36 inches..." class="form-input block w-full px-3 py-2 rounded-lg text-sm shadow-sm"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE: PLACEHOLDER for other modules -->
+                <div id="placeholder-module" class="module-content hidden">
+                    <div class="card p-8 text-center">
+                        <h2 class="text-xl font-bold text-slate-700">Coming Soon!</h2>
+                        <p class="text-slate-500 mt-2">This calculation module is under construction.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Labor Screen -->
+            <div id="labor-screen" class="hidden screen-content space-y-5">
+                <!-- Design Labor Card -->
+                <div class="card">
+                    <div class="accordion-header flex items-center justify-between p-5 cursor-pointer">
+                        <h2 class="text-lg font-bold text-slate-800">Design</h2>
+                        <div class="flex items-center gap-4">
+                             <span id="design-labor-summary" class="text-sm font-semibold text-teal-600">0 hrs | $0.00</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="p-4 space-y-3">
+                            <div id="labor-design-shower-base-group" class="hidden">
+                                <h3 class="text-sm font-semibold text-slate-500 mb-2 mt-3 border-b pb-1">Shower Base</h3>
+                                <div id="design-labor-shower-base-container" class="space-y-3"></div>
+                                <div class="mt-3"><button data-target="design-labor-shower-base-container" data-type="labor" class="add-item-btn w-full text-center py-2 px-4 bg-slate-100 text-blue-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-semibold flex items-center justify-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Add Labor Item</button></div>
+                            </div>
+                             <div id="labor-design-shower-walls-group" class="hidden">
+                                <h3 class="text-sm font-semibold text-slate-500 mb-2 mt-3 border-b pb-1">Shower Walls</h3>
+                                <div id="design-labor-shower-walls-container" class="space-y-3"></div>
+                                <div class="mt-3"><button data-target="design-labor-shower-walls-container" data-type="labor" class="add-item-btn w-full text-center py-2 px-4 bg-slate-100 text-blue-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-semibold flex items-center justify-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Add Labor Item</button></div>
+                            </div>
+                        </div>
+                        <p id="no-design-labor" class="hidden text-sm text-slate-500 text-center p-5">No labor items for design.</p>
+                    </div>
+                </div>
+
+                <!-- Construction Labor Card -->
+                <div class="card">
+                    <div class="accordion-header flex items-center justify-between p-5 cursor-pointer">
+                        <h2 class="text-lg font-bold text-slate-800">Construction</h2>
+                        <div class="flex items-center gap-4">
+                            <span id="construction-labor-summary" class="text-sm font-semibold text-teal-600">0 hrs | $0.00</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="accordion-content">
+                         <div class="p-4 space-y-3">
+                             <div id="labor-construction-shower-base-group" class="hidden">
+                                <h3 class="text-sm font-semibold text-slate-500 mb-2 mt-3 border-b pb-1">Shower Base</h3>
+                                <div id="construction-labor-shower-base-container" class="space-y-3"></div>
+                                <div class="mt-3"><button data-target="construction-labor-shower-base-container" data-type="labor" class="add-item-btn w-full text-center py-2 px-4 bg-slate-100 text-blue-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-semibold flex items-center justify-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Add Labor Item</button></div>
+                            </div>
+                             <div id="labor-construction-shower-walls-group" class="hidden">
+                                <h3 class="text-sm font-semibold text-slate-500 mb-2 mt-3 border-b pb-1">Shower Walls</h3>
+                                <div id="construction-labor-shower-walls-container" class="space-y-3"></div>
+                                <div class="mt-3"><button data-target="construction-labor-shower-walls-container" data-type="labor" class="add-item-btn w-full text-center py-2 px-4 bg-slate-100 text-blue-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-semibold flex items-center justify-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Add Labor Item</button></div>
+                            </div>
+                        </div>
+                        <p id="no-construction-labor" class="hidden text-sm text-slate-500 text-center p-5">No labor items for construction.</p>
+                    </div>
+                </div>
+                
+                <div class="mt-5 p-5 flex justify-between items-center bg-slate-100 rounded-xl border border-slate-200">
+                    <span class="text-lg font-bold text-slate-800">Total Labor</span>
+                    <div class="flex items-center gap-4 text-right">
+                        <span id="labor-grand-total-hours" class="text-lg font-bold text-teal-600">0.0 hrs</span>
+                        <span id="labor-grand-total" class="text-lg font-bold text-slate-800">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materials Screen -->
+            <div id="materials-screen" class="hidden screen-content space-y-5">
+                 <!-- Design Materials Card -->
+                <div class="card">
+                    <div class="accordion-header flex items-center justify-between p-5 cursor-pointer">
+                        <h2 class="text-lg font-bold text-slate-800">Design</h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="p-4 space-y-3">
+                           <div id="material-design-shower-base-group" class="hidden">
+                                <h3 class="text-sm font-semibold text-slate-500 mb-2 mt-3 border-b pb-1">Shower Base</h3>
+                                <div id="design-material-shower-base-container" class="space-y-3"></div>
+                                <div class="mt-3"><button data-target="design-material-shower-base-container" data-type="material" class="add-item-btn w-full text-center py-2 px-4 bg-slate-100 text-blue-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-semibold flex items-center justify-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Add Material Item</button></div>
+                            </div>
+                             <div id="material-design-shower-walls-group" class="hidden">
+                                <h3 class="text-sm font-semibold text-slate-500 mb-2 mt-3 border-b pb-1">Shower Walls</h3>
+                                <div id="design-material-shower-walls-container" class="space-y-3"></div>
+                                <div class="mt-3"><button data-target="design-material-shower-walls-container" data-type="material" class="add-item-btn w-full text-center py-2 px-4 bg-slate-100 text-blue-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-semibold flex items-center justify-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Add Material Item</button></div>
+                            </div>
+                        </div>
+                        <p id="no-design-material" class="hidden text-sm text-slate-500 text-center p-5">No material items for design.</p>
+                    </div>
+                </div>
+
+                <!-- Construction Materials Card -->
+                <div class="card">
+                    <div class="accordion-header flex items-center justify-between p-5 cursor-pointer">
+                        <h2 class="text-lg font-bold text-slate-800">Construction</h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="accordion-icon w-5 h-5 text-blue-500 transition-transform transform"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="p-4 space-y-3">
+                            <div id="material-construction-shower-base-group" class="hidden">
+                                <h3 class="text-sm font-semibold text-slate-500 mb-2 mt-3 border-b pb-1">Shower Base</h3>
+                                <div id="construction-material-shower-base-container" class="space-y-3"></div>
+                                <div class="mt-3"><button data-target="construction-material-shower-base-container" data-type="material" class="add-item-btn w-full text-center py-2 px-4 bg-slate-100 text-blue-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-semibold flex items-center justify-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Add Material Item</button></div>
+                            </div>
+                            <div id="material-construction-shower-walls-group" class="hidden">
+                                <h3 class="text-sm font-semibold text-slate-500 mb-2 mt-3 border-b pb-1">Shower Walls</h3>
+                                <div id="construction-material-shower-walls-container" class="space-y-3"></div>
+                                <div class="mt-3"><button data-target="construction-material-shower-walls-container" data-type="material" class="add-item-btn w-full text-center py-2 px-4 bg-slate-100 text-blue-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-semibold flex items-center justify-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Add Material Item</button></div>
+                            </div>
+                        </div>
+                        <p id="no-construction-material" class="hidden text-sm text-slate-500 text-center p-5">No material items for construction.</p>
+                    </div>
+                </div>
+
+                <div class="mt-5 p-5 flex justify-between items-center bg-slate-100 rounded-xl border border-slate-200">
+                    <span class="text-lg font-bold text-slate-800">Total Materials</span>
+                    <span id="material-grand-total" class="text-lg font-bold text-slate-800">$0.00</span>
+                </div>
+            </div>
+
+
+            <!-- Proposal Screen -->
+             <div id="estimate-screen" class="hidden screen-content space-y-5">
+                <div class="card proposal-card">
+                    <div class="p-6 sm:p-8">
+                        <!-- Header -->
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h2 class="text-2xl font-bold text-slate-800">Your Company Inc.</h2>
+                                <p class="text-sm text-slate-500">123 Builder Lane, Ottawa, ON</p>
+                                <p class="text-sm text-slate-500">contact@yourcompany.ca | (613) 555-0123</p>
+                            </div>
+                            <div class="text-right">
+                                <h1 class="text-3xl font-extrabold text-blue-600 tracking-tight">PROPOSAL</h1>
+                                <p class="text-sm text-slate-500 mt-1">Date: <span id="proposal-header-date"></span></p>
+                            </div>
+                        </div>
+
+                        <!-- Client Info -->
+                        <div class="mt-8 pt-6 border-t">
+                            <h3 class="text-sm font-semibold uppercase text-slate-400 tracking-wider">Prepared For</h3>
+                            <p class="font-bold text-slate-700 mt-1">Valued Client</p>
+                        </div>
+
+                        <!-- Scope of Work -->
+                        <div class="mt-8">
+                            <h3 class="text-sm font-semibold uppercase text-slate-400 tracking-wider">Scope of Work</h3>
+                            <div id="proposal-scope-of-work" class="mt-2 text-sm text-slate-600 prose prose-sm max-w-none">
+                                <!-- Notes will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Financials -->
+                        <div class="mt-8 pt-6 border-t">
+                            <div class="max-w-sm ml-auto space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-md font-medium text-slate-600">Subtotal</span>
+                                    <span id="summary-subtotal" class="text-md font-semibold text-slate-800">$0.00</span>
+                                </div>
+                                 <div class="grid grid-cols-2 items-center gap-4 no-print">
+                                    <label for="summary-markup" class="text-sm font-medium text-slate-600">Markup (%)</label>
+                                    <input type="number" id="summary-markup" value="20" class="form-input w-full text-sm p-2 h-9 text-right">
+                                </div>
+                                <div class="flex justify-between items-center">
+                                     <span class="text-sm font-medium text-slate-600">Markup Amount</span>
+                                    <span id="summary-markup-amount" class="text-sm font-medium text-slate-700">$0.00</span>
+                                </div>
+                                 <div class="grid grid-cols-2 items-center gap-4 no-print">
+                                    <label for="summary-tax" class="text-sm font-medium text-slate-600">Tax (%)</label>
+                                    <input type="number" id="summary-tax" value="13" class="form-input w-full text-sm p-2 h-9 text-right">
+                                </div>
+                                 <div class="flex justify-between items-center">
+                                     <span class="text-sm font-medium text-slate-600">Tax (HST)</span>
+                                    <span id="summary-tax-amount" class="text-sm font-medium text-slate-700">$0.00</span>
+                                </div>
+                            </div>
+                         </div>
+                         <div class="mt-4 pt-4 border-t-2 border-slate-300">
+                             <div class="flex justify-between items-center max-w-sm ml-auto">
+                                <span class="text-xl font-extrabold text-blue-800">Grand Total</span>
+                                <span id="summary-grand-total" class="text-xl font-extrabold text-blue-800">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button id="print-proposal-btn" class="no-print w-full mt-4 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    Print Proposal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="fixed bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-t border-slate-200 safe-area-padding no-print">
+        <div class="max-w-xl mx-auto">
+            <div id="bottom-nav" class="flex justify-evenly py-2">
+                <a href="#" id="nav-design" class="nav-item flex flex-col items-center justify-center w-20 h-16 rounded-xl transition-colors group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg>
+                    <span class="text-xs font-semibold">Design</span>
+                </a>
+                <a href="#" id="nav-labor" class="nav-item flex flex-col items-center justify-center w-20 h-16 rounded-xl hover:bg-slate-100 transition-colors group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span class="text-xs font-semibold">Labor</span>
+                </a>
+                <a href="#" id="nav-materials" class="nav-item flex flex-col items-center justify-center w-20 h-16 rounded-xl hover:bg-slate-100 transition-colors group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    <span class="text-xs font-semibold">Materials</span>
+                </a>
+                <a href="#" id="nav-estimate" class="nav-item flex flex-col items-center justify-center w-20 h-16 rounded-xl hover:bg-slate-100 transition-colors group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                    <span class="text-xs font-semibold">Proposal</span>
+                </a>
+                <div class="relative">
+                     <a href="#" id="nav-menu" class="nav-item flex flex-col items-center justify-center w-20 h-16 rounded-xl hover:bg-slate-100 transition-colors group">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                        <span class="text-xs font-semibold">Menu</span>
+                    </a>
+                    <div id="menu-dropdown" class="absolute right-0 bottom-full mb-3 w-56 bg-white rounded-xl shadow-lg border border-slate-200 hidden overflow-hidden z-30">
+                        <a href="#" id="new-project-btn" class="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg><span>New Project</span></a>
+                        <a href="#" id="settings-btn" class="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors border-t border-slate-100"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg><span>Settings</span></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal fixed inset-0 z-30 hidden items-center justify-center p-4 no-print">
+        <div class="modal-backdrop fixed inset-0"></div>
+        <div class="modal-content relative w-full max-w-md bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">Settings</h2>
+            <div class="space-y-5">
+                <div>
+                    <label for="setting-labor-rate" class="block text-sm font-medium text-slate-600 mb-1.5">Default Labor Rate ($/hr)</label>
+                    <input type="number" id="setting-labor-rate" value="75" class="form-input block w-full px-3 py-2 rounded-lg text-sm shadow-sm">
+                </div>
+                <div>
+                    <label for="setting-markup" class="block text-sm font-medium text-slate-600 mb-1.5">Default Markup (%)</label>
+                    <input type="number" id="setting-markup" value="20" class="form-input block w-full px-3 py-2 rounded-lg text-sm shadow-sm">
+                </div>
+                 <div>
+                    <label for="setting-tax" class="block text-sm font-medium text-slate-600 mb-1.5">Default Tax (%)</label>
+                    <input type="number" id="setting-tax" value="13" class="form-input block w-full px-3 py-2 rounded-lg text-sm shadow-sm">
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end space-x-3">
+                <button id="cancel-settings-btn" class="px-5 py-2.5 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+                <button id="save-settings-btn" class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal fixed inset-0 z-40 hidden items-center justify-center p-4 no-print">
+        <div class="modal-backdrop fixed inset-0"></div>
+        <div class="modal-content relative w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 sm:p-8 text-center">
+             <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+              </div>
+            <h3 class="text-lg font-semibold text-slate-800 mt-4">Are you sure?</h3>
+            <p id="confirm-message" class="text-sm text-slate-500 mt-2">This action cannot be undone.</p>
+            <div class="mt-6 flex justify-center space-x-3">
+                <button id="confirm-cancel-btn" class="px-5 py-2.5 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+                <button id="confirm-ok-btn" class="px-5 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            // --- STATE MANAGEMENT ---
+            const APP_STATE_KEY = 'renovationCalculatorState_v4';
+            const SETTINGS_KEY = 'renovationCalculatorSettings_v1';
+            let appState = {
+                activeModule: 'showerBase',
+                laborTotal: 0,
+                materialTotal: 0,
+            };
+            let settings = {
+                defaultRate: 75,
+                defaultMarkup: 20,
+                defaultTax: 13,
+            };
+
+            // --- ELEMENT SELECTORS ---
+            const elements = {
+                showerBase: {
+                    length: document.getElementById('base-length'),
+                    width: document.getElementById('base-width'),
+                    baseType: document.getElementById('base-type'),
+                    tiledBaseSystem: document.getElementById('tiled-base-system'),
+                    designNotes: document.getElementById('base-design-notes'),
+                    constructionNotes: document.getElementById('base-construction-notes'),
+                    sqFtBadge: document.getElementById('sq-ft-badge'),
+                    prefabricatedOptions: document.getElementById('prefabricated-base-options'),
+                    tiledOptions: document.getElementById('tiled-base-options'),
+                    tradeInstallNote: document.getElementById('trade-install-note'),
+                    clientSuppliesNote: document.getElementById('client-supplies-note'),
+                },
+                showerWalls: {
+                    height: document.getElementById('wall-height'),
+                    isCornerShower: document.getElementById('is-corner-shower'),
+                    wall1Length: document.getElementById('wall-1-length'),
+                    wall2Length: document.getElementById('wall-2-length'),
+                    wall3Length: document.getElementById('wall-3-length'),
+                    wall3Container: document.getElementById('wall-3-container'),
+                    finishType: document.getElementById('wall-finish-type'),
+                    tiledOptions: document.getElementById('tiled-wall-options'),
+                    waterproofingSystem: document.getElementById('waterproofing-system'),
+                    nicheOptions: document.getElementById('niche-options'),
+                    sqFtBadge: document.getElementById('wall-sq-ft-badge'),
+                    designNotes: document.getElementById('walls-design-notes'),
+                    constructionNotes: document.getElementById('walls-construction-notes'),
+                },
+                summary: {
+                    markup: document.getElementById('summary-markup'),
+                    tax: document.getElementById('summary-tax'),
+                    subtotal: document.getElementById('summary-subtotal'),
+                    markupAmount: document.getElementById('summary-markup-amount'),
+                    taxAmount: document.getElementById('summary-tax-amount'),
+                    grandTotal: document.getElementById('summary-grand-total'),
+                },
+                proposal: {
+                    scopeOfWork: document.getElementById('proposal-scope-of-work'),
+                    date: document.getElementById('proposal-header-date'),
+                    printBtn: document.getElementById('print-proposal-btn'),
+                },
+                labor: {
+                    designSummary: document.getElementById('design-labor-summary'),
+                    constructionSummary: document.getElementById('construction-labor-summary'),
+                    grandTotal: document.getElementById('labor-grand-total'),
+                    grandTotalHours: document.getElementById('labor-grand-total-hours'),
+                    noDesign: document.getElementById('no-design-labor'),
+                    noConstruction: document.getElementById('no-construction-labor'),
+                    designBaseGroup: document.getElementById('labor-design-shower-base-group'),
+                    designBaseContainer: document.getElementById('design-labor-shower-base-container'),
+                    constructionBaseGroup: document.getElementById('labor-construction-shower-base-group'),
+                    constructionBaseContainer: document.getElementById('construction-labor-shower-base-container'),
+                    designWallsGroup: document.getElementById('labor-design-shower-walls-group'),
+                    designWallsContainer: document.getElementById('design-labor-shower-walls-container'),
+                    constructionWallsGroup: document.getElementById('labor-construction-shower-walls-group'),
+                    constructionWallsContainer: document.getElementById('construction-labor-shower-walls-container'),
+                },
+                materials: {
+                    grandTotal: document.getElementById('material-grand-total'),
+                    noDesign: document.getElementById('no-design-material'),
+                    noConstruction: document.getElementById('no-construction-material'),
+                    designBaseGroup: document.getElementById('material-design-shower-base-group'),
+                    designBaseContainer: document.getElementById('design-material-shower-base-container'),
+                    constructionBaseGroup: document.getElementById('material-construction-shower-base-group'),
+                    constructionBaseContainer: document.getElementById('construction-material-shower-base-container'),
+                    designWallsGroup: document.getElementById('material-design-shower-walls-group'),
+                    designWallsContainer: document.getElementById('design-material-shower-walls-container'),
+                    constructionWallsGroup: document.getElementById('material-construction-shower-walls-group'),
+                    constructionWallsContainer: document.getElementById('construction-material-shower-walls-container'),
+                },
+                general: {
+                    screenTitle: document.getElementById('screen-title'),
+                    menuDropdown: document.getElementById('menu-dropdown'),
+                },
+                screens: {
+                    design: document.getElementById('design-screen'),
+                    labor: document.getElementById('labor-screen'),
+                    materials: document.getElementById('materials-screen'),
+                    estimate: document.getElementById('estimate-screen'),
+                },
+                modules: {
+                    showerBase: document.getElementById('shower-base-module'),
+                    showerWalls: document.getElementById('shower-walls-module'),
+                    placeholder: document.getElementById('placeholder-module'),
+                },
+                nav: {
+                    topBar: document.getElementById('top-nav-bar'),
+                    bottomBar: document.getElementById('bottom-nav'),
+                    design: document.getElementById('nav-design'),
+                    labor: document.getElementById('nav-labor'),
+                    materials: document.getElementById('nav-materials'),
+                    estimate: document.getElementById('nav-estimate'),
+                    menu: document.getElementById('nav-menu'),
+                },
+                settingsModal: {
+                    modal: document.getElementById('settings-modal'),
+                    laborRate: document.getElementById('setting-labor-rate'),
+                    markup: document.getElementById('setting-markup'),
+                    tax: document.getElementById('setting-tax'),
+                    saveBtn: document.getElementById('save-settings-btn'),
+                    cancelBtn: document.getElementById('cancel-settings-btn'),
+                    settingsBtn: document.getElementById('settings-btn'),
+                },
+                confirmModal: {
+                    modal: document.getElementById('confirm-modal'),
+                    message: document.getElementById('confirm-message'),
+                    okBtn: document.getElementById('confirm-ok-btn'),
+                    cancelBtn: document.getElementById('confirm-cancel-btn'),
+                }
+            };
+
+            const screensShown = new Set();
+
+            // --- MODALS (Settings & Confirmation) ---
+            function showConfirmation(message, onConfirm) {
+                elements.confirmModal.message.textContent = message;
+                elements.confirmModal.modal.classList.remove('hidden');
+
+                const okListener = () => {
+                    onConfirm();
+                    hideConfirmation();
+                };
+                
+                const cancelListener = () => hideConfirmation();
+
+                const hideConfirmation = () => {
+                    elements.confirmModal.modal.classList.add('hidden');
+                    elements.confirmModal.okBtn.removeEventListener('click', okListener);
+                    elements.confirmModal.cancelBtn.removeEventListener('click', cancelListener);
+                }
+
+                elements.confirmModal.okBtn.addEventListener('click', okListener, { once: true });
+                elements.confirmModal.cancelBtn.addEventListener('click', cancelListener, { once: true });
+            }
+
+            function toggleSettingsModal(show) {
+                elements.settingsModal.modal.classList.toggle('hidden', !show);
+            }
+            
+            // --- NAVIGATION ---
+            function showScreen(screenName) {
+                Object.values(elements.screens).forEach(screen => screen.classList.add('hidden'));
+                const targetScreen = elements.screens[screenName];
+                if (targetScreen) {
+                    targetScreen.classList.remove('hidden');
+                }
+
+                if (!screensShown.has(screenName)) {
+                    screensShown.add(screenName);
+                    if (screenName !== 'design') {
+                         targetScreen.querySelectorAll('.accordion-header').forEach(toggleAccordion);
+                    }
+                }
+                
+                if (elements.general.menuDropdown && !elements.general.menuDropdown.classList.contains('hidden')) {
+                    elements.general.menuDropdown.classList.add('hidden');
+                }
+
+                const title = screenName === 'estimate' ? 'Proposal' : screenName.charAt(0).toUpperCase() + screenName.slice(1);
+                elements.general.screenTitle.textContent = title;
+
+
+                elements.nav.bottomBar.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('text-blue-600', 'bg-blue-100');
+                    item.classList.add('text-slate-600');
+                });
+
+                const activeNavItem = elements.nav[screenName];
+                if(activeNavItem) {
+                    activeNavItem.classList.add('text-blue-600', 'bg-blue-100');
+                    activeNavItem.classList.remove('text-slate-600');
+                }
+            }
+            
+            function showModule(moduleName) {
+                 if (!elements.modules[moduleName]) {
+                     moduleName = 'placeholder';
+                 }
+                appState.activeModule = moduleName;
+
+                Object.values(elements.modules).forEach(module => module.classList.add('hidden'));
+                elements.modules[moduleName].classList.remove('hidden');
+
+                elements.nav.topBar.querySelectorAll('.top-tab .tab-button').forEach(b => b.classList.remove('active'));
+                const activeTabButton = elements.nav.topBar.querySelector(`[data-module="${moduleName}"] .tab-button`);
+                if(activeTabButton) activeTabButton.classList.add('active');
+
+                const titleMap = {
+                    showerBase: 'Shower Base', showerWalls: 'Shower Walls', demolition: 'Demolition', floors: 'Floors',
+                    finishings: 'Finishings', structural: 'Structural', trades: 'Trades', placeholder: 'Coming Soon'
+                };
+                elements.general.screenTitle.textContent = titleMap[moduleName] || 'Calculator';
+
+                if (!screensShown.has(moduleName)) {
+                    screensShown.add(moduleName);
+                    const firstAccordion = elements.modules[moduleName].querySelector('.accordion-header');
+                    if (firstAccordion) toggleAccordion(firstAccordion, true);
+                }
+            }
+
+            // --- DATA PERSISTENCE ---
+            function saveSettings() {
+                settings.defaultRate = parseFloat(elements.settingsModal.laborRate.value) || 75;
+                settings.defaultMarkup = parseFloat(elements.settingsModal.markup.value) || 20;
+                settings.defaultTax = parseFloat(elements.settingsModal.tax.value) || 13;
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+                toggleSettingsModal(false);
+                applySettings();
+                updateAllCalculations();
+            }
+
+            function loadSettings() {
+                const savedSettings = localStorage.getItem(SETTINGS_KEY);
+                if (savedSettings) {
+                    settings = { ...settings, ...JSON.parse(savedSettings) };
+                }
+                applySettings();
+            }
+
+            function applySettings() {
+                elements.settingsModal.laborRate.value = settings.defaultRate;
+                elements.settingsModal.markup.value = settings.defaultMarkup;
+                elements.settingsModal.tax.value = settings.defaultTax;
+                elements.summary.markup.value = settings.defaultMarkup;
+                elements.summary.tax.value = settings.defaultTax;
+            }
+
+
+            function saveState() {
+                const state = { appState };
+                state.inputs = {};
+                document.querySelectorAll('input, select, textarea').forEach(el => {
+                    if (el.id) {
+                         state.inputs[el.id] = (el.type === 'checkbox') ? el.checked : el.value;
+                    }
+                });
+                state.pills = {};
+                document.querySelectorAll('.pill-selector').forEach(selector => {
+                    const group = selector.dataset.group;
+                    const activePill = selector.querySelector('.pill.active');
+                    if (group && activePill) {
+                        state.pills[group] = activePill.dataset.value;
+                    }
+                });
+                localStorage.setItem(APP_STATE_KEY, JSON.stringify(state));
+            }
+
+            function loadState() {
+                const savedStateJSON = localStorage.getItem(APP_STATE_KEY);
+                if (!savedStateJSON) return;
+                const state = JSON.parse(savedStateJSON);
+
+                if (state.appState) appState = { ...appState, ...state.appState };
+
+                if (state.inputs) {
+                    for (const id in state.inputs) {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            if (el.type === 'checkbox') el.checked = state.inputs[id];
+                            else el.value = state.inputs[id];
+                        }
+                    }
+                }
+                
+                if (state.pills) {
+                     for (const group in state.pills) {
+                         const selector = document.querySelector(`.pill-selector[data-group="${group}"]`);
+                         if (selector) {
+                             selector.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+                             const pillToActivate = selector.querySelector(`.pill[data-value="${state.pills[group]}"]`);
+                             if(pillToActivate) pillToActivate.classList.add('active');
+                         }
+                    }
+                }
+            }
+            
+            // --- MAIN LOGIC & CALCULATIONS ---
+            function formatCurrency(value) {
+                return (value || 0).toLocaleString('en-CA', { style: 'currency', currency: 'CAD' });
+            }
+
+            function adjustOpenAccordions(container) {
+                const accordionContent = container.closest('.accordion-content');
+                if (accordionContent && accordionContent.style.maxHeight) {
+                    accordionContent.style.maxHeight = accordionContent.scrollHeight + "px";
+                }
+            }
+            
+            function createLaborRow(item) {
+                const itemEl = document.createElement('div');
+                if (item.type === 'note') {
+                    itemEl.className = 'flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border';
+                    itemEl.innerHTML = `<div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-blue-500"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg><span class="text-sm font-medium text-slate-700">${item.label}</span></div><span class="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full">See Trade Screen</span>`;
+                } else {
+                     itemEl.className = 'labor-item p-3 bg-white rounded-lg shadow-sm border';
+                     const rate = item.rate || settings.defaultRate;
+                     itemEl.innerHTML = `<div class="flex justify-between items-center mb-2"><input type="text" value="${item.label}" class="item-label form-input-underline w-full text-md font-bold"><button class="remove-item text-blue-500 hover:text-blue-700 transition-colors p-1 ml-2 flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div><div class="grid grid-cols-3 gap-2"><div><label class="block text-xs font-medium text-slate-500 mb-1">Hours</label><input type="number" value="${item.hours || 0}" class="form-input w-full text-sm p-2 h-9 labor-hours rounded-md text-center"></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Rate</label><input type="number" value="${rate}" class="form-input w-full text-sm p-2 h-9 labor-rate rounded-md text-center"></div><div class="text-right"><label class="block text-xs font-medium text-slate-500 mb-1">Total</label><div class="font-semibold text-slate-800 text-md h-9 flex items-center justify-end mt-1"><span class="labor-total">$0.00</span></div></div></div>`;
+                }
+                return itemEl;
+            }
+
+            function createMaterialRow(item) {
+                const itemEl = document.createElement('div');
+                if (item.type === 'note') {
+                    itemEl.className = 'flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border';
+                    itemEl.innerHTML = `<div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-500"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg><span class="text-sm font-medium text-slate-700">${item.label}</span></div>`;
+                } else {
+                    itemEl.className = 'material-item p-3 bg-white rounded-lg shadow-sm border';
+                    itemEl.innerHTML = `<div class="flex justify-between items-center mb-2"><input type="text" value="${item.label}" class="item-label form-input-underline w-full text-md font-bold"><button class="remove-item text-blue-500 hover:text-blue-700 transition-colors p-1 ml-2 flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div><div class="grid grid-cols-3 gap-2"><div><label class="block text-xs font-medium text-slate-500 mb-1">Qty</label><input type="number" value="${item.qty || 0}" class="form-input w-full text-sm p-2 h-9 material-qty rounded-md text-center"></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Price</label><input type="number" value="${item.price || 0}" class="form-input w-full text-sm p-2 h-9 material-price rounded-md text-center"></div><div class="text-right"><label class="block text-xs font-medium text-slate-500 mb-1">Total</label><div class="font-semibold text-slate-800 text-md h-9 flex items-center justify-end mt-1"><span class="material-total">$0.00</span></div></div></div>`;
+                }
+                return itemEl;
+            }
+
+            function getPillValue(group) {
+                const pill = document.querySelector(`.pill-selector[data-group="${group}"] .pill.active`);
+                return pill ? pill.dataset.value : null;
+            }
+
+            function getShowerBaseItems() {
+                const designLabor = [], constLabor = [], designMat = [], constMat = [];
+                const baseType = elements.showerBase.baseType.value;
+                if (baseType === 'Tub' || baseType === 'Acrylic Base') {
+                    if (getPillValue('base-installation-by') === 'me') designLabor.push({ label: `Install ${baseType}`, type: 'standard', hours: 4, rate: settings.defaultRate });
+                    else designLabor.push({ label: `Install ${baseType} by Trade`, type: 'note' });
+                    if (getPillValue('client-supplies-base') === 'no') designMat.push({ label: baseType, type: 'standard', qty: 1, price: (baseType === 'Tub' ? 550 : 500) });
+                    else designMat.push({ label: `${baseType} supplied by client`, type: 'note' });
+                } else if (baseType === 'Tiled Base') {
+                    designLabor.push({ label: 'Build Tiled Base', type: 'standard', hours: 16, rate: settings.defaultRate });
+                    const tiledSystem = elements.showerBase.tiledBaseSystem.value;
+                    if (tiledSystem === 'Schluter') designMat.push({ label: 'Schluter-Kerdi Kit', qty: 1, price: 800 });
+                    if (tiledSystem === 'Mortar Bed') {
+                        designMat.push({ label: 'Mortar Mix', qty: 3, price: 10 });
+                        designMat.push({ label: 'Waterproofing Membrane (Liquid)', qty: 1, price: 115 });
+                    }
+                    if (getPillValue('entry-type') === 'curbless') designLabor.push({ label: 'Create Curbless Entry', hours: 8, rate: settings.defaultRate });
+                    else designLabor.push({ label: 'Build Curb', hours: 2, rate: settings.defaultRate });
+                    
+                    if (getPillValue('drain-type') === 'linear') {
+                         designLabor.push({ label: 'Install Linear Drain', hours: 3, rate: settings.defaultRate });
+                         designMat.push({ label: 'Linear Shower Drain', qty: 1, price: 350 });
+                    } else {
+                         designLabor.push({ label: 'Install Regular Drain', hours: 1.5, rate: settings.defaultRate });
+                         designMat.push({ label: 'Standard Shower Drain', qty: 1, price: 50 });
+                    }
+                }
+                if (getPillValue('repair-subfloor') === 'yes') {
+                    constLabor.push({ label: 'Repair Subfloor', hours: 4, rate: settings.defaultRate });
+                    constMat.push({ label: 'Plywood/OSB Sheathing', qty: 1, price: 70 });
+                }
+                if (getPillValue('modify-joists') === 'yes') {
+                    constLabor.push({ label: 'Modify Floor Joists', hours: 6, rate: settings.defaultRate });
+                    constMat.push({ label: 'Lumber & Hangers', qty: 1, price: 100 });
+                }
+                return { designLabor, constLabor, designMat, constMat };
+            }
+
+            function getShowerWallsItems() {
+                const designLabor = [], constLabor = [], designMat = [], constMat = [];
+                const wallSqFt = parseFloat(elements.showerWalls.sqFtBadge.textContent) || 0;
+                
+                if (elements.showerWalls.finishType.value === 'Tiled') {
+                    // Tiling time is estimated with a base of 8 hours for setup/layout/grouting, plus 0.15 hours per square foot.
+                    designLabor.push({ label: 'Tile Walls', hours: (8 + wallSqFt * 0.15).toFixed(1), rate: settings.defaultRate });
+                    designMat.push({ label: 'Wall Tile', qty: (wallSqFt * 1.15).toFixed(0), price: 8 });
+                    designMat.push({ label: 'Thin-set Mortar', qty: Math.ceil(wallSqFt / 50), price: 35 });
+                    
+                    const wpSystem = elements.showerWalls.waterproofingSystem.value;
+                    if(wpSystem === 'Kerdi-Board') {
+                        designLabor.push({ label: 'Install Kerdi-Board', hours: 6, rate: settings.defaultRate });
+                        designMat.push({ label: 'Kerdi-Board Sheets', qty: Math.ceil(wallSqFt / 32), price: 140 });
+                    } else if (wpSystem === 'Liquid Membrane') {
+                        designLabor.push({ label: 'Apply Liquid Membrane', hours: 2, rate: settings.defaultRate });
+                        designMat.push({ label: 'Liquid Membrane Pail (1 Gal)', qty: 1, price: 115 });
+                    }
+                }
+                
+                if (getPillValue('add-niche') === 'yes') {
+                    designLabor.push({ label: 'Build & Tile Niche', hours: 4, rate: settings.defaultRate });
+                    designMat.push({ label: 'Prefabricated Niche', qty: 1, price: 130 });
+                    if(getPillValue('add-niche-shelf') === 'yes') {
+                        designMat.push({ label: 'Niche Shelf', qty: 1, price: 50 });
+                    }
+                }
+                if (getPillValue('add-bench') !== 'no') {
+                     designLabor.push({ label: `Build ${getPillValue('add-bench')} Bench`, hours: 6, rate: settings.defaultRate });
+                     designMat.push({ label: `${getPillValue('add-bench')} Bench Form`, qty: 1, price: 250 });
+                }
+
+                if(getPillValue('repair-studs') === 'yes') {
+                    constLabor.push({ label: 'Repair Wall Studs', hours: 4, rate: settings.defaultRate});
+                    constMat.push({ label: 'Lumber (2x4)', qty: 5, price: 6});
+                }
+                if(getPillValue('add-blocking') === 'yes') {
+                    constLabor.push({ label: 'Add Blocking', hours: 2, rate: settings.defaultRate});
+                    constMat.push({ label: 'Lumber (2x6)', qty: 2, price: 10});
+                }
+                return { designLabor, constLabor, designMat, constMat };
+            }
+
+
+            // --- UI UPDATE & RENDER ---
+            function renderItems(container, group, items, createRowFn) {
+                const currentlyAdded = Array.from(container.querySelectorAll('.item-label')).map(el => el.value);
+                const autoGenerated = items.filter(item => !currentlyAdded.includes(item.label));
+                
+                if (items.length > 0 || currentlyAdded.length > 0) {
+                    group.classList.remove('hidden');
+                    autoGenerated.forEach(item => container.appendChild(createRowFn(item)));
+                } else {
+                    group.classList.add('hidden');
+                }
+            }
+            
+            function calculateTotals(rootSelector) {
+                let totalCost = 0, totalHours = 0;
+                document.querySelectorAll(`${rootSelector} .labor-item`).forEach(item => {
+                    const hours = parseFloat(item.querySelector('.labor-hours').value) || 0;
+                    const rate = parseFloat(item.querySelector('.labor-rate').value) || 0;
+                    const rowTotal = hours * rate;
+                    item.querySelector('.labor-total').textContent = formatCurrency(rowTotal);
+                    totalHours += hours;
+                    totalCost += rowTotal;
+                });
+                 document.querySelectorAll(`${rootSelector} .material-item`).forEach(item => {
+                    const qty = parseFloat(item.querySelector('.material-qty').value) || 0;
+                    const price = parseFloat(item.querySelector('.material-price').value) || 0;
+                    const rowTotal = qty * price;
+                    item.querySelector('.material-total').textContent = formatCurrency(rowTotal);
+                    totalCost += rowTotal;
+                });
+                return { totalCost, totalHours };
+            }
+            
+            function updateAllCalculations() {
+                const baseItems = getShowerBaseItems();
+                const wallsItems = getShowerWallsItems();
+                
+                renderItems(elements.labor.designBaseContainer, elements.labor.designBaseGroup, baseItems.designLabor, createLaborRow);
+                renderItems(elements.labor.constructionBaseContainer, elements.labor.constructionBaseGroup, baseItems.constLabor, createLaborRow);
+                renderItems(elements.labor.designWallsContainer, elements.labor.designWallsGroup, wallsItems.designLabor, createLaborRow);
+                renderItems(elements.labor.constructionWallsContainer, elements.labor.constructionWallsGroup, wallsItems.constLabor, createLaborRow);
+                
+                renderItems(elements.materials.designBaseContainer, elements.materials.designBaseGroup, baseItems.designMat, createMaterialRow);
+                renderItems(elements.materials.constructionBaseContainer, elements.materials.constructionBaseGroup, baseItems.constMat, createMaterialRow);
+                renderItems(elements.materials.designWallsContainer, elements.materials.designWallsGroup, wallsItems.designMat, createMaterialRow);
+                renderItems(elements.materials.constructionWallsContainer, elements.materials.constructionWallsGroup, wallsItems.constMat, createMaterialRow);
+
+                const { totalCost: designLaborCost, totalHours: designLaborHours } = calculateTotals('#labor-screen .card:first-child');
+                const { totalCost: constLaborCost, totalHours: constLaborHours } = calculateTotals('#labor-screen .card:last-child');
+                const { totalCost: designMaterialCost } = calculateTotals('#materials-screen .card:first-child');
+                const { totalCost: constMaterialCost } = calculateTotals('#materials-screen .card:last-child');
+                
+                appState.laborTotal = designLaborCost + constLaborCost;
+                appState.materialTotal = designMaterialCost + constMaterialCost;
+
+                elements.labor.designSummary.textContent = `${designLaborHours.toFixed(1)} hrs | ${formatCurrency(designLaborCost)}`;
+                elements.labor.constructionSummary.textContent = `${constLaborHours.toFixed(1)} hrs | ${formatCurrency(constLaborCost)}`;
+                elements.labor.grandTotalHours.textContent = `${(designLaborHours + constLaborHours).toFixed(1)} hrs`;
+                elements.labor.grandTotal.textContent = formatCurrency(appState.laborTotal);
+                elements.materials.grandTotal.textContent = formatCurrency(appState.materialTotal);
+
+                elements.labor.noDesign.classList.toggle('hidden', designLaborCost > 0);
+                elements.labor.noConstruction.classList.toggle('hidden', constLaborCost > 0);
+                elements.materials.noDesign.classList.toggle('hidden', designMaterialCost > 0);
+                elements.materials.noConstruction.classList.toggle('hidden', constMaterialCost > 0);
+
+                updateSummaryAndProposal();
+                saveState();
+            }
+
+            function updateSummaryAndProposal() {
+                const subtotal = appState.laborTotal + appState.materialTotal;
+                const markupPercent = parseFloat(elements.summary.markup.value) || 0;
+                const taxPercent = parseFloat(elements.summary.tax.value) || 0;
+                const markupAmount = subtotal * (markupPercent / 100);
+                const totalBeforeTax = subtotal + markupAmount;
+                const taxAmount = totalBeforeTax * (taxPercent / 100);
+                const grandTotal = totalBeforeTax + taxAmount;
+
+                // Update summary fields (used by proposal)
+                elements.summary.subtotal.textContent = formatCurrency(subtotal);
+                elements.summary.markupAmount.textContent = formatCurrency(markupAmount);
+                elements.summary.taxAmount.textContent = formatCurrency(taxAmount);
+                elements.summary.grandTotal.textContent = formatCurrency(grandTotal);
+                
+                // Update proposal fields
+                const allNotes = [
+                    elements.showerBase.designNotes.value,
+                    elements.showerBase.constructionNotes.value,
+                    elements.showerWalls.designNotes.value,
+                    elements.showerWalls.constructionNotes.value
+                ].filter(Boolean).join('\n\n'); // Join with double newline for paragraphs
+
+                elements.proposal.scopeOfWork.innerHTML = allNotes.replace(/\n/g, '<br>') || '<p>No scope details provided.</p>';
+            }
+            
+            function updateUIDependentOnInputs() {
+                // Shower Base UI
+                const baseLength = parseFloat(elements.showerBase.length.value) || 0;
+                const baseWidth = parseFloat(elements.showerBase.width.value) || 0;
+                elements.showerBase.sqFtBadge.textContent = `${((baseLength * baseWidth) / 144).toFixed(2)} sq/ft`;
+
+                const baseType = elements.showerBase.baseType.value;
+                elements.showerBase.prefabricatedOptions.classList.toggle('hidden', !(baseType === 'Tub' || baseType === 'Acrylic Base'));
+                elements.showerBase.tiledOptions.classList.toggle('hidden', baseType !== 'Tiled Base');
+                elements.showerBase.tradeInstallNote.classList.toggle('hidden', getPillValue('base-installation-by') !== 'trade');
+                elements.showerBase.clientSuppliesNote.classList.toggle('hidden', getPillValue('client-supplies-base') !== 'yes');
+                
+                // Shower Walls UI
+                const wallHeight = parseFloat(elements.showerWalls.height.value) || 0;
+                const w1 = parseFloat(elements.showerWalls.wall1Length.value) || 0;
+                const w2 = parseFloat(elements.showerWalls.wall2Length.value) || 0;
+                const isCorner = elements.showerWalls.isCornerShower.checked;
+                elements.showerWalls.wall3Container.classList.toggle('hidden', isCorner);
+                const w3 = isCorner ? 0 : parseFloat(elements.showerWalls.wall3Length.value) || 0;
+                elements.showerWalls.sqFtBadge.textContent = `${(((w1+w2+w3) * wallHeight) / 144).toFixed(2)} sq/ft`;
+                
+                elements.showerWalls.tiledOptions.classList.toggle('hidden', elements.showerWalls.finishType.value !== 'Tiled');
+                elements.showerWalls.nicheOptions.classList.toggle('hidden', getPillValue('add-niche') === 'no');
+
+                document.querySelectorAll('.accordion-content').forEach(content => {
+                     if (content.style.maxHeight) {
+                         content.style.maxHeight = content.scrollHeight + "px";
+                     }
+                });
+
+                updateAllCalculations();
+            }
+
+            // --- ACCORDIONS ---
+            function toggleAccordion(header, forceOpen = false) {
+                const content = header.nextElementSibling;
+                const icon = header.querySelector('.accordion-icon');
+                const parentScreen = header.closest('.screen-content, .module-content');
+                const isExclusive = !header.closest('#labor-screen, #materials-screen');
+
+                if (forceOpen) {
+                    if (content.style.maxHeight) return;
+                } else if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                    if(icon) icon.style.transform = 'rotate(0deg)';
+                    return;
+                }
+                
+                if (isExclusive) {
+                    parentScreen.querySelectorAll('.accordion-header').forEach(otherHeader => {
+                        if(otherHeader !== header && otherHeader.closest('.card') === header.closest('.card').parentElement.querySelector('.card')) {
+                            otherHeader.nextElementSibling.style.maxHeight = null;
+                            const otherIcon = otherHeader.querySelector('.accordion-icon');
+                            if(otherIcon) otherIcon.style.transform = 'rotate(0deg)';
+                        }
+                    });
+                }
+                content.style.maxHeight = content.scrollHeight + "px";
+                if(icon) icon.style.transform = 'rotate(180deg)';
+            }
+            
+            function toggleSubAccordion(header) {
+                const content = header.nextElementSibling;
+                if (!content) return;
+                const icon = header.querySelector('.accordion-icon');
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                    if (icon) icon.style.transform = 'rotate(0deg)';
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                    if (icon) icon.style.transform = 'rotate(180deg)';
+                }
+                const parentAccordionContent = header.closest('.accordion-content');
+                if (parentAccordionContent && parentAccordionContent.style.maxHeight) {
+                    setTimeout(() => {
+                        parentAccordionContent.style.maxHeight = parentAccordionContent.scrollHeight + "px";
+                    }, 400);
+                }
+            }
+            
+            // --- EVENT LISTENERS ---
+            document.body.addEventListener('input', (e) => {
+                if (e.target.matches('input, select, textarea')) {
+                    updateUIDependentOnInputs();
+                }
+            });
+            
+            document.body.addEventListener('click', (e) => {
+                const pill = e.target.closest('.pill');
+                if (pill) {
+                    const selector = pill.closest('.pill-selector');
+                    selector.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    updateUIDependentOnInputs();
+                }
+
+                const addItemBtn = e.target.closest('.add-item-btn');
+                if (addItemBtn) {
+                    e.preventDefault();
+                    const targetContainerId = addItemBtn.dataset.target;
+                    const itemType = addItemBtn.dataset.type;
+                    const container = document.getElementById(targetContainerId);
+
+                    if (container) {
+                        let newItemEl;
+                        if (itemType === 'labor') newItemEl = createLaborRow({ label: 'New Labor Item', type: 'standard', hours: 0, rate: settings.defaultRate });
+                        else newItemEl = createMaterialRow({ label: 'New Material Item', type: 'standard', qty: 1, price: 0 });
+                        
+                        container.appendChild(newItemEl);
+                        const parentGroup = container.closest('[id$="-group"]');
+                        if(parentGroup) parentGroup.classList.remove('hidden');
+
+                        adjustOpenAccordions(container);
+                        newItemEl.querySelector('.item-label').focus();
+                        updateAllCalculations();
+                    }
+                }
+
+                const accordionHeader = e.target.closest('.accordion-header');
+                if(accordionHeader) toggleAccordion(accordionHeader);
+                
+                const subAccordionHeader = e.target.closest('.sub-accordion-header');
+                if(subAccordionHeader) toggleSubAccordion(subAccordionHeader);
+                
+                const bottomNavItem = e.target.closest('.nav-item');
+                if (bottomNavItem) {
+                    e.preventDefault();
+                    if(bottomNavItem.id === 'nav-design') showScreen('design');
+                    else if(bottomNavItem.id === 'nav-labor') showScreen('labor');
+                    else if(bottomNavItem.id === 'nav-materials') showScreen('materials');
+                    else if(bottomNavItem.id === 'nav-estimate') showScreen('estimate');
+                    else if(bottomNavItem.id === 'nav-menu') {
+                        elements.general.menuDropdown.classList.toggle('hidden');
+                        elements.nav.menu.classList.toggle('bg-blue-100');
+                    }
+                }
+
+                const topTab = e.target.closest('.top-tab');
+                if(topTab) {
+                    e.preventDefault();
+                    showModule(topTab.dataset.module);
+                }
+                
+                if (!elements.general.menuDropdown.classList.contains('hidden') && !e.target.closest('#nav-menu')) {
+                    elements.general.menuDropdown.classList.add('hidden');
+                    elements.nav.menu.classList.remove('bg-blue-100');
+                }
+
+                const removeButton = e.target.closest('.remove-item');
+                if (removeButton) {
+                    const item = removeButton.closest('.labor-item, .material-item');
+                    item.remove();
+                    updateAllCalculations();
+                }
+
+                if (e.target.closest('#print-proposal-btn')) {
+                    window.print();
+                }
+                
+                // New menu and modal listeners
+                if (e.target.closest('#new-project-btn')) {
+                    e.preventDefault();
+                    showConfirmation('This will clear all project data. Are you sure?', () => {
+                        localStorage.removeItem(APP_STATE_KEY);
+                        window.location.reload();
+                    });
+                }
+                if (e.target.closest('#settings-btn')) {
+                    e.preventDefault();
+                    toggleSettingsModal(true);
+                }
+                if (e.target.closest('#save-settings-btn')) saveSettings();
+                if (e.target.closest('#cancel-settings-btn') || e.target === elements.settingsModal.modal) {
+                     toggleSettingsModal(false);
+                }
+            });
+
+            // --- INITIALIZATION ---
+            function setDate() {
+                const today = new Date(); // Use the current date
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                const formattedDate = today.toLocaleDateString("en-CA", options);
+                elements.proposal.date.textContent = formattedDate;
+            }
+
+            loadState();
+            loadSettings();
+            setDate();
+            showScreen('design');
+            showModule(appState.activeModule || 'showerBase');
+            updateUIDependentOnInputs();
+             // Open the first accordion by default on first load
+            const firstAccordion = document.querySelector('#shower-base-module .accordion-header');
+            if(firstAccordion && !screensShown.has('firstAccordionLoaded')) {
+                toggleAccordion(firstAccordion, true);
+                screensShown.add('firstAccordionLoaded');
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+

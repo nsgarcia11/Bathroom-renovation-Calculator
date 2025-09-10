@@ -1,0 +1,574 @@
+import React, { useState, useEffect } from 'react';
+
+// --- Data ---
+// NOTE: All pricing below is for demonstration purposes. Prices have been updated to reflect September 2025 Home Depot Canada values.
+// For accurate estimates, please confirm these labor rates and material prices with current values for your location.
+const COST_DATA = {
+    // Plumbing Tasks
+    rough_in_plumbing: { category: 'plumbing', labor: [{ id: 'lab-rough-in-plumbing', name: 'Rough-in new plumbing', hours: 16, rate: 110 }], materials: [ { id: 'mat-pex-a', name: 'PEX-A Plumbing Pipe (100ft)', quantity: 1, price: 35.00, unit: 'roll' }, { id: 'mat-plumbing-fittings', name: 'Plumbing Fittings Assortment', quantity: 1, price: 65.00, unit: 'box' } ] },
+    move_toilet_drain: { category: 'plumbing', labor: [{ id: 'lab-move-toilet-drain', name: 'Move toilet drain and supply', hours: 5, rate: 110 }], materials: [{ id: 'mat-pvc-pipe', name: '1.5-in. PVC Drain Pipe (10ft)', quantity: 1, price: 10.00, unit: 'length' }] },
+    install_new_shower_valve: { category: 'plumbing', labor: [{ id: 'lab-install-shower-valve', name: 'Install new shower valve', hours: 4, rate: 110 }], materials: [{ id: 'mat-shower-valve', name: 'Pressure-Balance Shower Valve', quantity: 1, price: 95.00, unit: 'unit' }] },
+    install_vanity_plumbing: { category: 'plumbing', labor: [{ id: 'lab-install-vanity-plumbing', name: 'Install vanity sink plumbing', hours: 2, rate: 110 }], materials: [{ id: 'mat-vanity-kit', name: 'P-Trap Vanity Plumbing Kit', quantity: 1, price: 14.00, unit: 'kit' }] },
+    move_drain: { category: 'plumbing', labor: [{ id: 'lab-move-drain', name: 'Move drain', hours: 4, rate: 110 }], materials: [{ id: 'mat-pvc-pipe-drain', name: '1.5-in. PVC Drain Pipe (10ft)', quantity: 1, price: 10.00, unit: 'length' }] },
+    // Electrical Tasks
+    install_new_outlet: { category: 'electrical', labor: [{ id: 'lab-install-outlet', name: 'Install new outlet', hours: 2, rate: 95 }], materials: [ { id: 'mat-electrical-wire', name: '14/2 NMD90 Electrical Wire (10m)', quantity: 1, price: 33.00, unit: 'roll' }, { id: 'mat-outlet-box', name: 'Single Gang Outlet Box', quantity: 1, price: 3.00, unit: 'box' }, { id: 'mat-outlet', name: 'Standard Duplex Outlet', quantity: 1, price: 1.00, unit: 'unit' } ] },
+    install_new_gfci: { category: 'electrical', labor: [{ id: 'lab-install-gfci', name: 'Install new GFCI outlet', hours: 2.5, rate: 95 }], materials: [ { id: 'mat-gfci-outlet', name: 'GFCI Outlet', quantity: 1, price: 26.00, unit: 'unit' }, { id: 'mat-electrical-wire-gfci', name: '14/2 NMD90 Electrical Wire (10m)', quantity: 1, price: 33.00, unit: 'roll' } ] },
+    install_light_fixture: { category: 'electrical', labor: [{ id: 'lab-install-light-fixture', name: 'Install new light fixture', hours: 2, rate: 95 }], materials: [{ id: 'mat-light-box', name: 'Octagonal Light Box', quantity: 1, price: 6.00, unit: 'box' }] },
+    install_exhaust_fan: { category: 'electrical', labor: [{ id: 'lab-install-exhaust-fan', name: 'Install new exhaust fan', hours: 4, rate: 95 }], materials: [ { id: 'mat-exhaust-fan', name: 'Standard Bathroom Exhaust Fan', quantity: 1, price: 55.00, unit: 'unit' }, { id: 'mat-ducting-fan', name: '4-in. Flexible Vent Ducting (8ft)', quantity: 1, price: 16.00, unit: 'roll' } ] },
+    // HVAC Tasks
+    install_new_ductwork: { category: 'hvac', labor: [{ id: 'lab-install-ductwork', name: 'Install new ductwork', hours: 10, rate: 120 }], materials: [ { id: 'mat-ducting', name: '6-in. Insulated Flexible Duct (25ft)', quantity: 1, price: 39.00, unit: 'roll' }, { id: 'mat-duct-tape', name: 'HVAC Foil Tape', quantity: 1, price: 24.00, unit: 'roll' } ] },
+    relocate_vent: { category: 'hvac', labor: [{ id: 'lab-relocate-vent', name: 'Relocate an existing vent', hours: 4, rate: 120 }], materials: [ { id: 'mat-ducting-vent', name: '4-in. Flexible Ducting (5ft)', quantity: 1, price: 10.00, unit: 'length' }, { id: 'mat-register-boot', name: 'Register Boot', quantity: 1, price: 12.50, unit: 'unit' } ] },
+    add_heater: { category: 'hvac', labor: [{ id: 'lab-add-heater', name: 'Add a wall heater', hours: 5, rate: 120 }], materials: [ { id: 'mat-wall-heater', name: 'Electric Fan Wall Heater', quantity: 1, price: 140.00, unit: 'unit' }, { id: 'mat-thermostat', name: 'Line-Voltage Thermostat', quantity: 1, price: 26.00, unit: 'unit' } ] },
+};
+
+const CATEGORY_STYLES = {
+    plumbing: { name: 'Plumbing', bg: 'bg-indigo-100', border: 'border-indigo-300', text: 'text-slate-900', },
+    electrical: { name: 'Electrical', bg: 'bg-rose-100', border: 'border-rose-300', text: 'text-slate-900', },
+    hvac: { name: 'HVAC', bg: 'bg-teal-100', border: 'border-teal-300', text: 'text-slate-900', },
+};
+
+const PROVINCE_TAX_RATES = {
+    'AB': 0.05, 'BC': 0.12, 'MB': 0.12, 'NB': 0.15, 'NL': 0.15,
+    'NT': 0.05, 'NS': 0.15, 'NU': 0.05, 'ON': 0.13, 'PE': 0.15,
+    'QC': 0.14975, 'SK': 0.11, 'YT': 0.05
+};
+
+// --- Helper Components ---
+const CheckboxOption = ({ label, isChecked, onToggle, children }) => {
+    return (
+        <div className="p-4 bg-white rounded-lg border border-slate-300">
+            <label className="flex items-center justify-between cursor-pointer">
+                <span className="text-sm font-semibold text-slate-700">{label}</span>
+                <div className="relative">
+                    <input type="checkbox" checked={isChecked} onChange={onToggle} className="sr-only peer" />
+                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 border-2 border-blue-300 peer-checked:border-blue-600"></div>
+                </div>
+            </label>
+            {isChecked && children && <div className="mt-3 pt-3 border-t border-slate-200 animate-fade-in">{children}</div>}
+        </div>
+    );
+};
+
+const QuantityOption = ({ label, isChecked, onToggle, quantity, onQuantityChange }) => {
+    return (
+        <div className="p-4 bg-white rounded-lg border border-slate-300">
+            <label className="flex items-center justify-between cursor-pointer">
+                <span className="text-sm font-semibold text-slate-700">{label}</span>
+                <div className="relative">
+                    <input type="checkbox" checked={isChecked} onChange={onToggle} className="sr-only peer" />
+                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 border-2 border-blue-300 peer-checked:border-blue-600"></div>
+                </div>
+            </label>
+            {isChecked && (
+                <div className="mt-3 pt-3 border-t border-slate-200 animate-fade-in flex items-center justify-between">
+                    <label className="text-sm font-medium text-slate-600">Quantity</label>
+                    <input
+                        type="number"
+                        value={quantity}
+                        onChange={onQuantityChange}
+                        className="w-24 p-2 text-center border border-slate-300 rounded-lg"
+                        min="1"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- Top Navigation Component ---
+const TopNavBar = ({ activeView, setActiveView }) => {
+    const navItems = [
+        { id: 'demolition', view: 'demolition', label: 'Demolition', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><path d="m15 12-9.373 9.373a1 1 0 0 1-3.001-3L12 9"/><path d="m18 15 4-4"/><path d="m21.5 11.5-1.914-1.914A2 2 0 0 1 19 8.172v-.344a2 2 0 0 0-.586-1.414l-1.657-1.657A6 6 0 0 0 12.516 3H9l1.243 1.243A6 6 0 0 1 12 8.485V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5"/></svg> },
+        { id: 'shower_walls', view: 'shower_walls', label: 'Shower Walls', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><path d="m4 4 2.5 2.5"/><path d="M13.5 6.5a4.95 4.95 0 0 0-7 7"/><path d="M15 5 5 15"/><path d="M14 17v.01"/><path d="M10 16v.01"/><path d="M13 13v.01"/><path d="M16 10v.01"/><path d="M11 20v.01"/><path d="M17 14v.01"/><path d="M20 11v.01"/></svg> },
+        { id: 'shower_base', view: 'shower_base', label: 'Shower Base', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg> },
+        { id: 'floors', view: 'floors', label: 'Floors', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg> },
+        { id: 'finishings', view: 'finishings', label: 'Finishings', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/></svg> },
+        { id: 'structural_other', view: 'structural_other', label: 'Structural/Other', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M9 12h6"/></svg> },
+        { id: 'trade', view: 'tasks', label: 'Trade', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M14 6a6 6 0 0 1 6 6v3"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><rect x="2" y="15" width="20" height="4" rx="1"/></svg> },
+    ];
+    return (
+        <div className="fixed top-0 left-0 right-0 z-20 bg-white/80 backdrop-blur-sm shadow-sm px-4 sm:px-6">
+            <div className="max-w-xl mx-auto">
+                <div id="nav-container" className="tab-scrollbar flex space-x-4 overflow-x-auto py-3">
+                    {navItems.map(item => {
+                        const isActive = activeView === item.view;
+                        return (
+                            <button key={item.id} onClick={() => setActiveView(item.view)} className="flex-shrink-0">
+                                <div className={`flex flex-col items-center justify-center w-24 h-20 rounded-xl transition-colors ${isActive ? 'bg-white text-blue-600 shadow-md border-2 border-blue-500' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                                    {item.icon}
+                                    <span className="text-xs font-medium">{item.label}</span>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// --- View Components ---
+const TradesView = ({ choices, setChoices }) => {
+    const [isPlumbingOpen, setIsPlumbingOpen] = useState(true);
+    const [isElectricalOpen, setIsElectricalOpen] = useState(false);
+    const [isHvacOpen, setIsHvacOpen] = useState(false);
+    const [showNotes, setShowNotes] = useState(false);
+
+    const handleToggle = (category, task) => { 
+        setChoices(prev => { 
+            const currentTasks = prev[category] || []; 
+            const newTasks = currentTasks.includes(task) 
+                ? currentTasks.filter(t => t !== task) 
+                : [...currentTasks, task]; 
+            return { ...prev, [category]: newTasks }; 
+        }); 
+    };
+
+    const handleElectricalToggle = (taskId, hasQuantity) => {
+        setChoices(prev => {
+            const electricalTasks = prev.electrical || [];
+            const isSelected = electricalTasks.some(task => task.id === taskId);
+            let newElectricalTasks;
+
+            if (isSelected) {
+                newElectricalTasks = electricalTasks.filter(task => task.id !== taskId);
+            } else {
+                const newTask = hasQuantity ? { id: taskId, quantity: 1 } : { id: taskId };
+                newElectricalTasks = [...electricalTasks, newTask];
+            }
+            return { ...prev, electrical: newElectricalTasks };
+        });
+    };
+    
+    const handleElectricalQuantityChange = (taskId, newQuantity) => {
+        setChoices(prev => {
+            const newElectricalTasks = (prev.electrical || []).map(task =>
+                task.id === taskId ? { ...task, quantity: Math.max(1, parseInt(newQuantity, 10) || 1) } : task
+            );
+            return { ...prev, electrical: newElectricalTasks };
+        });
+    };
+
+    const handleInputChange = (field, value) => { setChoices(prev => ({ ...prev, [field]: value })); };
+
+    const plumbingOptions = [ { id: 'rough_in_plumbing', label: 'Rough-in new plumbing' }, { id: 'move_toilet_drain', label: 'Move toilet drain and supply' }, { id: 'install_new_shower_valve', label: 'Install new shower valve' }, { id: 'install_vanity_plumbing', label: 'Install vanity sink plumbing' }, { id: 'move_drain', label: 'Move drain' } ];
+    const electricalOptions = [ 
+        { id: 'install_new_outlet', label: 'Install new outlet', hasQuantity: true },
+        { id: 'install_new_gfci', label: 'Install new GFCI outlet', hasQuantity: true },
+        { id: 'install_light_fixture', label: 'Install new light fixture', hasQuantity: true },
+        { id: 'install_exhaust_fan', label: 'Install new exhaust fan', hasQuantity: false }
+    ];
+    const hvacOptions = [ { id: 'install_new_ductwork', label: 'Install new ductwork' }, { id: 'relocate_vent', label: 'Relocate an existing vent' }, { id: 'add_heater', label: 'Add a wall heater' } ];
+
+    return (
+        <div className="space-y-6">
+            <div className="pt-2 pb-6">
+                <h2 className="text-4xl font-bold text-slate-800">Trades</h2>
+            </div>
+            {/* Plumbing Card */}
+            <div className="bg-white rounded-xl border border-slate-300 shadow-sm overflow-hidden">
+                <button onClick={() => setIsPlumbingOpen(!isPlumbingOpen)} className={`w-full flex justify-between items-center p-4 ${CATEGORY_STYLES.plumbing.text}`}><h3 className="text-lg font-bold">{CATEGORY_STYLES.plumbing.name}</h3><svg className={`w-5 h-5 transition-transform text-blue-500 ${isPlumbingOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg></button>
+                {isPlumbingOpen && <div className="p-4 pt-0 space-y-2 animate-fade-in">{plumbingOptions.map(opt => (<CheckboxOption key={opt.id} label={opt.label} isChecked={(choices.plumbing || []).includes(opt.id)} onToggle={() => handleToggle('plumbing', opt.id)} />))}</div>}
+            </div>
+
+            {/* Electrical Card */}
+            <div className="bg-white rounded-xl border border-slate-300 shadow-sm overflow-hidden">
+                <button onClick={() => setIsElectricalOpen(!isElectricalOpen)} className={`w-full flex justify-between items-center p-4 ${CATEGORY_STYLES.electrical.text}`}><h3 className="text-lg font-bold">{CATEGORY_STYLES.electrical.name}</h3><svg className={`w-5 h-5 transition-transform text-blue-500 ${isElectricalOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg></button>
+                {isElectricalOpen && <div className="p-4 pt-0 space-y-2 animate-fade-in">
+                    {electricalOptions.map(opt => {
+                        const choice = (choices.electrical || []).find(c => c.id === opt.id);
+                        const isChecked = !!choice;
+
+                        if (opt.hasQuantity) {
+                            return (
+                                <QuantityOption
+                                    key={opt.id}
+                                    label={opt.label}
+                                    isChecked={isChecked}
+                                    onToggle={() => handleElectricalToggle(opt.id, opt.hasQuantity)}
+                                    quantity={isChecked ? choice.quantity : 1}
+                                    onQuantityChange={(e) => handleElectricalQuantityChange(opt.id, e.target.value)}
+                                />
+                            );
+                        } else {
+                            return (
+                                <CheckboxOption
+                                    key={opt.id}
+                                    label={opt.label}
+                                    isChecked={isChecked}
+                                    onToggle={() => handleElectricalToggle(opt.id, opt.hasQuantity)}
+                                />
+                            );
+                        }
+                    })}
+                </div>}
+            </div>
+            
+            {/* HVAC Card */}
+            <div className="bg-white rounded-xl border border-slate-300 shadow-sm overflow-hidden">
+                <button onClick={() => setIsHvacOpen(!isHvacOpen)} className={`w-full flex justify-between items-center p-4 ${CATEGORY_STYLES.hvac.text}`}><h3 className="text-lg font-bold">{CATEGORY_STYLES.hvac.name}</h3><div className="flex items-center gap-4"><svg className={`w-5 h-5 transition-transform text-blue-500 ${isHvacOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg></div></button>
+                {isHvacOpen && <div className="p-4 pt-0 space-y-2 animate-fade-in">{hvacOptions.map(opt => (<CheckboxOption key={opt.id} label={opt.label} isChecked={(choices.hvac || []).includes(opt.id)} onToggle={() => handleToggle('hvac', opt.id)} />))}</div>}
+            </div>
+            <section>
+                <h3 className="text-lg font-semibold text-slate-700 mb-3">General Notes</h3>
+                <div className="rounded-xl bg-white p-4 border border-slate-200">
+                    {!showNotes ? (<button onClick={() => setShowNotes(true)} className="w-full text-sm font-semibold text-blue-600 hover:text-blue-800 py-2 rounded-lg hover:bg-blue-100 transition-colors">+ Add Notes</button>) : (<div className="animate-fade-in"><div className="flex justify-between items-center mb-1.5"><label className="block text-sm font-semibold text-slate-700">Notes</label><button onClick={() => setShowNotes(false)} className="text-xs text-slate-500 hover:text-slate-700">Hide</button></div><textarea value={choices.notes || ''} onChange={(e) => handleInputChange('notes', e.target.value)} placeholder="Add notes..." className="w-full p-2.5 border border-slate-300 rounded-lg" rows="3"></textarea></div>)}
+                </div>
+            </section>
+        </div>
+    );
+};
+
+const ItemsView = ({ title, itemsByCategory, onUpdateItem, onAddItem, onDeleteItem, itemType }) => {
+    const [openCategories, setOpenCategories] = useState({ plumbing: true, electrical: true, hvac: true });
+    const toggleCategory = (category) => { setOpenCategories(prev => ({ ...prev, [category]: !prev[category] })); };
+    
+    const isLabor = itemType === 'labor';
+    const field1Name = isLabor ? 'hours' : 'quantity';
+    const field2Name = isLabor ? 'rate' : 'price';
+    const field1Label = isLabor ? 'Hours' : 'Quantity';
+    const field2Label = isLabor ? 'Rate ($/hr)' : 'Price/Unit ($)';
+
+    const total = Object.values(itemsByCategory).flat().reduce((sum, item) => sum + (parseFloat(item[field1Name]) || 0) * (parseFloat(item[field2Name]) || 0), 0);
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">{title}</h2>
+                <p className="font-bold text-blue-600 text-lg">${total.toFixed(2)}</p>
+            </div>
+            <div className="space-y-4">
+                {Object.entries(itemsByCategory).map(([category, items]) => {
+                    if (items.length === 0) return null;
+                    const style = CATEGORY_STYLES[category];
+                    const categoryTotal = items.reduce((sum, item) => sum + (item[field1Name] || 0) * (item[field2Name] || 0), 0);
+                    const isOpen = !!openCategories[category];
+                    return (
+                        <div key={category} className="bg-white rounded-xl border border-slate-300 shadow-sm overflow-hidden">
+                            <button onClick={() => toggleCategory(category)} className={`w-full p-4 flex justify-between items-center ${style.text}`}>
+                                <h3 className="text-lg font-bold">{style.name}</h3>
+                                <div className="flex items-center gap-4">
+                                    <span className="font-semibold">${categoryTotal.toFixed(2)}</span>
+                                    <svg className={`w-5 h-5 transition-transform text-blue-500 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                                </div>
+                            </button>
+                            {isOpen && (
+                                <div className="p-4 pt-0 space-y-3 animate-fade-in">
+                                    {items.map(item => {
+                                        const isCustom = item.id.startsWith('custom-');
+                                        return (
+                                            <div key={item.id} className="p-4 bg-white rounded-lg border border-slate-300">
+                                                <div className="flex justify-between items-start">
+                                                    <input type="text" value={item.name} onChange={e => onUpdateItem(item.id, { name: e.target.value })} readOnly={!isCustom} className={`w-full font-semibold text-slate-800 mb-2 p-1 border-b-2 border-transparent focus:border-blue-500 focus:ring-0 ${!isCustom && 'bg-slate-50'}`} />
+                                                    <button onClick={() => onDeleteItem(item.id)} className="p-1 text-red-400 hover:text-red-600 ml-2 flex-shrink-0">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                    </button>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-4">
+                                                    <div>
+                                                        <label className="text-xs text-slate-500">{field1Label}</label>
+                                                        <input type="number" value={item[field1Name]} onChange={e => onUpdateItem(item.id, { [field1Name]: e.target.value })} readOnly={!isCustom} className={`w-full p-2 text-center border rounded-lg ${!isCustom && 'bg-slate-100 border-slate-200'}`} />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs text-slate-500">{field2Label}</label>
+                                                        <input type="number" value={item[field2Name]} onChange={e => onUpdateItem(item.id, { [field2Name]: e.target.value })} readOnly={!isCustom} className={`w-full p-2 text-center border rounded-lg ${!isCustom && 'bg-slate-100 border-slate-200'}`} />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs text-slate-500">Total</label>
+                                                        <p className="w-full p-2 text-center font-semibold text-slate-800">${((item[field1Name] || 0) * (item[field2Name] || 0)).toFixed(2)}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                    <button onClick={() => onAddItem(category)} className="w-full text-sm font-semibold text-blue-600 hover:text-blue-800 py-2 mt-2 rounded-lg hover:bg-blue-100 transition-colors">+ Add Custom {isLabor ? 'Labor' : 'Material'}</button>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+                {total === 0 && <p className="text-slate-500 text-center py-4">No {isLabor ? 'labor' : 'material'} items selected.</p>}
+            </div>
+        </div>
+    );
+};
+
+// --- Bottom Navigation Component ---
+const BottomNavBar = ({ activeView, setActiveView }) => {
+    const navItems = [
+        { id: 'tasks', view: 'tasks', label: 'Tasks', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg> },
+        { id: 'labor', view: 'labor', label: 'Labor', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+        { id: 'materials', view: 'materials', label: 'Materials', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg> },
+        { id: 'estimate', view: 'estimate', label: 'Estimate', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> },
+    ];
+
+    return (
+        <div className="fixed bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-t border-slate-200 safe-area-padding">
+            <div className="max-w-xl mx-auto">
+                <div id="bottom-nav" className="flex justify-evenly py-2">
+                    {navItems.map(item => {
+                        const isActive = activeView === item.view;
+                        return (
+                             <button key={item.id} onClick={() => setActiveView(item.view)} className="nav-item flex flex-col items-center justify-center w-20 h-16 rounded-xl transition-colors group">
+                                 <div className={`flex flex-col items-center justify-center w-full h-full rounded-xl transition-colors group ${isActive ? 'text-blue-600 bg-blue-100' : 'text-slate-600 hover:bg-slate-100'}`}>
+                                     {item.icon}
+                                     <span className="text-xs font-semibold">{item.label}</span>
+                                 </div>
+                             </button>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- Main App Component ---
+const App = () => {
+    const [activeView, setActiveView] = useState('tasks');
+    const [projectChoices, setProjectChoices] = useState({ plumbing: [], electrical: [], hvac: [], notes: '' });
+    const [province, setProvince] = useState('ON');
+    
+    const [customLaborItems, setCustomLaborItems] = useState([]);
+    const [customMaterialItems, setCustomMaterialItems] = useState([]);
+
+    const [laborItems, setLaborItems] = useState({});
+    const [materialItems, setMaterialItems] = useState({});
+
+    // --- Custom Labor Handlers ---
+    const addCustomLabor = (category) => {
+        const newItem = { id: `custom-lab-${Date.now()}`, name: 'New Custom Labor', hours: 8, rate: 100, category };
+        setCustomLaborItems(prev => [...prev, newItem]);
+    };
+    const updateCustomLabor = (id, updatedValues) => {
+        setCustomLaborItems(prev => prev.map(item => item.id === id ? { ...item, ...updatedValues } : item));
+    };
+    
+    // --- Custom Material Handlers ---
+    const addCustomMaterial = (category) => {
+        const newItem = { id: `custom-mat-${Date.now()}`, name: 'New Custom Material', quantity: 1, price: 50, category };
+        setCustomMaterialItems(prev => [...prev, newItem]);
+    };
+    const updateCustomMaterial = (id, updatedValues) => {
+        setCustomMaterialItems(prev => prev.map(item => item.id === id ? { ...item, ...updatedValues } : item));
+    };
+
+    const deleteItem = (id) => {
+        // First, check if it's a custom item and remove it from the custom lists
+        const newCustomLabor = customLaborItems.filter(item => item.id !== id);
+        if (newCustomLabor.length !== customLaborItems.length) {
+            setCustomLaborItems(newCustomLabor);
+            return;
+        }
+        const newCustomMaterial = customMaterialItems.filter(item => item.id !== id);
+        if (newCustomMaterial.length !== customMaterialItems.length) {
+            setCustomMaterialItems(newCustomMaterial);
+            return;
+        }
+
+        // If not a custom item, find which task it belongs to and de-select that task
+        let taskIdToDelete = null;
+        let taskCategory = null;
+        for (const [taskId, taskData] of Object.entries(COST_DATA)) {
+            const laborMatch = taskData.labor?.some(l => id.startsWith(l.id));
+            const materialMatch = taskData.materials?.some(m => id.startsWith(m.id));
+            if (laborMatch || materialMatch) {
+                taskIdToDelete = taskId;
+                taskCategory = taskData.category;
+                break;
+            }
+        }
+
+        if (taskIdToDelete && taskCategory) {
+            setProjectChoices(prev => {
+                const currentTasks = prev[taskCategory] || [];
+                let newTasks;
+                if (taskCategory === 'electrical') {
+                    newTasks = currentTasks.filter(t => t.id !== taskIdToDelete);
+                } else {
+                    newTasks = currentTasks.filter(t => t !== taskIdToDelete);
+                }
+                return { ...prev, [taskCategory]: newTasks };
+            });
+        }
+    };
+
+
+    useEffect(() => {
+        const newLabor = { plumbing: [], electrical: [], hvac: [] };
+        const newMaterials = { plumbing: [], electrical: [], hvac: [] };
+        
+        // Handle simple checkbox tasks (Plumbing, HVAC)
+        const simpleTaskCategories = ['plumbing', 'hvac'];
+        simpleTaskCategories.forEach(category => {
+            (projectChoices[category] || []).forEach(taskId => {
+                const data = COST_DATA[taskId];
+                if (data) {
+                    if (data.labor) newLabor[data.category].push(...JSON.parse(JSON.stringify(data.labor)));
+                    if (data.materials) newMaterials[data.category].push(...JSON.parse(JSON.stringify(data.materials)));
+                }
+            });
+        });
+
+        // Handle tasks with quantity (Electrical)
+        (projectChoices.electrical || []).forEach(task => {
+            const data = COST_DATA[task.id];
+            if (data) {
+                const quantity = task.quantity || 1;
+                // Add labor and materials for each quantity, ensuring unique IDs
+                for (let i = 0; i < quantity; i++) {
+                    if (data.labor) {
+                        const laborWithUniqueId = data.labor.map(l => ({ ...l, id: `${l.id}-${task.id}-${i}` }));
+                        newLabor.electrical.push(...JSON.parse(JSON.stringify(laborWithUniqueId)));
+                    }
+                    if (data.materials) {
+                        const materialsWithUniqueId = data.materials.map(m => ({ ...m, id: `${m.id}-${task.id}-${i}` }));
+                        newMaterials.electrical.push(...JSON.parse(JSON.stringify(materialsWithUniqueId)));
+                    }
+                }
+            }
+        });
+
+        // Add custom items to their respective categories
+        customLaborItems.forEach(item => {
+            if (newLabor[item.category]) newLabor[item.category].push(item);
+        });
+        customMaterialItems.forEach(item => {
+            if (newMaterials[item.category]) newMaterials[item.category].push(item);
+        });
+
+        setLaborItems(newLabor);
+        setMaterialItems(newMaterials);
+    }, [projectChoices, customLaborItems, customMaterialItems]);
+
+    const EstimateView = () => {
+        const totalLabor = Object.values(laborItems).flat().reduce((sum, item) => sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0), 0);
+        const totalMaterials = Object.values(materialItems).flat().reduce((sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0), 0);
+        const subtotal = totalLabor + totalMaterials;
+        const taxRate = PROVINCE_TAX_RATES[province] || 0.13;
+        const tax = subtotal * taxRate;
+        const total = subtotal + tax;
+
+        return (
+            <div className="space-y-6">
+                <div className="pt-2 pb-6">
+                    <h2 className="text-4xl font-bold text-slate-800 text-center">Project Estimate</h2>
+                </div>
+                <div className="bg-white rounded-xl border border-slate-300 shadow-sm p-6 space-y-4">
+                    <div className="flex justify-between items-center">
+                         <label htmlFor="province-select" className="text-slate-600">Province / Territory</label>
+                         <select id="province-select" value={province} onChange={e => setProvince(e.target.value)} className="font-semibold text-slate-800 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                             {Object.keys(PROVINCE_TAX_RATES).map(p => <option key={p} value={p}>{p}</option>)}
+                         </select>
+                    </div>
+                    <div className="border-t border-slate-200 my-4"></div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-slate-600">Labor Total</span>
+                        <span className="font-semibold text-slate-800">${totalLabor.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-slate-600">Materials Total</span>
+                        <span className="font-semibold text-slate-800">${totalMaterials.toFixed(2)}</span>
+                    </div>
+                    <div className="border-t border-slate-200 my-4"></div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-slate-600">Subtotal</span>
+                        <span className="font-semibold text-slate-800">${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-slate-600">Tax ({province} @ {(taxRate * 100).toFixed(2)}%)</span>
+                        <span className="font-semibold text-slate-800">${tax.toFixed(2)}</span>
+                    </div>
+                    <div className="border-t-2 border-slate-300 my-4"></div>
+                    <div className="flex justify-between items-center text-xl">
+                        <span className="font-bold text-slate-800">Grand Total</span>
+                        <span className="font-bold text-blue-600">${total.toFixed(2)}</span>
+                    </div>
+                </div>
+                {projectChoices.notes && (
+                    <div className="bg-white rounded-xl border border-slate-300 shadow-sm p-6">
+                        <h3 className="font-semibold text-slate-700 mb-2">Notes</h3>
+                        <p className="text-slate-600 whitespace-pre-wrap">{projectChoices.notes}</p>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // Placeholders for new views
+    const DemolitionView = () => <div className="text-center text-slate-500 py-12"><h1>Demolition View</h1><p>This is a placeholder for the demolition tasks.</p></div>;
+    const ShowerWallsView = () => <div className="text-center text-slate-500 py-12"><h1>Shower Walls View</h1><p>This is a placeholder for the shower walls tasks.</p></div>;
+    const ShowerBaseView = () => <div className="text-center text-slate-500 py-12"><h1>Shower Base View</h1><p>This is a placeholder for the shower base tasks.</p></div>;
+    const FloorsView = () => <div className="text-center text-slate-500 py-12"><h1>Floors View</h1><p>This is a placeholder for the floors tasks.</p></div>;
+    const FinishingsView = () => <div className="text-center text-slate-500 py-12"><h1>Finishings View</h1><p>This is a placeholder for the finishings tasks.</p></div>;
+    const StructuralOtherView = () => <div className="text-center text-slate-500 py-12"><h1>Structural/Other View</h1><p>This is a placeholder for the structural/other tasks.</p></div>;
+
+    const renderActiveView = () => {
+        switch (activeView) {
+            case 'tasks': return <TradesView choices={projectChoices} setChoices={setProjectChoices} />;
+            case 'labor': return <ItemsView title="Labor Costs" itemsByCategory={laborItems} onUpdateItem={updateCustomLabor} onAddItem={addCustomLabor} onDeleteItem={deleteItem} itemType="labor" />;
+            case 'materials': return <ItemsView title="Material List" itemsByCategory={materialItems} onUpdateItem={updateCustomMaterial} onAddItem={addCustomMaterial} onDeleteItem={deleteItem} itemType="material" />;
+            case 'estimate': return <EstimateView />;
+            case 'demolition': return <DemolitionView />;
+            case 'shower_walls': return <ShowerWallsView />;
+            case 'shower_base': return <ShowerBaseView />;
+            case 'floors': return <FloorsView />;
+            case 'finishings': return <FinishingsView />;
+            case 'structural_other': return <StructuralOtherView />;
+            default: return <TradesView choices={projectChoices} setChoices={setProjectChoices} />;
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-slate-100 font-sans flex flex-col items-center pt-32 px-4 pb-24">
+            <TopNavBar activeView={activeView} setActiveView={setActiveView} />
+            <div className="w-full max-w-3xl mx-auto">
+                <main className="p-2 sm:p-4">
+                    {renderActiveView()}
+                </main>
+                <footer className="text-center mt-10 text-sm text-slate-400"><p>Powered by Gemini</p></footer>
+            </div>
+            <BottomNavBar activeView={activeView} setActiveView={setActiveView} />
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+                body { 
+                    font-family: 'Inter', sans-serif;
+                    background-color: #f1f5f9; /* slate-100 */
+                }
+                .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+                .bg-indigo-100 { background-color: #EEF2FF; } .border-indigo-300 { border-color: #A5B4FC; } .text-indigo-800 { color: #3730A3; }
+                .bg-rose-100 { background-color: #FFF1F2; } .border-rose-300 { border-color: #FDA4AF; } .text-rose-800 { color: #9F1239; }
+                .bg-teal-100 { background-color: #CCFBF1; } .border-teal-300 { border-color: #5EEAD4; } .text-teal-800 { color: #115E59; }
+                .safe-area-padding {
+                    padding-bottom: env(safe-area-inset-bottom);
+                }
+                /* Hide number input arrows */
+                input[type=number]::-webkit-inner-spin-button, 
+                input[type=number]::-webkit-outer-spin-button { 
+                    -webkit-appearance: none; 
+                    margin: 0; 
+                }
+                input[type=number] {
+                    -moz-appearance: textfield;
+                }
+                /* Custom scrollbar for the tab bar */
+                .tab-scrollbar::-webkit-scrollbar {
+                    height: 4px;
+                }
+                .tab-scrollbar::-webkit-scrollbar-thumb {
+                    background-color: #e2e8f0; /* slate-200 */
+                    border-radius: 10px;
+                }
+                .tab-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+            `}</style>
+        </div>
+    );
+};
+
+export default App;
+

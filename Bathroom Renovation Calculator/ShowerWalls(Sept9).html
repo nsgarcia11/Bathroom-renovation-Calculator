@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contractor Estimate Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        /* Custom scrollbar for the top navigation tabs */
+        .tab-scrollbar::-webkit-scrollbar {
+            height: 4px;
+        }
+        .tab-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .tab-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1; /* slate-300 */
+            border-radius: 20px;
+        }
+        .tab-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+        /* Applying a default sans-serif font to the body */
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // This component assumes React is loaded globally via a <script> tag to bypass environment loading issues.
+        const { useState, useEffect, useId } = React;
+
+        // --- Helper Components ---
+
+        const TopNav = ({ activeScope, setActiveScope }) => {
+            const scopes = [
+                { id: 'demolition', label: 'Demolition', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><path d="m15 12-9.373 9.373a1 1 0 0 1-3.001-3L12 9"/><path d="m18 15 4-4"/><path d="m21.5 11.5-1.914-1.914A2 2 0 0 1 19 8.172v-.344a2 2 0 0 0-.586-1.414l-1.657-1.657A6 6 0 0 0 12.516 3H9l1.243 1.243A6 6 0 0 1 12 8.485V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5"/></svg> },
+                { id: 'showerWalls', label: 'Shower Walls', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><path d="m4 4 2.5 2.5"/><path d="M13.5 6.5a4.95 4.95 0 0 0-7 7"/><path d="M15 5 5 15"/><path d="M14 17v.01"/><path d="M10 16v.01"/><path d="M13 13v.01"/><path d="M16 10v.01"/><path d="M11 20v.01"/><path d="M17 14v.01"/><path d="M20 11v.01"/></svg> },
+                { id: 'showerBase', label: 'Shower Base', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg> },
+                { id: 'floors', label: 'Floors', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg> },
+                { id: 'finishings', label: 'Finishings', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/></svg> },
+                { id: 'structural', label: 'Structural', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M9 12h6"/></svg> },
+                { id: 'trades', label: 'Trades', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1.5"><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M14 6a6 6 0 0 1 6 6v3"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><rect x="2" y="15" width="20" height="4" rx="1"/></svg> },
+            ];
+            return (
+                <div className="fixed top-0 left-0 right-0 z-30 bg-white/80 backdrop-blur-sm shadow-sm px-4 sm:px-6">
+                    <div className="max-w-xl mx-auto">
+                        <div className="tab-scrollbar flex space-x-4 overflow-x-auto py-3">
+                            {scopes.map(scope => (
+                                <a href="#" key={scope.id} onClick={(e) => {e.preventDefault(); setActiveScope(scope.id)}} className="flex-shrink-0">
+                                    <div className={`flex flex-col items-center justify-center w-24 h-20 rounded-xl transition-colors
+                                        ${activeScope === scope.id 
+                                            ? 'bg-white text-blue-600 shadow-md border-2 border-blue-500' 
+                                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`
+                                        }
+                                    >
+                                        {scope.icon}
+                                        <span className="text-xs font-medium">{scope.label}</span>
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Header = ({ title, onBack }) => (
+            <header>
+                <div className="max-w-xl mx-auto px-4 pt-[8.5rem] pb-6 flex items-center">
+                    {onBack && (
+                        <button onClick={onBack} className="mr-3 p-1 rounded-full hover:bg-slate-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                    )}
+                    <h1 className="text-4xl font-bold text-slate-800">{title}</h1>
+                </div>
+            </header>
+        );
+
+        const SectionTitle = ({ children }) => (
+            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider px-4 pt-4 pb-2">
+                {children}
+            </h2>
+        );
+
+        const Dropdown = ({ label, options, selected, setSelected }) => (
+            <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1">{label}</label>
+                <div className="relative">
+                    <select
+                        value={selected}
+                        onChange={(e) => setSelected(e.target.value)}
+                        className="w-full appearance-none bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    >
+                        {options.map(option => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-blue-500">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const EditableField = ({ label, value, setValue, placeholder }) => (
+            <div>
+                {label && <label className="block text-sm font-medium text-slate-600 mb-1">{label}</label>}
+                <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    placeholder={placeholder || ''}
+                    className="w-full bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+            </div>
+        );
+
+        const PillSelector = ({ label, options, selected, setSelected, className }) => (
+            <div className={`flex items-center justify-between ${className}`}>
+                <span className="text-sm font-medium text-slate-800">{label}</span>
+                <div className="flex items-center space-x-2">
+                    {options.map(option => (
+                        <button
+                            key={option}
+                            onClick={() => setSelected(option)}
+                            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                                selected === option
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                            }`}
+                        >
+                            {option}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        );
+
+        const ToggleSwitch = ({ label, enabled, setEnabled, className }) => (
+            <div className={`flex items-center justify-between ${className}`}>
+                <span className="text-sm font-medium text-slate-800">{label}</span>
+                <button
+                    onClick={() => setEnabled(!enabled)}
+                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-300 ease-in-out border ${enabled ? 'bg-blue-600 border-transparent' : 'bg-slate-200 border-blue-300'}`}
+                >
+                    <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-300 ease-in-out ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+            </div>
+        );
+
+        const HeaderToggleSwitch = ({ label, enabled, setEnabled }) => (
+            <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-slate-600">{label}</span>
+                <button
+                    onClick={() => setEnabled(!enabled)}
+                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-300 ease-in-out border ${enabled ? 'bg-blue-600 border-transparent' : 'bg-slate-200 border-blue-300'}`}
+                >
+                    <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-300 ease-in-out ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+            </div>
+        );
+
+        const EditableToggle = ({ task, setTask, placeholder }) => (
+            <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm border border-slate-200">
+                <input
+                    type="text"
+                    value={task.name}
+                    onChange={(e) => setTask({ ...task, name: e.target.value })}
+                    className="font-medium text-slate-800 border-b-2 border-transparent focus:outline-none focus:border-blue-500 flex-grow mr-4 bg-transparent"
+                    placeholder={placeholder || "Custom Task"}
+                />
+                <button
+                    onClick={() => setTask({ ...task, enabled: !task.enabled })}
+                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-300 ease-in-out flex-shrink-0 border ${task.enabled ? 'bg-blue-600 border-transparent' : 'bg-slate-200 border-blue-300'}`}
+                >
+                    <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-300 ease-in-out ${task.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+            </div>
+        );
+
+
+        const BottomNavBar = ({ activeView, setActiveView, onReset }) => {
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (isMenuOpen && !event.target.closest('#nav-menu-button') && !event.target.closest('#menu-dropdown')) {
+                        setIsMenuOpen(false);
+                    }
+                };
+
+                document.addEventListener('click', handleClickOutside);
+                return () => {
+                    document.removeEventListener('click', handleClickOutside);
+                };
+            }, [isMenuOpen]);
+
+            const handleNavClick = (view) => {
+                setActiveView(view);
+                setIsMenuOpen(false);
+            };
+
+            const navItems = [
+                { id: 'projectScope', label: 'Scope', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg> },
+                { id: 'labor', label: 'Labor', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+                { id: 'materials', label: 'Materials', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg> },
+                { id: 'quote', label: 'Estimate', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> }
+            ];
+
+            return (
+                <footer className="fixed bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-t border-slate-200 safe-area-padding">
+                    <style>{`.safe-area-padding { padding-bottom: env(safe-area-inset-bottom); }`}</style>
+                    <div className="max-w-xl mx-auto">
+                        <div id="bottom-nav" className="flex justify-evenly py-2">
+                            {navItems.map(item => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => handleNavClick(item.id)}
+                                    className={`nav-item flex flex-col items-center justify-center w-20 h-16 rounded-xl transition-colors group ${activeView === item.id ? 'text-blue-600 bg-blue-100' : 'text-slate-600 hover:bg-slate-100'}`}
+                                >
+                                    {item.icon}
+                                    <span className="text-xs font-semibold">{item.label}</span>
+                                </button>
+                            ))}
+                            <div className="relative">
+                                <button id="nav-menu-button" onClick={() => setIsMenuOpen(!isMenuOpen)} className="nav-item flex flex-col items-center justify-center w-20 h-16 rounded-xl hover:bg-slate-100 transition-colors group text-slate-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-1"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                                    <span className="text-xs font-semibold">Menu</span>
+                                </button>
+                                <div id="menu-dropdown" className={`absolute right-0 bottom-full mb-3 w-56 bg-white rounded-xl shadow-lg border border-slate-200 ${isMenuOpen ? 'block' : 'hidden'} overflow-hidden z-30 divide-y divide-slate-100`}>
+                                    <a href="#" className="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-slate-500"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                        <span>Notes</span>
+                                    </a>
+                                     <a href="#" className="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-slate-500"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                        <span>Send Estimate</span>
+                                    </a>
+                                     <a href="#" className="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-slate-500"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                                        <span>Insights</span>
+                                    </a>
+                                     <a href="#" className="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-slate-500"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                        <span>Settings</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            );
+        };
+
+
+        const EditDimensionsModal = ({ isOpen, onClose, dimension, setDimension }) => {
+            if (!isOpen) return null;
+
+            const [localDimension, setLocalDimension] = useState(dimension);
+
+            const handleTotalInchesChange = (e) => {
+                const totalInches = parseInt(e.target.value, 10);
+                if (isNaN(totalInches)) {
+                    setLocalDimension({ ft: 0, inch: 0 });
+                    return;
+                }
+                const ft = Math.floor(totalInches / 12);
+                const inch = totalInches % 12;
+                setLocalDimension({ ft, inch });
+            };
+            
+            const handleDone = () => {
+                setDimension(localDimension);
+                onClose();
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40" onClick={handleDone}>
+                    <div className="bg-white rounded-lg shadow-xl p-6 w-80" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-xl font-bold mb-6 text-center text-slate-800">Edit Dimension</h3>
+                            <div className="mb-6">
+                                <label className="block text-center text-sm font-medium text-slate-500 mb-2">Inches</label>
+                                <input
+                                    type="number"
+                                    value={localDimension.ft * 12 + localDimension.inch}
+                                    onChange={handleTotalInchesChange}
+                                    className="w-full p-2 border border-slate-300 rounded-md text-center text-2xl font-semibold"
+                                    autoFocus
+                                />
+                            </div>
+                        <button onClick={handleDone} className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                            Done
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const WallRow = ({ wall, onEdit, onDelete }) => {
+            const heightInInches = (wall.height.ft * 12) + wall.height.inch;
+            const widthInInches = (wall.width.ft * 12) + wall.width.inch;
+
+            return (
+                <div className="bg-white p-2 rounded-lg shadow-sm flex items-center justify-between border border-slate-200">
+                    <span className="font-medium text-slate-800 w-1/3">{wall.name}</span>
+                    <div className="flex items-center space-x-2">
+                             <div className="text-center cursor-pointer hover:bg-slate-100 p-2 rounded-md border border-blue-300" onClick={() => onEdit(wall.id, 'height')}>
+                                 <div className="text-sm text-slate-500">H</div>
+                                 <div className="text-lg font-medium text-slate-800">{`${heightInInches}"`}</div>
+                             </div>
+                             <div className="text-center cursor-pointer hover:bg-slate-100 p-2 rounded-md border border-blue-300" onClick={() => onEdit(wall.id, 'width')}>
+                                 <div className="text-sm text-slate-500">W</div>
+                                 <div className="text-lg font-medium text-slate-800">{`${widthInInches}"`}</div>
+                             </div>
+                    </div>
+                    <div className="flex items-center">
+                        <span className="text-slate-600 text-sm text-right w-20 mr-2">{wall.sqft.toFixed(2)} sq/ft</span>
+                        <button onClick={() => onDelete(wall.id)} className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.134H8.09a2.09 2.09 0 0 0-2.09 2.134v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const MaterialItem = ({ item, onUpdate, onDelete }) => (
+             <div className="bg-white p-3">
+                <div className="flex justify-between items-start">
+                    <div className="flex-grow mr-4">
+                        <div className="inline-block relative pr-16">
+                            <textarea
+                                rows="1"
+                                value={item.name}
+                                onChange={(e) => onUpdate(item.id, 'name', e.target.value)}
+                                onInput={(e) => {
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = (e.target.scrollHeight) + 'px';
+                                }}
+                                placeholder="Enter material name..."
+                                className="text-base font-medium text-slate-800 p-1 bg-transparent focus:outline-none resize-none overflow-hidden"
+                            />
+                            <span className="absolute bottom-0 left-0 w-full h-px bg-blue-300"></span>
+                        </div>
+                    </div>
+                    <button onClick={() => onDelete(item.id)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-100 ml-2 mt-1 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                           <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.134H8.09a2.09 2.09 0 0 0-2.09 2.134v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <label className="text-sm font-medium text-slate-500">Qty</label>
+                        <input 
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => onUpdate(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                            className="w-full p-1 bg-slate-50 border border-blue-300 rounded-lg text-center text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-slate-500">Price/Unit</label>
+                        <div className="flex items-center">
+                            <span className="text-slate-500 mr-1">$</span>
+                            <input 
+                                type="number"
+                                value={item.price}
+                                onChange={(e) => onUpdate(item.id, 'price', parseFloat(e.target.value) || 0)}
+                                className="w-full p-1 bg-slate-50 border border-blue-300 rounded-lg text-center text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            />
+                        </div>
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                        <label className="text-sm font-medium text-slate-500">Total</label>
+                            <div className="flex items-center">
+                                <span className="text-slate-500 mr-1">$</span>
+                                <input 
+                                    type="text"
+                                    value={item.total.toFixed(2)}
+                                    readOnly
+                                    className="w-full p-1 border-slate-200 rounded-md text-center font-semibold bg-slate-100 text-sm"
+                                />
+                            </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+
+        const LaborItem = ({ item, onUpdate, onDelete }) => (
+            <div className="bg-white p-3">
+                <div className="flex justify-between items-start">
+                    <div className="flex-grow mr-4">
+                             <div className="inline-block relative pr-16">
+                                <textarea
+                                    rows="1"
+                                    value={item.name}
+                                    onChange={(e) => onUpdate(item.id, 'name', e.target.value)}
+                                    onInput={(e) => {
+                                        e.target.style.height = 'auto';
+                                        e.target.style.height = (e.target.scrollHeight) + 'px';
+                                    }}
+                                    placeholder="Enter task name..."
+                                    className="text-base font-medium text-slate-800 p-1 bg-transparent focus:outline-none resize-none overflow-hidden"
+                                />
+                                <span className="absolute bottom-0 left-0 w-full h-px bg-blue-300"></span>
+                            </div>
+                    </div>
+                    <button onClick={() => onDelete(item.id)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-100 ml-2 mt-1 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.134H8.09a2.09 2.09 0 0 0-2.09 2.134v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <label className="text-sm font-medium text-slate-500">Hours</label>
+                        <input 
+                            type="number"
+                            value={item.hours}
+                            onChange={(e) => onUpdate(item.id, 'hours', parseFloat(e.target.value) || 0)}
+                            className="w-full p-1 bg-slate-50 border border-blue-300 rounded-lg text-center text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-slate-500">Rate</label>
+                        <div className="flex items-center">
+                            <span className="text-slate-500 mr-1">$</span>
+                            <input 
+                                type="number"
+                                value={item.hourlyRate}
+                                onChange={(e) => onUpdate(item.id, 'hourlyRate', parseFloat(e.target.value) || 0)}
+                                className="w-full p-1 bg-slate-50 border border-blue-300 rounded-lg text-center text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            />
+                        </div>
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                        <label className="text-sm font-medium text-slate-500">Total</label>
+                            <div className="flex items-center">
+                                <span className="text-slate-500 mr-1">$</span>
+                                <input 
+                                    type="text"
+                                    value={item.cost.toFixed(2)}
+                                    readOnly
+                                    className="w-full p-1 border-slate-200 rounded-md text-center font-semibold bg-slate-100 text-sm"
+                                />
+                            </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const CollapsibleCard = ({ title, items, children, note, totalHours, onAddItem, scope }) => {
+            const [isExpanded, setIsExpanded] = useState(true);
+            const totalCost = items.reduce((acc, item) => acc + (item.cost || item.total || 0), 0);
+            const titleColor = 'text-slate-800';
+
+            return (
+                <div className="rounded-lg shadow-sm border border-slate-200 bg-white">
+                    <div className="p-4 cursor-pointer flex justify-between items-center" onClick={() => setIsExpanded(!isExpanded)}>
+                        <h3 className={`font-bold text-lg ${titleColor}`}>{title}</h3>
+                        <div className="flex items-center space-x-4 text-right">
+                            {totalHours !== undefined && (
+                                 <span className="text-slate-600 font-semibold text-base">{totalHours.toFixed(2)} hrs</span>
+                            )}
+                            <span className="text-blue-900 font-bold text-base w-24 text-right">${totalCost.toFixed(2)}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-slate-500 transition-transform ml-2 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
+                    {isExpanded && (
+                        <div className="divide-y divide-slate-200 border-t border-slate-200">
+                            {items.length > 0 
+                                ? items.map(item => children(item))
+                                : <div className="p-4 text-sm text-center text-slate-500">No items in this category.</div>
+                            }
+                            {note && <div className="p-4 text-xs text-slate-600 bg-white">{note}</div>}
+                            <div className="p-3 bg-white rounded-b-lg flex justify-center">
+                                <button onClick={() => onAddItem(scope)} className="bg-blue-600 text-white font-semibold py-1.5 px-5 rounded-full hover:bg-blue-700 transition-colors">
+                                    + Add Item
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const CollapsibleSection = ({ title, children, colorScheme, summary, headerAccessory }) => {
+            const [isExpanded, setIsExpanded] = useState(true);
+            
+            const colors = {
+                design: { bg: 'bg-white', text: 'text-slate-800' },
+                construction: { bg: 'bg-white', text: 'text-slate-800' },
+                general: { bg: 'bg-slate-100', text: 'text-slate-800' },
+                neutral: { bg: 'bg-white', text: 'text-slate-800'}
+            }[colorScheme];
+
+            return (
+                <div className={`rounded-lg shadow-sm border border-slate-200 ${colors.bg}`}>
+                    <div className="p-4 cursor-pointer flex justify-between items-center" onClick={() => setIsExpanded(!isExpanded)}>
+                        <h3 className={`font-bold text-lg ${colors.text}`}>{title}</h3>
+                        <div className="flex items-center space-x-4">
+                            {headerAccessory && <div onClick={e => e.stopPropagation()}>{headerAccessory}</div>}
+                            {summary}
+                            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-blue-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
+                    {isExpanded && (
+                        <div className={`p-4 border-t border-slate-200`}>
+                            {children}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const CollapsibleNotesSection = ({ title, value, onChange, placeholder, helpers }) => {
+            const [isExpanded, setIsExpanded] = useState(true);
+
+            const handleHelperClick = (helper) => {
+                const currentNotes = value || '';
+                const newText = `${helper}: `;
+                const separator = currentNotes.trim() === '' ? '' : '\n';
+                onChange(currentNotes + separator + newText);
+            };
+
+            return (
+                <div className="border-t border-slate-200 pt-4">
+                    <div
+                        className="flex justify-between items-center cursor-pointer"
+                        onClick={() => setIsExpanded(!isExpanded)}
+                    >
+                        <h3 className="text-blue-700 font-bold text-lg">{title}</h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-blue-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                    {isExpanded && (
+                        <div className="mt-2">
+                            <textarea
+                                value={value || ''}
+                                onChange={(e) => onChange(e.target.value)}
+                                placeholder={placeholder}
+                                className="w-full text-sm border border-slate-300 rounded-md px-3 py-2 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                rows="4"
+                            />
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {helpers.map(helper => (
+                                    <button
+                                        key={helper}
+                                        onClick={() => handleHelperClick(helper)}
+                                        className="text-sm font-medium bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-colors"
+                                    >
+                                        + {helper}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+
+        // --- Main Screens ---
+
+        const ShowerWallsScreen = ({ projectState, setProjectState, wasteNote }) => {
+            const [totalSqft, setTotalSqft] = useState(0);
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [editingWall, setEditingWall] = useState(null);
+            const [editingField, setEditingField] = useState(null);
+            const [showWasteNote, setShowWasteNote] = useState(true);
+            const [showClientSuppliesNote, setShowClientSuppliesNote] = useState(true);
+
+            useEffect(() => {
+                if (wasteNote) {
+                    setShowWasteNote(true);
+                }
+            }, [wasteNote]);
+
+            useEffect(() => {
+                if (projectState.showerWalls.design.clientSuppliesBase === 'No') {
+                    setShowClientSuppliesNote(true);
+                }
+            }, [projectState.showerWalls.design.clientSuppliesBase]);
+
+            const { walls } = projectState.showerWalls;
+            const { 
+                tileSize, customTileWidth, customTileLength, tilePattern, customTilePatternName,
+                niche, showerDoor, waterproofingSystem, customWaterproofingName, grabBar, 
+                notes, constructionNotes, clientSuppliesBase, repairWalls, reinsulateWalls
+            } = projectState.showerWalls.design;
+
+            // Helper to update nested state
+            const updateDesignState = (key, value) => {
+                setProjectState(prev => ({
+                    ...prev,
+                    showerWalls: {
+                        ...prev.showerWalls,
+                        design: {
+                            ...prev.showerWalls.design,
+                            [key]: value
+                        }
+                    }
+                }));
+            };
+            
+            const setWalls = (newWalls) => {
+                setProjectState(prev => ({
+                    ...prev,
+                    showerWalls: {
+                        ...prev.showerWalls,
+                        walls: typeof newWalls === 'function' ? newWalls(prev.showerWalls.walls) : newWalls,
+                    }
+                }));
+            };
+
+            const wallsWithSqft = walls.map(wall => {
+                const heightInFeet = wall.height.ft + wall.height.inch / 12;
+                const widthInFeet = wall.width.ft + wall.width.inch / 12;
+                return { ...wall, sqft: heightInFeet * widthInFeet };
+            });
+            
+            useEffect(() => {
+                const total = wallsWithSqft.reduce((acc, wall) => acc + wall.sqft, 0);
+                setTotalSqft(total);
+            }, [walls]);
+
+            const handleEdit = (wallId, field) => {
+                setEditingWall(walls.find(w => w.id === wallId));
+                setEditingField(field);
+                setIsModalOpen(true);
+            };
+            
+            const handleAddWall = () => {
+                const newWall = {
+                    id: crypto.randomUUID(),
+                    name: `Wall ${walls.length + 1}`,
+                    height: { ft: 8, inch: 0 },
+                    width: { ft: 3, inch: 0 }
+                };
+                setWalls([...walls, newWall]);
+            };
+
+            const handleDeleteWall = (wallId) => {
+                setWalls(walls.filter(wall => wall.id !== wallId));
+            };
+
+            const handleDimensionChange = (newDimension) => {
+                setWalls(walls.map(wall => {
+                    if (wall.id === editingWall.id) {
+                        return { ...wall, [editingField]: newDimension };
+                    }
+                    return wall;
+                }));
+            };
+            
+            return (
+                <div className="space-y-4">
+                    <div className="px-4">
+                           <CollapsibleSection 
+                                title="Measurements" 
+                                colorScheme="neutral"                         
+                                summary={<span className="text-blue-900 font-bold text-lg">{totalSqft.toFixed(2)} sq/ft</span>}
+                            >
+                                <div className="space-y-2">
+                                    {wallsWithSqft.map(wall => (
+                                        <WallRow key={wall.id} wall={wall} onEdit={handleEdit} onDelete={handleDeleteWall} />
+                                    ))}
+                                    <div className="flex justify-end mt-2">
+                                        <button
+                                            onClick={handleAddWall}
+                                            className="bg-blue-600 text-white font-semibold py-1.5 px-5 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                                        >
+                                            + ADD WALL
+                                        </button>
+                                    </div>
+                                </div>
+                            </CollapsibleSection>
+                    </div>
+
+                    <div className="px-4 space-y-4">
+                        <CollapsibleSection 
+                            title="Design" 
+                            colorScheme="design"
+                        >
+                            <div className="space-y-4">
+                                <div className="pb-4 border-b border-slate-200">
+                                    <PillSelector
+                                        label="Will the client supply the tiles?"
+                                        options={['No', 'Yes']}
+                                        selected={clientSuppliesBase}
+                                        setSelected={(value) => updateDesignState('clientSuppliesBase', value)}
+                                    />
+                                    {clientSuppliesBase === 'Yes' && showClientSuppliesNote && (
+                                        <div className="text-orange-500 text-xs flex items-start space-x-2 mt-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0 mt-0.5">
+                                                <path d="M15 14c.2-1 .7-1.7 1.5-2.5C17.7 10.2 18 9 18 7.5a6 6 0 0 0-12 0c0 1.5.3 2.7 1.5 3.5.8.8 1.3 1.5 1.5 2.5"></path>
+                                                <path d="M9 18h6"></path>
+                                                <path d="M10 22h4"></path>
+                                            </svg>
+                                            <div className="flex-grow">
+                                                Client is providing tiles, which will be removed from the materials list. Please select the tile size and pattern to ensure accurate labor and material calculations.
+                                            </div>
+                                            <button onClick={() => setShowClientSuppliesNote(false)} className="text-orange-600 hover:text-orange-800 p-0.5 rounded-full hover:bg-orange-100 flex-shrink-0 -mt-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="text-xs text-slate-600">
+                                    Labor costs change based on tile size and pattern. You can edit these values on the Labor screen.
+                                </div>
+                                <div className="flex flex-row space-x-4">
+                                    <div className="flex-1">
+                                        <Dropdown 
+                                            label="Tile Size" 
+                                            options={['Select tile size', '12x24', '24x24', 'Subway (3"x6" or small size tile)', 'Custom']} 
+                                            selected={tileSize}
+                                            setSelected={(value) => updateDesignState('tileSize', value)}
+                                        />
+                                       {tileSize === 'Custom' && (
+                                            <div className="flex items-center space-x-2 mt-2">
+                                                <div className="flex-1">
+                                                    <label className="text-xs text-slate-500">Width (in)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={customTileWidth}
+                                                        onChange={(e) => updateDesignState('customTileWidth', e.target.value)}
+                                                        placeholder="e.g., 8"
+                                                        className="w-full p-2 border border-slate-300 rounded-md"
+                                                    />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className="text-xs text-slate-500">Length (in)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={customTileLength}
+                                                        onChange={(e) => updateDesignState('customTileLength', e.target.value)}
+                                                        placeholder="e.g., 16"
+                                                        className="w-full p-2 border border-slate-300 rounded-md"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1">
+                                         <Dropdown 
+                                            label="Tile Pattern" 
+                                            options={['Select Tile Pattern', 'Stacked', '1/2 Offset', '1/3 Offset', 'Herringbone', 'Custom']} 
+                                            selected={tilePattern}
+                                            setSelected={(value) => updateDesignState('tilePattern', value)}
+                                        />
+                                         {tilePattern === 'Custom' && (
+                                            <input
+                                                type="text"
+                                                value={customTilePatternName}
+                                                onChange={(e) => updateDesignState('customTilePatternName', e.target.value)}
+                                                placeholder="Enter custom pattern"
+                                                className="w-full mt-2 p-2 border border-slate-300 rounded-md"
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                                {wasteNote && showWasteNote && (
+                                    <div className="text-orange-500 text-sm p-3 flex items-start space-x-3 mt-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 flex-shrink-0 mt-0.5">
+                                            <path d="M15 14c.2-1 .7-1.7 1.5-2.5C17.7 10.2 18 9 18 7.5a6 6 0 0 0-12 0c0 1.5.3 2.7 1.5 3.5.8.8 1.3 1.5 1.5 2.5"></path>
+                                            <path d="M9 18h6"></path>
+                                            <path d="M10 22h4"></path>
+                                        </svg>
+                                        <div className="flex-grow">
+                                            {wasteNote}
+                                        </div>
+                                        <button onClick={() => setShowWasteNote(false)} className="text-orange-600 hover:text-orange-800 p-0.5 rounded-full hover:bg-orange-100 -mt-1 -mr-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                )}
+                                
+                                <div className="border-t border-slate-200 pt-4 space-y-4">
+                                      <div>
+                                          <Dropdown 
+                                              label="Niche" 
+                                              options={['None', '12x12', 'Standard (12x24)', 'Custom Size']} 
+                                              selected={niche}
+                                              setSelected={(value) => updateDesignState('niche', value)}
+                                          />
+                                      </div>
+                                      <div>
+                                          <Dropdown 
+                                              label="Shower Door" 
+                                              options={['None', 'Sliding Glass Door', 'Pivot Glass Door', 'Custom Glass']} 
+                                              selected={showerDoor}
+                                              setSelected={(value) => updateDesignState('showerDoor', value)}
+                                          />
+                                      </div>
+                                        <div className="flex items-center justify-between">
+                                            <label className="font-medium text-slate-800">Number of Grab Bars</label>
+                                            <input
+                                                type="number"
+                                                value={grabBar}
+                                                onChange={(e) => updateDesignState('grabBar', e.target.value)}
+                                                className="w-24 bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-slate-800 text-center focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                min="0"
+                                            />
+                                        </div>
+                                </div>
+
+                                <CollapsibleNotesSection
+                                    title="Notes"
+                                    value={notes}
+                                    onChange={(value) => updateDesignState('notes', value)}
+                                    placeholder="Add any project-specific notes here..."
+                                    helpers={['Trim Style', 'Grout Color', 'Niche Details', 'Accent Wall', 'Shower Fixtures']}
+                                />
+                            </div>
+                        </CollapsibleSection>
+                        
+                        <CollapsibleSection title="Construction" colorScheme="construction">
+                            <div className="space-y-4">
+                                <div className="pb-4 border-b border-slate-200">
+                                    <Dropdown 
+                                        label="Waterproofing" 
+                                        options={['None / Select System...', 'Schluter®-KERDI System', 'RedGard® Waterproofing Membrane', 'LATICRETE® HYDRO BAN', 'Drywall and Kerdi membrane', 'Other']} 
+                                        selected={waterproofingSystem}
+                                        setSelected={(value) => updateDesignState('waterproofingSystem', value)}
+                                    />
+                                    {waterproofingSystem === 'Other' && (
+                                        <div className="mt-2 space-y-2">
+                                            <input
+                                                type="text"
+                                                value={customWaterproofingName}
+                                                onChange={(e) => updateDesignState('customWaterproofingName', e.target.value)}
+                                                placeholder="Enter custom system name"
+                                                className="w-full p-2 border border-slate-300 rounded-md"
+                                            />
+                                           <p className="text-sm text-amber-800 bg-amber-50 p-3 rounded-md border border-amber-200">
+                                               <b>Note:</b> Ensure you update the Materials and Labor screens for custom systems.
+                                           </p>
+                                        </div>
+                                    )}
+                                </div>
+                                <ToggleSwitch
+                                    label="Re-insulate exterior walls?"
+                                    enabled={reinsulateWalls}
+                                    setEnabled={(value) => updateDesignState('reinsulateWalls', value)}
+                                    className="pb-4 border-b border-slate-200"
+                                />
+                                <ToggleSwitch
+                                    label="Repair Walls"
+                                    enabled={repairWalls}
+                                    setEnabled={(value) => updateDesignState('repairWalls', value)}
+                                    className="pb-4 border-b border-slate-200"
+                                />
+                                <CollapsibleNotesSection
+                                    title="Notes"
+                                    value={constructionNotes}
+                                    onChange={(value) => updateDesignState('constructionNotes', value)}
+                                    placeholder="e.g., Add blocking for grab bars, move plumbing..."
+                                    helpers={['Blocking', 'Plumbing Move', 'Electrical', 'Ventilation']}
+                                />
+                            </div>
+                        </CollapsibleSection>
+
+                    </div>
+
+                    <EditDimensionsModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        dimension={editingWall ? editingWall[editingField] : { ft: 0, inch: 0 }}
+                        setDimension={handleDimensionChange}
+                    />
+                </div>
+            );
+        };
+
+        const DemolitionScreen = ({ projectState, setProjectState }) => {
+            const {
+                removeTub, removeTile, removeDrywall, removePlumbing, haulDebris
+            } = projectState.demolition;
+
+            const updateState = (key, value) => {
+                setProjectState(prev => ({
+                    ...prev,
+                    demolition: { ...prev.demolition, [key]: value }
+                }));
+            };
+
+            return (
+                <div className="px-4 space-y-4">
+                    <CollapsibleSection title="Demolition Tasks" colorScheme="construction">
+                        <div className="space-y-4 divide-y divide-slate-200">
+                            <ToggleSwitch
+                                label="Remove existing tub/shower base"
+                                enabled={removeTub}
+                                setEnabled={(val) => updateState('removeTub', val)}
+                                className="pt-4"
+                            />
+                            <ToggleSwitch
+                                label="Remove existing tile"
+                                enabled={removeTile}
+                                setEnabled={(val) => updateState('removeTile', val)}
+                                className="pt-4"
+                            />
+                            <ToggleSwitch
+                                label="Remove drywall to studs"
+                                enabled={removeDrywall}
+                                setEnabled={(val) => updateState('removeDrywall', val)}
+                                className="pt-4"
+                            />
+                            <ToggleSwitch
+                                label="Remove existing plumbing fixtures"
+                                enabled={removePlumbing}
+                                setEnabled={(val) => updateState('removePlumbing', val)}
+                                className="pt-4"
+                            />
+                            <ToggleSwitch
+                                label="Haul away debris"
+                                enabled={haulDebris}
+                                setEnabled={(val) => updateState('haulDebris', val)}
+                                className="pt-4"
+                            />
+                        </div>
+                    </CollapsibleSection>
+                </div>
+            );
+        };
+
+        const StructuralScreen = ({ projectState, setProjectState }) => {
+            const { customTasks } = projectState.structural;
+
+            const updateTask = (id, updatedTask) => {
+                setProjectState(prev => ({
+                    ...prev,
+                    structural: {
+                        ...prev.structural,
+                        customTasks: prev.structural.customTasks.map(task =>
+                            task.id === id ? updatedTask : task
+                        )
+                    }
+                }));
+            };
+
+            const addTask = () => {
+                const newTask = { id: crypto.randomUUID(), name: '', enabled: true };
+                setProjectState(prev => ({
+                    ...prev,
+                    structural: {
+                        ...prev.structural,
+                        customTasks: [...prev.structural.customTasks, newTask]
+                    }
+                }));
+            };
+
+            return (
+                <div className="px-4 space-y-4">
+                    <CollapsibleSection title="Structural Work" colorScheme="construction">
+                        <div className="space-y-4">
+                            {customTasks.map(task => (
+                                <EditableToggle
+                                    key={task.id}
+                                    task={task}
+                                    setTask={(updatedTask) => updateTask(task.id, updatedTask)}
+                                    placeholder="e.g., Header installation"
+                                />
+                            ))}
+                            <div className="flex justify-center pt-2">
+                                <button
+                                    onClick={addTask}
+                                    className="bg-blue-600 text-white font-semibold py-1.5 px-5 rounded-full hover:bg-blue-700 transition-colors"
+                                >
+                                    + Add Structural Task
+                                </button>
+                            </div>
+                        </div>
+                    </CollapsibleSection>
+                </div>
+            );
+        };
+
+
+        const ProjectScopeScreen = ({ projectState, setProjectState, wasteNote, activeScope }) => {
+            switch (activeScope) {
+                case 'demolition':
+                    return <DemolitionScreen projectState={projectState} setProjectState={setProjectState} />;
+                case 'showerWalls':
+                    return <ShowerWallsScreen projectState={projectState} setProjectState={setProjectState} wasteNote={wasteNote} />;
+                case 'structural':
+                    return <StructuralScreen projectState={projectState} setProjectState={setProjectState} />;
+                default:
+                    return (
+                        <div className="px-4 text-center text-slate-500">
+                            <p className="font-semibold text-lg">Coming Soon!</p>
+                            <p>This section is under construction.</p>
+                        </div>
+                    );
+            }
+        };
+
+        const MaterialsScreen = ({ materials, setMaterials, wasteNote }) => {
+            const handleItemUpdate = (id, field, value) => {
+                setMaterials(prevMaterials => prevMaterials.map(item => {
+                    if (item.id === id) {
+                        const updatedItem = { ...item, [field]: value };
+                        if (typeof value === 'number' && (field === 'quantity' || field === 'price')) {
+                               updatedItem.total = (updatedItem.quantity || 0) * (updatedItem.price || 0);
+                        }
+                        return updatedItem;
+                    }
+                    return item;
+                }));
+            };
+
+            const handleAddItem = (scope) => {
+                const newItem = { 
+                    id: crypto.randomUUID(), 
+                    name: 'New Material', 
+                    quantity: 1, 
+                    price: 0, 
+                    total: 0, 
+                    scope,
+                    source: 'custom'
+                };
+                setMaterials(prev => [...prev, newItem]);
+            };
+
+            const handleDeleteItem = (id) => {
+                setMaterials(prevMaterials => prevMaterials.filter(item => item.id !== id));
+            };
+
+            const getCategoryTitle = (scope) => {
+                switch (scope) {
+                    case 'demolition': return 'Demolition Materials';
+                    case 'showerWalls_design': return 'Design Materials';
+                    case 'showerWalls_construction': return 'Construction Materials';
+                    case 'structural': return 'Structural Materials';
+                    default: return 'Other Materials';
+                }
+            };
+
+            const groupedMaterials = materials.reduce((acc, item) => {
+                const scope = item.scope || 'other';
+                if (!acc[scope]) {
+                    acc[scope] = [];
+                }
+                acc[scope].push(item);
+                return acc;
+            }, {});
+            
+            const totalCost = materials.reduce((acc, item) => acc + item.total, 0);
+
+            return (
+                <div className="p-4 space-y-4">
+                    {Object.keys(groupedMaterials).map(scope => (
+                         <CollapsibleCard 
+                            key={scope}
+                            title={getCategoryTitle(scope)} 
+                            items={groupedMaterials[scope]} 
+                            note={scope === 'showerWalls_design' ? wasteNote : null}
+                            onAddItem={handleAddItem}
+                            scope={scope}
+                        >
+                            {(item) => (
+                                <MaterialItem key={item.id} item={item} onUpdate={handleItemUpdate} onDelete={handleDeleteItem} />
+                            )}
+                        </CollapsibleCard>
+                    ))}
+
+                           <div className="px-4 mt-4">
+                                <div className="bg-slate-100 p-4 rounded-lg flex justify-between items-center shadow-inner">
+                               <span className="font-bold text-slate-800 text-lg">Total Material Cost</span>                                
+                               <span className="text-blue-900 text-2xl font-bold">CAD${totalCost.toFixed(2)}</span>
+                            </div>
+                        </div>
+                </div>
+            );
+        };
+
+        const LaborScreen = ({ labor, setLabor }) => {
+
+            const handleItemUpdate = (id, field, value) => {
+                setLabor(prevState => prevState.map(item => {
+                    if (item.id === id) {
+                        const updatedItem = { ...item, [field]: value };
+                        if (typeof value === 'number' && (field === 'hours' || field === 'hourlyRate')) {
+                            updatedItem.cost = (updatedItem.hours || 0) * (updatedItem.hourlyRate || 0);
+                        }
+                        return updatedItem;
+                    }
+                    return item;
+                }));
+            };
+
+            const handleAddItem = (scope) => {
+                const newItem = { 
+                    id: crypto.randomUUID(), 
+                    name: 'New Task', 
+                    hours: 1, 
+                    hourlyRate: 85.00, 
+                    cost: 85.00, 
+                    scope,
+                    source: 'custom'
+                };
+                setLabor(prevState => [...prevState, newItem]);
+            };
+
+            const handleDeleteItem = (id) => {
+                setLabor(prevState => prevState.filter(item => item.id !== id));
+            };
+            
+            const getCategoryTitle = (scope) => {
+                switch (scope) {
+                    case 'demolition': return 'Demolition Labor';
+                    case 'showerWalls_design': return 'Design Labor';
+                    case 'showerWalls_construction': return 'Construction Labor';
+                    case 'structural': return 'Structural Labor';
+                    default: return 'Other Labor';
+                }
+            };
+            
+            const groupedLabor = labor.reduce((acc, item) => {
+                const scope = item.scope || 'other';
+                if (!acc[scope]) {
+                    acc[scope] = [];
+                }
+                acc[scope].push(item);
+                return acc;
+            }, {});
+
+            const totalCost = labor.reduce((acc, item) => acc + item.cost, 0);
+            const totalHours = labor.reduce((acc, item) => acc + (item.hours || 0), 0);
+
+            return (
+                <div className="p-4 space-y-4">
+                    {Object.keys(groupedLabor).map(scope => {
+                         const scopeTasks = groupedLabor[scope];
+                         const totalScopeHours = scopeTasks.reduce((acc, item) => acc + (item.hours || 0), 0);
+                         return (
+                            <CollapsibleCard
+                                key={scope}
+                                title={getCategoryTitle(scope)}
+                                items={scopeTasks}
+                                totalHours={totalScopeHours}
+                                onAddItem={handleAddItem}
+                                scope={scope}
+                            >
+                                {(item) => (
+                                    <LaborItem key={item.id} item={item} onUpdate={handleItemUpdate} onDelete={handleDeleteItem} />
+                                )}
+                            </CollapsibleCard>
+                        );
+                    })}
+
+                           <div className="px-4 mt-4">
+                                <div className="bg-slate-100 border border-slate-200 p-4 rounded-lg flex justify-between items-center shadow-inner">
+                                    <span className="font-bold text-lg text-slate-800">Total Labor Cost</span>
+                                    <div className="flex items-center space-x-4 text-right">
+                                        <span className="text-slate-600 font-semibold text-lg">{totalHours.toFixed(2)} hrs</span>
+                                        <span className="text-blue-900 text-2xl font-bold">CAD${totalCost.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                        </div>
+                </div>
+            );
+        };
+
+
+        const QuoteScreen = ({ projectState, setProjectState, materials, labor }) => {
+            const [quote, setQuote] = useState('');
+            const [isGenerating, setIsGenerating] = useState(false);
+            const [copySuccess, setCopySuccess] = useState('');
+
+            const totalMaterialCost = materials.reduce((acc, item) => acc + item.total, 0);
+            const totalLaborCost = labor.reduce((acc, item) => acc + item.cost, 0);
+            const grandTotal = totalMaterialCost + totalLaborCost;
+
+            const updateProjectInfo = (key, value) => {
+                setProjectState(prev => ({
+                    ...prev,
+                    projectInfo: {
+                        ...prev.projectInfo,
+                        [key]: value
+                    }
+                }));
+            };
+
+            const generateQuote = async () => {
+                setIsGenerating(true);
+                setQuote('');
+                
+                const materialDetails = materials.map(m => `- ${m.name}: ${m.quantity} units @ $${m.price.toFixed(2)}/unit = $${m.total.toFixed(2)}`).join('\n');
+                const laborDetails = labor.map(l => `- ${l.name}: ${l.hours} hours @ $${l.hourlyRate.toFixed(2)}/hr = $${l.cost.toFixed(2)}`).join('\n');
+                const designState = projectState.showerWalls.design;
+                const { projectInfo } = projectState;
+
+                const prompt = `
+                    Act as a professional contractor and generate a client-facing quote document based on the following project details. The tone should be professional, clear, and courteous. All prices are in Canadian Dollars (CAD).
+
+                    **Project Details:**
+                    - Client Name: ${projectInfo.clientName || 'N/A'}
+                    - Project Address: ${projectInfo.projectAddress || 'N/A'}
+                    - Estimate Date: ${projectInfo.estimateDate}
+
+                    Project Scope:
+                    - Tile Size: ${designState.tileSize === 'Custom' ? `${designState.customTileWidth}" x ${designState.customTileLength}"` : designState.tileSize}
+                    - Tile Pattern: ${designState.tilePattern === 'Custom' ? designState.customTilePatternName : designState.tilePattern}
+                    - Waterproofing System: ${designState.waterproofingSystem}
+                    - Niche: ${designState.niche}
+                    - Shower Door: ${designState.showerDoor}
+                    - Grab Bars: ${designState.grabBar}
+                    - Additional Notes: ${designState.notes || 'None'}
+                    - Construction Notes: ${designState.constructionNotes || 'None'}
+                    
+                    Materials Breakdown:
+                    ${materialDetails}
+                    Total Material Cost: CAD$${totalMaterialCost.toFixed(2)}
+
+                    Labor Breakdown:
+                    ${laborDetails}
+                    Total Labor Cost: CAD$${totalLaborCost.toFixed(2)}
+
+                    Grand Total: CAD$${grandTotal.toFixed(2)}
+
+                    Please structure the quote with the following sections:
+                    1.  **Project Overview:** A brief, friendly introduction summarizing the scope of work.
+                    2.  **Materials Estimate:** A list of materials.
+                    3.  **Labor Estimate:** A list of tasks.
+                    4.  **Cost Summary:** A clear breakdown of Material, Labor, and Grand Total costs. **Ensure all costs are clearly marked as CAD.**
+                    5.  **Terms & Conditions:** Include standard contractor terms regarding payment schedule (e.g., 50% deposit, 50% on completion), change orders, and warranty.
+                `;
+
+                try {
+                    let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                    const payload = { contents: chatHistory };
+                    const apiKey = "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API call failed with status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const generatedQuote = result.candidates[0].content.parts[0].text;
+                        setQuote(generatedQuote);
+                    } else {
+                        setQuote("Could not generate quote. No content in response.");
+                    }
+                } catch (error) {
+                    console.error("Error generating quote:", error);
+                    setQuote("Error generating quote. Please try again.");
+                } finally {
+                    setIsGenerating(false);
+                }
+            };
+            
+            const copyToClipboard = () => {
+                const quoteText = document.getElementById('quote-text');
+                quoteText.select();
+                try {
+                    document.execCommand('copy');
+                    setCopySuccess('Copied!');
+                    setTimeout(() => setCopySuccess(''), 2000);
+                } catch (err) {
+                    setCopySuccess('Failed to copy');
+                    setTimeout(() => setCopySuccess(''), 2000);
+                }
+            };
+
+
+            return (
+                <div className="p-4 space-y-4">
+                     <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                         <h2 className="text-xl font-bold text-slate-800 mb-4">Project Details</h2>
+                         <div className="space-y-3">
+                             <EditableField
+                                 label="Client Name"
+                                 value={projectState.projectInfo.clientName}
+                                 setValue={(val) => updateProjectInfo('clientName', val)}
+                                 placeholder="Enter client's name"
+                             />
+                             <EditableField
+                                 label="Project Address"
+                                 value={projectState.projectInfo.projectAddress}
+                                 setValue={(val) => updateProjectInfo('projectAddress', val)}
+                                 placeholder="Enter project address"
+                             />
+                             <div>
+                                  <label className="block text-sm font-medium text-slate-600 mb-1">Estimate Date</label>
+                                  <div className="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700">
+                                      {projectState.projectInfo.estimateDate}
+                                  </div>
+                             </div>
+                         </div>
+                     </div>
+
+                    <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                        <h2 className="text-xl font-bold text-slate-800 mb-4">Quote Summary</h2>
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-600">Total Material Cost:</span>
+                                <span className="font-semibold text-slate-800">CAD${totalMaterialCost.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-600">Total Labor Cost:</span>
+                                <span className="font-semibold text-slate-800">CAD${totalLaborCost.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-lg font-bold border-t pt-2 mt-2">
+                                <span>Grand Total:</span>
+                                <span className="text-blue-900 font-bold">CAD${grandTotal.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={generateQuote}
+                        disabled={isGenerating}
+                        className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                        {isGenerating ? 'Generating...' : '✨ Generate Professional Quote'}
+                    </button>
+
+                    {isGenerating && <div className="text-center text-slate-500">Generating your quote...</div>}
+
+                    {quote && (
+                        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 relative">
+                            <button onClick={copyToClipboard} className="absolute top-2 right-2 bg-slate-200 text-slate-700 px-3 py-1 rounded-md text-sm hover:bg-slate-300">
+                                {copySuccess || 'Copy'}
+                            </button>
+                            <h3 className="text-lg font-bold mb-2">Generated Quote</h3>
+                            <textarea id="quote-text" readOnly value={quote} className="w-full h-96 p-2 border rounded-md bg-slate-50 font-mono text-sm"></textarea>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+
+        // --- App Configuration & Calculation Logic ---
+        const APP_CONFIG = {
+            DEFAULT_HOURLY_RATE: 85.00,
+            DEFAULT_PRICES: {
+                grout: 40.00, trim: 50.00, thinset: 30.00, kerdiBoard: 100.00, kerdiBand: 50.00,
+                kerdiScrews: 35.00, liquidMembrane: 120.00, fabric: 20.00, drywall: 25.00,
+                kerdiMembrane: 2.50, niche: 100.00, showerDoor: 800.00, grabBar: 50.00,
+                wallTile: 5.00, insulation: 75.00, tileEdge: 35.00, debrisHaul: 250.00,
+            },
+        };
+
+        const calculateProjectItems = (projectState) => {
+            const desiredLabor = new Map();
+            const desiredMaterials = new Map();
+            const { DEFAULT_PRICES, DEFAULT_HOURLY_RATE } = APP_CONFIG;
+
+            // --- Demolition Calculations ---
+            const { demolition, showerWalls, structural } = projectState;
+            if (demolition.removeTub) desiredLabor.set('demo-tub', { name: 'Remove existing tub/base', hours: 2.5, scope: 'demolition' });
+            if (demolition.removeTile) desiredLabor.set('demo-tile', { name: 'Remove existing tile', hours: 4.0, scope: 'demolition' });
+            if (demolition.removeDrywall) desiredLabor.set('demo-drywall', { name: 'Remove drywall to studs', hours: 3.0, scope: 'demolition' });
+            if (demolition.removePlumbing) desiredLabor.set('demo-plumbing', { name: 'Remove existing plumbing', hours: 1.5, scope: 'demolition' });
+            if (demolition.haulDebris) desiredMaterials.set('mat-debris', { name: 'Debris Haulage', quantity: 1, price: DEFAULT_PRICES.debrisHaul, scope: 'demolition' });
+            
+            // --- Shower Walls Calculations ---
+            const totalSqft = showerWalls.walls.reduce((acc, wall) => {
+                const h = wall.height.ft + wall.height.inch / 12;
+                const w = wall.width.ft + wall.width.inch / 12;
+                return acc + (h * w);
+            }, 0);
+            const design = showerWalls.design;
+
+            if (design.waterproofingSystem !== 'None / Select System...') {
+                const wpName = design.waterproofingSystem === 'Other' && design.customWaterproofingName.trim() !== '' ? design.customWaterproofingName : design.waterproofingSystem;
+                let wpHours = 0;
+                switch (design.waterproofingSystem) {
+                    case 'Schluter®-KERDI System': wpHours = totalSqft / 40; break;
+                    case 'RedGard® Waterproofing Membrane': case 'LATICRETE® HYDRO BAN': wpHours = totalSqft / 60; break;
+                    case 'Drywall and Kerdi membrane': wpHours = totalSqft / 25; break;
+                    default: wpHours = totalSqft / 40; break;
+                }
+                desiredLabor.set('sw-wp', { name: `Waterproofing: ${wpName}`, hours: Math.round(wpHours * 100) / 100, scope: 'showerWalls_construction' });
+            }
+
+            if (design.tileSize !== 'Select tile size') {
+                // Adjust tiling hours based on complexity
+                let tilingHours = 0;
+                const baseRateSqftPerHour = design.tileSize.includes('Subway') ? 7 : 10; // Slower for small tiles
+                let tilePatternModifier = 1.0;
+                switch (design.tilePattern) {
+                    case '1/2 Offset':
+                    case '1/3 Offset':
+                        tilePatternModifier = 1.15; // 15% longer
+                        break;
+                    case 'Herringbone':
+                        tilePatternModifier = 1.30; // 30% longer
+                        break;
+                }
+                tilingHours = (totalSqft / baseRateSqftPerHour) * tilePatternModifier;
+                const tilingTaskName = `Tiling Walls (${design.tilePattern} Pattern)`;
+
+                desiredLabor.set('sw-boarding', { name: 'Boarding', hours: Math.round((totalSqft / 30) * 100) / 100, scope: 'showerWalls_construction' });
+                desiredLabor.set('sw-tiling', { name: tilingTaskName, hours: Math.round(tilingHours * 100) / 100, scope: 'showerWalls_design' });
+                desiredLabor.set('sw-grouting', { name: 'Grouting', hours: Math.round((totalSqft / 40) * 100) / 100, scope: 'showerWalls_design' });
+                desiredLabor.set('sw-silicone', { name: 'Silicone', hours: 1.5, scope: 'showerWalls_construction' });
+            }
+            
+            if (design.niche !== 'None') desiredLabor.set('sw-niche', { name: 'Niche Installation', hours: 2.5, scope: 'showerWalls_construction' });
+            if (design.showerDoor !== 'None') {
+                desiredLabor.set('sw-door', { name: 'Shower Door Installation', hours: 3.0, scope: 'showerWalls_construction' });
+                desiredLabor.set('sw-door-blocking', { name: 'Install Blocking for Shower Door', hours: 2.0, scope: 'showerWalls_construction' });
+            }
+            const numGrabBars = parseInt(design.grabBar, 10) || 0;
+            if (numGrabBars > 0) desiredLabor.set('sw-grabbar', { name: `Install ${numGrabBars} Grab Bar(s)`, hours: 1.5 * numGrabBars, scope: 'showerWalls_construction' });
+            if (design.repairWalls) desiredLabor.set('sw-repair', { name: 'Wall Repair', hours: 8.0, scope: 'showerWalls_construction' });
+            if (design.reinsulateWalls) desiredLabor.set('sw-reinsulate', { name: 'Re-insulate exterior walls', hours: 2.0, scope: 'showerWalls_construction' });
+
+            // --- Shower Wall Materials ---
+            const wasteFactor = (design.tilePattern === '1/2 Offset' || design.tilePattern === '1/3 Offset') ? 1.15 : (design.tilePattern === 'Herringbone' ? 1.25 : 1.10);
+            const tileNeeded = totalSqft * wasteFactor;
+            
+            if (design.tileSize !== 'Select tile size') {
+                if(design.clientSuppliesBase === 'No') {
+                    let tileName = `Wall Tile (${design.tileSize === 'Custom' ? `${design.customTileWidth}"x${design.customTileLength}"` : design.tileSize})`;
+                    desiredMaterials.set('mat-walltile', { name: tileName, quantity: tileNeeded, price: DEFAULT_PRICES.wallTile, scope: 'showerWalls_design' });
+                }
+                desiredMaterials.set('mat-thinset', { name: 'Thinset Mortar', quantity: Math.ceil(totalSqft / 50), price: DEFAULT_PRICES.thinset, scope: 'showerWalls_construction' });
+                const groutQty = Math.ceil(totalSqft / 100);
+                desiredMaterials.set('mat-grout', { name: 'Grout', quantity: groutQty > 0 ? groutQty : 1, price: DEFAULT_PRICES.grout, scope: 'showerWalls_design' });
+                desiredMaterials.set('mat-tile-edge', { name: 'Tile Edge', quantity: 2, price: DEFAULT_PRICES.tileEdge, scope: 'showerWalls_design' });
+            }
+            
+            if (design.waterproofingSystem !== 'None / Select System...') {
+                const wpName = design.waterproofingSystem === 'Other' && design.customWaterproofingName.trim() !== '' ? design.customWaterproofingName : design.waterproofingSystem;
+                switch (design.waterproofingSystem) {
+                    case 'Schluter®-KERDI System':
+                        desiredMaterials.set('mat-wp-board', { name: 'Kerdi Board', quantity: Math.ceil(totalSqft / 32), price: DEFAULT_PRICES.kerdiBoard, scope: 'showerWalls_construction' });
+                        desiredMaterials.set('mat-wp-band', { name: 'Kerdi Band', quantity: 1, price: DEFAULT_PRICES.kerdiBand, scope: 'showerWalls_construction' });
+                        desiredMaterials.set('mat-wp-screws', { name: 'Kerdi Screws/Washers', quantity: 1, price: DEFAULT_PRICES.kerdiScrews, scope: 'showerWalls_construction' });
+                        break;
+                    case 'RedGard® Waterproofing Membrane': case 'LATICRETE® HYDRO BAN':
+                        desiredMaterials.set('mat-wp-liquid', { name: wpName, quantity: Math.ceil(totalSqft / 100), price: DEFAULT_PRICES.liquidMembrane, scope: 'showerWalls_construction' });
+                        desiredMaterials.set('mat-wp-fabric', { name: 'Reinforcing Fabric', quantity: 1, price: DEFAULT_PRICES.fabric, scope: 'showerWalls_construction' });
+                        break;
+                    case 'Drywall and Kerdi membrane':
+                        desiredMaterials.set('mat-wp-drywall', { name: 'Moisture-Resistant Drywall', quantity: Math.ceil(totalSqft / 32), price: DEFAULT_PRICES.drywall, scope: 'showerWalls_construction' });
+                        desiredMaterials.set('mat-wp-membrane', { name: 'Kerdi Membrane', quantity: totalSqft, price: DEFAULT_PRICES.kerdiMembrane, scope: 'showerWalls_construction' });
+                        break;
+                    case 'Other':
+                        desiredMaterials.set('mat-wp-other', { name: wpName, quantity: 1, price: 150.00, scope: 'showerWalls_construction' });
+                        break;
+                }
+            }
+            
+            if (design.reinsulateWalls) desiredMaterials.set('mat-insulation', { name: 'Exterior Wall Insulation', quantity: 1, price: DEFAULT_PRICES.insulation, scope: 'showerWalls_construction' });
+            if (design.niche !== 'None') desiredMaterials.set('mat-niche', { name: `Niche: ${design.niche}`, quantity: 1, price: DEFAULT_PRICES.niche, scope: 'showerWalls_construction' });
+            if (design.showerDoor !== 'None') {
+                desiredMaterials.set('mat-door', { name: `Shower Door: ${design.showerDoor}`, quantity: 1, price: DEFAULT_PRICES.showerDoor, scope: 'showerWalls_construction' });
+                desiredMaterials.set('mat-door-blocking', { name: 'Blocking for Shower Glass Door', quantity: 1, price: 50.00, scope: 'showerWalls_construction' });
+            }
+            if (numGrabBars > 0) desiredMaterials.set('mat-grabbar', { name: 'Grab Bar & Blocking', quantity: numGrabBars, price: DEFAULT_PRICES.grabBar, scope: 'showerWalls_construction' });
+
+            // --- Structural Calculations ---
+            structural.customTasks.forEach(task => {
+                if (task.enabled && task.name.trim() !== '') {
+                    desiredLabor.set(`struct-${task.id}`, { name: task.name, hours: 8.0, scope: 'structural' });
+                    desiredMaterials.set(`struct-mat-${task.id}`, { name: `Materials for ${task.name}`, quantity: 1, price: 100.00, scope: 'structural' });
+                }
+            });
+
+            return { desiredLabor, desiredMaterials, wasteFactor };
+        };
+
+
+        // --- Main App Component ---
+        function App() {
+            const getDefaultProjectState = () => ({
+                projectInfo: {
+                    clientName: '',
+                    projectAddress: '',
+                    estimateDate: 'September 9, 2025'
+                },
+                demolition: {
+                    removeTub: false, removeTile: false, removeDrywall: false, removePlumbing: false, haulDebris: false,
+                },
+                showerWalls: {
+                    walls: [
+                        { id: crypto.randomUUID(), name: 'Back Wall', height: { ft: 8, inch: 0 }, width: { ft: 5, inch: 0 } },
+                        { id: crypto.randomUUID(), name: 'Left Wall', height: { ft: 8, inch: 0 }, width: { ft: 3, inch: 0 } },
+                        { id: crypto.randomUUID(), name: 'Right Wall', height: { ft: 8, inch: 0 }, width: { ft: 3, inch: 0 } },
+                    ],
+                    design: {
+                        tileSize: 'Select tile size', customTileWidth: '', customTileLength: '', tilePattern: 'Select Tile Pattern',
+                        customTilePatternName: '', niche: 'None', showerDoor: 'None', waterproofingSystem: 'None / Select System...',
+                        customWaterproofingName: '', grabBar: '0', notes: '', constructionNotes: '', clientSuppliesBase: 'No',
+                        repairWalls: false, reinsulateWalls: false,
+                    }
+                },
+                structural: {
+                    customTasks: [],
+                },
+            });
+
+            const getInitialState = (key, defaultValue) => {
+                try {
+                    const savedItem = localStorage.getItem(key);
+                    return savedItem ? JSON.parse(savedItem) : defaultValue;
+                } catch (error) {
+                    console.error(`Error reading from localStorage for key "${key}":`, error);
+                    return defaultValue;
+                }
+            };
+            
+            const [activeView, setActiveView] = useState('projectScope');
+            const [activeScope, setActiveScope] = useState('showerWalls');
+            
+            const [projectState, setProjectState] = useState(() => {
+                const savedState = getInitialState('projectState', null);
+                const defaultState = getDefaultProjectState();
+                if (savedState) {
+                    // Deep merge saved state with default state to ensure all properties exist and prevent crashes on new properties
+                    return {
+                        ...defaultState,
+                        ...savedState,
+                        projectInfo: { ...defaultState.projectInfo, ...(savedState.projectInfo || {}) },
+                        demolition: { ...defaultState.demolition, ...(savedState.demolition || {}) },
+                        showerWalls: {
+                            ...defaultState.showerWalls,
+                            ...(savedState.showerWalls || {}),
+                            design: { ...defaultState.showerWalls.design, ...((savedState.showerWalls || {}).design || {}) }
+                        },
+                        structural: { ...defaultState.structural, ...(savedState.structural || {}) },
+                    };
+                }
+                return defaultState;
+            });
+
+            const [labor, setLabor] = useState(() => getInitialState('labor', []));
+            const [materials, setMaterials] = useState(() => getInitialState('materials', []));
+            const [wasteNote, setWasteNote] = useState('');
+
+            useEffect(() => {
+                try {
+                    localStorage.setItem('projectState', JSON.stringify(projectState));
+                    localStorage.setItem('labor', JSON.stringify(labor));
+                    localStorage.setItem('materials', JSON.stringify(materials));
+                } catch (error) {
+                    console.error("Error writing to localStorage:", error);
+                }
+            }, [projectState, labor, materials]);
+
+            useEffect(() => {
+                const { desiredLabor, desiredMaterials, wasteFactor } = calculateProjectItems(projectState);
+                const { DEFAULT_HOURLY_RATE } = APP_CONFIG;
+
+                if (projectState.showerWalls.design.tileSize !== 'Select tile size' && projectState.showerWalls.design.tilePattern !== 'Select Tile Pattern') {
+                    setWasteNote(`Includes ${(wasteFactor * 100 - 100).toFixed(0)}% waste factor for pattern complexity.`);
+                } else {
+                    setWasteNote('');
+                }
+
+                // --- RECONCILIATION LOGIC ---
+                const reconcile = (currentItems, desiredItems, defaultRate) => {
+                    const newItems = [];
+                    const processedIds = new Set();
+                    const currentItemsMap = new Map(currentItems.map(item => [item.id, item]));
+
+                    // 1. Update or add calculated items
+                    for (const [id, desiredItem] of desiredItems.entries()) {
+                        const existingItem = currentItemsMap.get(id);
+                        if (existingItem) {
+                            // Item exists, update its calculated values but preserve user edits
+                            const updatedItem = { ...existingItem };
+                            updatedItem.name = desiredItem.name;
+                            if (desiredItem.hours !== undefined) updatedItem.hours = desiredItem.hours;
+                            if (desiredItem.quantity !== undefined) updatedItem.quantity = desiredItem.quantity;
+                            
+                            // Recalculate cost/total
+                            if (updatedItem.hours !== undefined) updatedItem.cost = updatedItem.hours * updatedItem.hourlyRate;
+                            if (updatedItem.quantity !== undefined) updatedItem.total = updatedItem.quantity * updatedItem.price;
+
+                            newItems.push(updatedItem);
+                        } else {
+                            // New calculated item, add it
+                            const newItem = {
+                                ...desiredItem,
+                                id,
+                                source: 'calculated'
+                            };
+                            if (newItem.hours !== undefined) {
+                                newItem.hourlyRate = defaultRate;
+                                newItem.cost = newItem.hours * newItem.hourlyRate;
+                            }
+                            if (newItem.quantity !== undefined) {
+                                newItem.total = newItem.quantity * newItem.price;
+                            }
+                            newItems.push(newItem);
+                        }
+                        processedIds.add(id);
+                    }
+
+                    // 2. Preserve custom items
+                    for (const currentItem of currentItems) {
+                        if (currentItem.source === 'custom' && !processedIds.has(currentItem.id)) {
+                            newItems.push(currentItem);
+                        }
+                    }
+
+                    return newItems;
+                };
+                
+                setLabor(prevLabor => reconcile(prevLabor, desiredLabor, DEFAULT_HOURLY_RATE));
+                setMaterials(prevMaterials => reconcile(prevMaterials, desiredMaterials));
+
+            }, [projectState]);
+
+            const handleReset = () => {
+                localStorage.removeItem('projectState');
+                localStorage.removeItem('labor');
+                localStorage.removeItem('materials');
+                window.location.reload();
+            };
+
+            const getHeaderTitle = () => {
+                if (activeView === 'projectScope') {
+                    switch(activeScope) {
+                        case 'demolition': return 'Demolition';
+                        case 'showerWalls': return 'Shower Walls';
+                        case 'showerBase': return 'Shower Base';
+                        case 'floors': return 'Floors';
+                        case 'finishings': return 'Finishings';
+                        case 'structural': return 'Structural';
+                        case 'trades': return 'Trades';
+                        default: return 'Project Scope';
+                    }
+                }
+                switch(activeView) {
+                    case 'materials': return 'Materials List';
+                    case 'labor': return 'Labor Estimate';
+                    case 'quote': return 'Final Estimate';
+                    default: return 'Project Scope';
+                }
+            };
+            
+            const renderActiveView = () => {
+                switch (activeView) {
+                    case 'projectScope':
+                        return <ProjectScopeScreen 
+                                    projectState={projectState} 
+                                    setProjectState={setProjectState} 
+                                    wasteNote={wasteNote}
+                                    activeScope={activeScope}
+                                />;
+                    case 'materials':
+                        return <MaterialsScreen materials={materials} setMaterials={setMaterials} wasteNote={wasteNote} />;
+                    case 'labor':
+                        return <LaborScreen labor={labor} setLabor={setLabor} />;
+                    case 'quote':
+                        return <QuoteScreen 
+                                    projectState={projectState} 
+                                    setProjectState={setProjectState}
+                                    materials={materials} 
+                                    labor={labor} 
+                                />;
+                    default:
+                        return <ProjectScopeScreen 
+                                    projectState={projectState} 
+                                    setProjectState={setProjectState} 
+                                    wasteNote={wasteNote}
+                                    activeScope={activeScope}
+                                />;
+                }
+            };
+
+            return (
+                <div className="bg-slate-50 font-sans">
+                    <div className="max-w-xl mx-auto bg-slate-50 flex flex-col" style={{ minHeight: '100vh' }}>
+                        <TopNav activeScope={activeScope} setActiveScope={setActiveScope} />
+                        <div className="flex-grow flex flex-col">
+                            <Header title={getHeaderTitle()} />
+                            <main className="flex-grow overflow-y-auto pb-24">
+                                {renderActiveView()}
+                            </main>
+                        </div>
+                        <BottomNavBar activeView={activeView} setActiveView={setActiveView} onReset={handleReset} />
+                    </div>
+                </div>
+            );
+        }
+        
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
