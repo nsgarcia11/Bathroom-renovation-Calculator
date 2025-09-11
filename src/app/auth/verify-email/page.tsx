@@ -37,11 +37,11 @@ export default function VerifyEmailPage() {
             'Email verification failed. Please try again or request a new verification email.'
           );
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error('Email verification error:', error);
         setStatus('error');
         setMessage(
-          error.message || 'An error occurred during email verification.'
+          (error instanceof Error ? error.message : 'An error occurred during email verification.')
         );
       }
     };
