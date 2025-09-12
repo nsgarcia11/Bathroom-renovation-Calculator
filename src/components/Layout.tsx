@@ -91,7 +91,7 @@ function LayoutContent({
             </div>
           ) : (
             <div className='p-4'>
-              <div className='flex justify-between'>
+              <div className='flex justify-end'>
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className='p-3 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors'
