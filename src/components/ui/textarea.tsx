@@ -1,18 +1,44 @@
-import * as React from "react"
+import React from 'react';
 
-import { cn } from "@/lib/utils"
-
-function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
-  return (
-    <textarea
-      data-slot="textarea"
-      className={cn(
-        "border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 flex field-sizing-content min-h-16 w-full rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-        className
-      )}
-      {...props}
-    />
-  )
+interface TextareaProps {
+  id: string;
+  name?: string;
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  helperText?: string;
+  rows?: number;
+  className?: string;
 }
 
-export { Textarea }
+export const Textarea: React.FC<TextareaProps> = ({
+  id,
+  name,
+  label,
+  value,
+  onChange,
+  placeholder,
+  helperText,
+  rows = 4,
+  className = '',
+}) => (
+  <div>
+    <label
+      htmlFor={id}
+      className='block text-sm font-medium text-slate-600 mb-1'
+    >
+      {label}
+    </label>
+    <textarea
+      id={id}
+      name={name || id}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      rows={rows}
+      className={`block w-full p-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 ${className}`}
+    />
+    {helperText && <p className='mt-2 text-xs text-slate-500'>{helperText}</p>}
+  </div>
+);
