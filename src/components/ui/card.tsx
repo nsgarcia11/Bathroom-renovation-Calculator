@@ -18,7 +18,7 @@ export const Card: React.FC<CardProps> = ({
   onClick,
 }) => {
   const baseClasses =
-    'bg-white rounded-lg shadow-sm border border-slate-200 p-4';
+    'bg-white rounded-lg shadow-sm border border-slate-200 p-0';
   const interactiveClasses = onClick
     ? 'cursor-pointer hover:shadow-md transition-shadow'
     : '';
@@ -46,6 +46,31 @@ export const Card: React.FC<CardProps> = ({
   );
 };
 
+export const CardHeader: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+}> = ({ children, className = '' }) => (
+  <div className={`px-3 py-4 border-b border-slate-200 ${className}`}>
+    {children}
+  </div>
+);
+
+export const CardContent: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+}> = ({ children, className = '' }) => (
+  <div className={`px-3 py-4 ${className}`}>{children}</div>
+);
+
+export const CardTitle: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+}> = ({ children, className = '' }) => (
+  <h3 className={`text-lg font-semibold text-slate-800 ${className}`}>
+    {children}
+  </h3>
+);
+
 export const DashboardCard: React.FC<{
   icon: React.ReactNode;
   title: string;
@@ -53,8 +78,10 @@ export const DashboardCard: React.FC<{
   color: string;
 }> = ({ icon, title, value, color }) => (
   <div className='bg-white p-4 rounded-xl shadow-sm flex-1'>
-    <div className={`p-2 inline-block rounded-full ${color}`}>{icon}</div>
+    <div className='flex items-center justify-between'>
+      <div className={`p-2 inline-block rounded-full ${color}`}>{icon}</div>
+      <p className='text-2xl font-bold text-slate-800'>{value}</p>
+    </div>
     <p className='text-sm text-slate-500 mt-2'>{title}</p>
-    <p className='text-2xl font-bold text-slate-800'>{value}</p>
   </div>
 );

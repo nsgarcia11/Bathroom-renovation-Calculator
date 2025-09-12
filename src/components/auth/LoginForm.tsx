@@ -116,7 +116,7 @@ export function LoginForm() {
 
           <div className='space-y-4'>
             {message && (
-              <Alert>
+              <Alert variant='informative'>
                 <AlertDescription>{message}</AlertDescription>
               </Alert>
             )}
@@ -209,12 +209,17 @@ export function LoginForm() {
           </div>
 
           {message && (
-            <Alert>
+            <Alert variant='destructive'>
               <AlertDescription>{message}</AlertDescription>
             </Alert>
           )}
 
-          <Button type='submit' className='w-full' disabled={isLoading}>
+          <Button
+            type='submit'
+            variant='default'
+            className='w-full'
+            disabled={isLoading}
+          >
             {isLoading
               ? isSignUp
                 ? 'Creating Account...'

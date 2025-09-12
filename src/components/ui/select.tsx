@@ -31,7 +31,7 @@ export const Select: React.FC<SelectProps> = ({
       name={name || id}
       value={value}
       onChange={onChange}
-      className={`block w-full p-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 ${className}`}
+      className={`w-full text-sm border border-slate-300 rounded-md px-3 py-2 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${className}`}
     >
       {children}
     </select>

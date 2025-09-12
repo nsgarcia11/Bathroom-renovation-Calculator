@@ -1,62 +1,148 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useContractor } from '@/hooks/use-contractor';
-import { AppHeader } from '@/components/AppHeader';
+import { useUpdateContractor } from '@/hooks/use-contractor';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Building2,
-  CreditCard,
-  Bell,
-  Shield,
-  HelpCircle,
-  Edit,
-  Check,
-} from 'lucide-react';
+import { PROVINCES, CURRENCIES } from '@/lib/constants';
+import { Plus, Save, Trash2 } from 'lucide-react';
 
 export function SettingsPage() {
   const router = useRouter();
-  const { data: contractor, isLoading } = useContractor();
-  const [activeTab, setActiveTab] = useState('contractor');
+  const { data: contractor } = useContractor();
+  const updateContractor = useUpdateContractor();
+  const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const settingsTabs = [
-    {
-      id: 'contractor',
-      name: 'Contractor Information',
-      icon: Building2,
-      description: 'Manage your company details and contact information',
-    },
-    {
-      id: 'billing',
-      name: 'Billing & Subscription',
-      icon: CreditCard,
-      description: 'Manage your subscription and payment methods',
-    },
-    {
-      id: 'notifications',
-      name: 'Notifications',
-      icon: Bell,
-      description: 'Configure email and app notifications',
-    },
-    {
-      id: 'security',
-      name: 'Security',
-      icon: Shield,
-      description: 'Manage your account security settings',
-    },
-    {
-      id: 'help',
-      name: 'Help & Support',
-      icon: HelpCircle,
-      description: 'Get help and contact support',
-    },
-  ];
+  const [formData, setFormData] = useState({
+    companyName: '',
+    companyEmails: [''],
+    companyPhones: [''],
+    address: '',
+    postalCode: '',
+    province: 'ON',
+    hourlyRate: '75',
+    taxRate: '13',
+    currency: 'CAD',
+  });
 
-  const handleEditContractor = () => {
-    router.push('/setup');
+  // Load contractor data into form
+  useEffect(() => {
+    if (contractor) {
+      // Split comma-separated emails and phones into arrays
+      const emails = contractor.email
+        ? contractor.email
+            .split(',')
+            .map((email) => email.trim())
+            .filter((email) => email)
+        : [''];
+      const phones = contractor.phone
+        ? contractor.phone
+            .split(',')
+            .map((phone) => phone.trim())
+            .filter((phone) => phone)
+        : [''];
+
+      setFormData({
+        companyName: contractor.name || '',
+        companyEmails: emails.length > 0 ? emails : [''],
+        companyPhones: phones.length > 0 ? phones : [''],
+        address: contractor.address || '',
+        postalCode: contractor.postal_code || '',
+        province: contractor.province || 'ON',
+        hourlyRate: contractor.hourly_rate?.toString() || '75',
+        taxRate: ((contractor.tax_rate || 0.13) * 100).toString(),
+        currency: contractor.currency || 'CAD',
+      });
+    }
+  }, [contractor]);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleArrayInputChange = (
+    field: 'companyEmails' | 'companyPhones',
+    index: number,
+    value: string
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: prev[field].map((item, i) => (i === index ? value : item)),
+    }));
+  };
+
+  const addEmail = () => {
+    setFormData((prev) => ({
+      ...prev,
+      companyEmails: [...prev.companyEmails, ''],
+    }));
+  };
+
+  const removeEmail = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      companyEmails: prev.companyEmails.filter((_, i) => i !== index),
+    }));
+  };
+
+  const addPhone = () => {
+    setFormData((prev) => ({
+      ...prev,
+      companyPhones: [...prev.companyPhones, ''],
+    }));
+  };
+
+  const removePhone = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      companyPhones: prev.companyPhones.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage('');
+
+    try {
+      const contractorData = {
+        name: formData.companyName,
+        address: formData.address,
+        postal_code: formData.postalCode,
+        phone: formData.companyPhones
+          .filter((phone) => phone.trim() !== '')
+          .join(', '),
+        email: formData.companyEmails
+          .filter((email) => email.trim() !== '')
+          .join(', '),
+        province: formData.province,
+        tax_rate: parseFloat(formData.taxRate) / 100,
+        hourly_rate: parseFloat(formData.hourlyRate),
+        currency: formData.currency,
+      };
+
+      await updateContractor.mutateAsync(contractorData);
+      setMessage('Settings updated successfully!');
+
+      // Redirect to home page after successful save
+      setTimeout(() => {
+        router.push('/');
+      }, 1500);
+    } catch (error) {
+      console.error('Settings update error:', error);
+      setMessage('Failed to update settings. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isLoading) {
@@ -68,315 +154,221 @@ export function SettingsPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <AppHeader
-        title='Settings'
-        subtitle='Manage your account settings and preferences'
-        showBackButton={true}
-        backButtonText='Back to Dashboard'
-      />
-
-      <div className='py-8 px-4 sm:px-6 lg:px-8'>
-        <div className='max-w-7xl mx-auto'>
-          <div className='grid grid-cols-1 lg:grid-cols-4 gap-8'>
-            {/* Settings Navigation */}
-            <div className='lg:col-span-1'>
-              <Card>
-                <CardContent className='p-0'>
-                  <nav className='space-y-1'>
-                    {settingsTabs.map((tab) => {
-                      const Icon = tab.icon;
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => setActiveTab(tab.id)}
-                          className={`w-full text-left px-4 py-3 flex items-center space-x-3 transition-colors ${
-                            activeTab === tab.id
-                              ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                              : 'text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          <Icon className='h-5 w-5' />
-                          <div>
-                            <div className='font-medium'>{tab.name}</div>
-                            <div className='text-sm text-gray-500'>
-                              {tab.description}
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </nav>
-                </CardContent>
-              </Card>
+    <div className='p-4 space-y-6'>
+      {/* Form */}
+      <form onSubmit={handleSubmit} className='space-y-6'>
+        <Card>
+          <CardHeader>
+            <CardTitle>Company Information</CardTitle>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <div className='grid grid-cols-1 gap-4'>
+              <Input
+                id='companyName'
+                label='Company Name'
+                value={formData.companyName}
+                onChange={(e) =>
+                  handleInputChange('companyName', e.target.value)
+                }
+                placeholder='Enter company name'
+              />
             </div>
 
-            {/* Settings Content */}
-            <div className='lg:col-span-3'>
-              {activeTab === 'contractor' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className='flex items-center space-x-2'>
-                      <Building2 className='h-5 w-5' />
-                      <span>Contractor Information</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className='space-y-6'>
-                    {contractor ? (
-                      <>
-                        <Alert>
-                          <Check className='h-4 w-4' />
-                          <AlertDescription>
-                            Your contractor information is set up and ready to
-                            use.
-                          </AlertDescription>
-                        </Alert>
-
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                          <div>
-                            <h3 className='font-medium text-gray-900 mb-2'>
-                              Company Details
-                            </h3>
-                            <div className='space-y-2 text-sm'>
-                              <div>
-                                <span className='font-medium'>
-                                  Company Name:
-                                </span>
-                                <span className='ml-2 text-gray-600'>
-                                  {contractor.name}
-                                </span>
-                              </div>
-                              <div>
-                                <span className='font-medium'>Address:</span>
-                                <span className='ml-2 text-gray-600'>
-                                  {contractor.address}
-                                </span>
-                              </div>
-                              <div>
-                                <span className='font-medium'>
-                                  Postal Code:
-                                </span>
-                                <span className='ml-2 text-gray-600'>
-                                  {contractor.postal_code}
-                                </span>
-                              </div>
-                              <div>
-                                <span className='font-medium'>Province:</span>
-                                <span className='ml-2 text-gray-600'>
-                                  {contractor.province}
-                                </span>
-                              </div>
-                              <div>
-                                <span className='font-medium'>Tax Rate:</span>
-                                <span className='ml-2 text-gray-600'>
-                                  {(contractor.tax_rate * 100).toFixed(2)}%
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div>
-                            <h3 className='font-medium text-gray-900 mb-2'>
-                              Contact Information
-                            </h3>
-                            <div className='space-y-2 text-sm'>
-                              <div>
-                                <span className='font-medium'>Email:</span>
-                                <span className='ml-2 text-gray-600'>
-                                  {contractor.email}
-                                </span>
-                              </div>
-                              <div>
-                                <span className='font-medium'>Phone:</span>
-                                <span className='ml-2 text-gray-600'>
-                                  {contractor.phone}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className='flex space-x-4'>
-                          <Button
-                            onClick={handleEditContractor}
-                            className='flex items-center space-x-2'
-                          >
-                            <Edit className='h-4 w-4' />
-                            <span>Edit Information</span>
-                          </Button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <Alert variant='destructive'>
-                          <AlertDescription>
-                            No contractor information found. Please set up your
-                            contractor details to get started.
-                          </AlertDescription>
-                        </Alert>
-
-                        <div className='text-center py-8'>
-                          <Building2 className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-                          <h3 className='text-lg font-medium text-gray-900 mb-2'>
-                            Set Up Your Contractor Information
-                          </h3>
-                          <p className='text-gray-600 mb-6'>
-                            Add your company details, contact information, and
-                            tax settings.
-                          </p>
-                          <Button
-                            onClick={handleEditContractor}
-                            className='flex items-center space-x-2'
-                          >
-                            <Building2 className='h-4 w-4' />
-                            <span>Set Up Contractor Info</span>
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
-              {activeTab === 'billing' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className='flex items-center space-x-2'>
-                      <CreditCard className='h-5 w-5' />
-                      <span>Billing & Subscription</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className='text-center py-8'>
-                      <CreditCard className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-                      <h3 className='text-lg font-medium text-gray-900 mb-2'>
-                        Subscription Management
-                      </h3>
-                      <p className='text-gray-600 mb-6'>
-                        Manage your subscription and billing information.
-                      </p>
-                      <Button onClick={() => router.push('/subscription')}>
-                        Manage Subscription
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {activeTab === 'notifications' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className='flex items-center space-x-2'>
-                      <Bell className='h-5 w-5' />
-                      <span>Notifications</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className='text-center py-8'>
-                      <Bell className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-                      <h3 className='text-lg font-medium text-gray-900 mb-2'>
-                        Notification Settings
-                      </h3>
-                      <p className='text-gray-600 mb-6'>
-                        Configure your notification preferences.
-                      </p>
-                      <Alert>
-                        <AlertDescription>
-                          Notification settings will be available in a future
-                          update.
-                        </AlertDescription>
-                      </Alert>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {activeTab === 'security' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className='flex items-center space-x-2'>
-                      <Shield className='h-5 w-5' />
-                      <span>Security</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className='text-center py-8'>
-                      <Shield className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-                      <h3 className='text-lg font-medium text-gray-900 mb-2'>
-                        Security Settings
-                      </h3>
-                      <p className='text-gray-600 mb-6'>
-                        Manage your account security and authentication.
-                      </p>
-                      <Alert>
-                        <AlertDescription>
-                          Security settings will be available in a future
-                          update.
-                        </AlertDescription>
-                      </Alert>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {activeTab === 'help' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className='flex items-center space-x-2'>
-                      <HelpCircle className='h-5 w-5' />
-                      <span>Help & Support</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className='space-y-6'>
-                      <div className='text-center py-8'>
-                        <HelpCircle className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-                        <h3 className='text-lg font-medium text-gray-900 mb-2'>
-                          Need Help?
-                        </h3>
-                        <p className='text-gray-600 mb-6'>
-                          Get help with using the bathroom renovation
-                          calculator.
-                        </p>
-                      </div>
-
-                      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                        <Card>
-                          <CardContent className='p-4'>
-                            <h4 className='font-medium text-gray-900 mb-2'>
-                              Documentation
-                            </h4>
-                            <p className='text-sm text-gray-600 mb-4'>
-                              Learn how to use all features of the calculator.
-                            </p>
-                            <Button variant='outline' size='sm' disabled>
-                              View Docs
-                            </Button>
-                          </CardContent>
-                        </Card>
-
-                        <Card>
-                          <CardContent className='p-4'>
-                            <h4 className='font-medium text-gray-900 mb-2'>
-                              Contact Support
-                            </h4>
-                            <p className='text-sm text-gray-600 mb-4'>
-                              Get help from our support team.
-                            </p>
-                            <Button variant='outline' size='sm' disabled>
-                              Contact Us
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+            {/* Emails Section */}
+            <div className='space-y-2'>
+              <label className='flex justify-between text-sm font-medium text-slate-600'>
+                Email Addresses
+                <button
+                  type='button'
+                  onClick={addEmail}
+                  className='p-1 text-blue-600 hover:bg-blue-50 rounded-md ml-1'
+                  title='Add email'
+                >
+                  <Plus size={22} />
+                </button>
+              </label>
+              {formData.companyEmails.map((email, index) => (
+                <div
+                  key={`settings-email-${index}`}
+                  className='flex items-center -mx-7 px-7'
+                >
+                  <input
+                    type='email'
+                    value={email}
+                    onChange={(e) =>
+                      handleArrayInputChange(
+                        'companyEmails',
+                        index,
+                        e.target.value
+                      )
+                    }
+                    placeholder='Enter email address'
+                    className='w-full text-sm border border-slate-300 rounded-md px-3 py-2 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400'
+                  />
+                  {formData.companyEmails.length > 1 && (
+                    <button
+                      type='button'
+                      onClick={() => removeEmail(index)}
+                      className='p-1 text-red-600 hover:bg-red-50 rounded-md flex-shrink-0 ml-1'
+                      title='Remove email'
+                    >
+                      <Trash2 size={22} />
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
+
+            {/* Phones Section */}
+            <div className='space-y-2'>
+              <label className='flex justify-between text-sm font-medium text-slate-600'>
+                <span>Phone Numbers</span>
+                <button
+                  type='button'
+                  onClick={addPhone}
+                  className='p-1 text-blue-600 hover:bg-blue-50 rounded-md ml-1'
+                  title='Add phone'
+                >
+                  <Plus size={22} />
+                </button>
+              </label>
+              {formData.companyPhones.map((phone, index) => (
+                <div
+                  key={`settings-phone-${index}`}
+                  className='flex items-center -mx-7 px-7'
+                >
+                  <input
+                    type='tel'
+                    value={phone}
+                    onChange={(e) =>
+                      handleArrayInputChange(
+                        'companyPhones',
+                        index,
+                        e.target.value
+                      )
+                    }
+                    placeholder='Enter phone number'
+                    className='w-full text-sm border border-slate-300 rounded-md px-3 py-2 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400'
+                  />
+                  {formData.companyPhones.length > 1 && (
+                    <button
+                      type='button'
+                      onClick={() => removePhone(index)}
+                      className='p-1 text-red-600 hover:bg-red-50 rounded-md flex-shrink-0 ml-1'
+                      title='Remove phone'
+                    >
+                      <Trash2 size={22} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className='grid grid-cols-1 gap-4'>
+              <Input
+                id='address'
+                label='Address'
+                value={formData.address}
+                onChange={(e) => handleInputChange('address', e.target.value)}
+                placeholder='Enter address'
+              />
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+              <Input
+                id='postalCode'
+                label='Postal Code'
+                value={formData.postalCode}
+                onChange={(e) =>
+                  handleInputChange('postalCode', e.target.value)
+                }
+                placeholder='Enter postal code'
+              />
+              <Select
+                id='province'
+                label='Province'
+                value={formData.province}
+                onChange={(e) => handleInputChange('province', e.target.value)}
+              >
+                {Object.entries(PROVINCES).map(([code, data]) => (
+                  <option key={code} value={code}>
+                    {data.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Business Settings</CardTitle>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <Input
+                id='hourlyRate'
+                label='Hourly Rate ($)'
+                type='number'
+                value={formData.hourlyRate}
+                onChange={(e) =>
+                  handleInputChange('hourlyRate', e.target.value)
+                }
+                placeholder='Enter hourly rate'
+              />
+              <Input
+                id='taxRate'
+                label='Tax Rate (%)'
+                type='number'
+                value={formData.taxRate}
+                onChange={(e) => handleInputChange('taxRate', e.target.value)}
+                placeholder='Enter tax rate'
+              />
+              <Select
+                id='currency'
+                label='Currency'
+                value={formData.currency}
+                onChange={(e) => handleInputChange('currency', e.target.value)}
+              >
+                {Object.entries(CURRENCIES).map(([code, name]) => (
+                  <option key={code} value={code}>
+                    {name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {message && (
+          <Alert
+            variant={
+              message.includes('success') ? 'informative' : 'destructive'
+            }
+          >
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+        )}
+
+        {!message && (
+          <div className='flex justify-between space-x-4'>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => router.back()}
+            >
+              Cancel
+            </Button>
+            <Button
+              type='submit'
+              disabled={isLoading}
+              className='flex items-center space-x-2'
+            >
+              <Save size={16} />
+              <span>{isLoading ? 'Saving...' : 'Save Changes'}</span>
+            </Button>
           </div>
-        </div>
-      </div>
+        )}
+      </form>
     </div>
   );
 }

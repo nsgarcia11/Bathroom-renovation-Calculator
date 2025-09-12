@@ -68,14 +68,11 @@ export function useCreateProject() {
         'id' | 'created_at' | 'updated_at' | 'contractor_id' | 'user_id'
       >
     ) => {
-      console.log('🏗️ Creating project with data:', projectData);
 
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
-
-      console.log('✅ User authenticated:', user.id);
 
       // Get contractor data to get contractor_id (handle multiple records)
       const { data: contractors, error: contractorError } = await supabase
@@ -95,13 +92,6 @@ export function useCreateProject() {
 
       // Use the most recent contractor record
       const contractor = contractors[0];
-      console.log(
-        '✅ Contractor found:',
-        contractor.id,
-        '(using most recent of',
-        contractors.length,
-        'records)'
-      );
 
       const { data, error } = await supabase
         .from('projects')
@@ -114,11 +104,10 @@ export function useCreateProject() {
         .single();
 
       if (error) {
-        console.error('❌ Project creation error:', error);
         throw error;
       }
 
-      console.log('✅ Project created successfully:', data);
+      
       return data;
     },
     onSuccess: () => {

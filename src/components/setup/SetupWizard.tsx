@@ -237,18 +237,24 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
                 <label className='block text-sm font-medium text-slate-600 mb-2'>
                   Currency
                 </label>
-                <div className='flex rounded-md shadow-sm'>
-                  <button
+                <div className='flex rounded-md'>
+                  {/* <button
                     onClick={() => handleCurrencyChange('CAD')}
-                    className={`px-4 py-2 text-sm font-medium rounded-l-md w-full border ${
+                    className={`px-4 py-2 text-sm font-medium rounded-l-md border ${
                       settings.currency === 'CAD'
                         ? 'bg-blue-600 text-white z-10 border-blue-600'
                         : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                     }`}
                   >
                     CAD
-                  </button>
-                  <button
+                  </button> */}
+                  <Button
+                    onClick={() => handleCurrencyChange('CAD')}
+                    className='px-6 py-2.5'
+                  >
+                    CAD
+                  </Button>
+                  {/* <button
                     onClick={() => handleCurrencyChange('USD')}
                     className={`-ml-px px-4 py-2 text-sm font-medium rounded-r-md w-full border ${
                       settings.currency === 'USD'
@@ -257,7 +263,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
                     }`}
                   >
                     USD
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </div>
@@ -269,9 +275,9 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
   };
 
   return (
-    <div className='h-full bg-slate-50 flex flex-col justify-between p-8'>
+    <div className='h-full bg-slate-50 flex flex-col gap-6 justify-between p-8'>
       <div className='flex-grow flex items-center'>{renderStep()}</div>
-      <div className='flex-shrink-0'>
+      <div className='flex-shrink-0 pb-6'>
         {step > 1 && (
           <div className='flex items-center justify-between'>
             <Button

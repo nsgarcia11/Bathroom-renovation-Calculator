@@ -4,7 +4,7 @@ import { HomePage } from '@/components/pages/HomePage';
 
 export default function Home() {
   return (
-    <Layout showBottomNav={false}>
+    <Layout showBottomNav={true}>
       <AuthGuard>
         <HomePage />
       </AuthGuard>

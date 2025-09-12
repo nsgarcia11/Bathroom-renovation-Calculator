@@ -12,6 +12,8 @@ CREATE TABLE contractors (
   email TEXT NOT NULL,
   province TEXT NOT NULL,
   tax_rate DECIMAL(5,4) NOT NULL DEFAULT 0.13,
+  hourly_rate DECIMAL(10,2) NOT NULL DEFAULT 75.00,
+  currency TEXT NOT NULL DEFAULT 'CAD',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   -- Ensure only one contractor record per user

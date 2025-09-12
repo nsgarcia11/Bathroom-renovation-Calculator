@@ -33,9 +33,7 @@ export function SetupPage() {
         currency: settings.currency,
       };
 
-      console.log('💾 Saving contractor data:', contractorData);
       await updateContractor.mutateAsync(contractorData);
-      console.log('✅ Contractor data saved successfully');
 
       // Redirect to home page
       router.push('/');

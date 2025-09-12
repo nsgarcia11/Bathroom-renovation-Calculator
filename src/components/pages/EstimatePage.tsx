@@ -1,104 +1,108 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
-import { useSubscription } from '@/contexts/SubscriptionContext';
-import { Contractor, Project, EstimateTotals } from '@/types';
-import { AppHeader } from '@/components/AppHeader';
-import { WorkflowNavigation } from '@/components/WorkflowNavigation';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { useProject } from '@/hooks/use-projects';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/utils';
-import { Download, CreditCard } from 'lucide-react';
+import { Toggle } from '@/components/ui/toggle';
+import { Button } from '@/components/ui/button';
+import {
+  ArrowLeft,
+  Hammer,
+  ShowerHead,
+  Square,
+  Layers,
+  Paintbrush,
+  Wrench,
+  Users,
+  ChevronUp,
+  ChevronDown,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
-export function EstimatePage() {
-  const { user } = useAuth();
-  const { hasActiveSubscription } = useSubscription();
+interface EstimatePageProps {
+  projectId: string;
+}
+
+const CATEGORIES = [
+  {
+    id: 'demolition',
+    name: 'Demolition',
+    icon: Hammer,
+    color: 'bg-blue-100 text-blue-600',
+  },
+  {
+    id: 'shower-walls',
+    name: 'Shower Walls',
+    icon: ShowerHead,
+    color: 'bg-gray-100 text-gray-600',
+  },
+  {
+    id: 'shower-base',
+    name: 'Shower Base',
+    icon: Square,
+    color: 'bg-gray-100 text-gray-600',
+  },
+  {
+    id: 'floors',
+    name: 'Floors',
+    icon: Layers,
+    color: 'bg-gray-100 text-gray-600',
+  },
+  {
+    id: 'finishings',
+    name: 'Finishings',
+    icon: Paintbrush,
+    color: 'bg-gray-100 text-gray-600',
+  },
+  {
+    id: 'structural',
+    name: 'Structural',
+    icon: Wrench,
+    color: 'bg-gray-100 text-gray-600',
+  },
+  {
+    id: 'trades',
+    name: 'Trades',
+    icon: Users,
+    color: 'bg-gray-100 text-gray-600',
+  },
+];
+
+const DEMOLITION_TASKS = [
+  'Remove existing tub/shower base',
+  'Remove existing tile',
+  'Remove drywall to studs',
+  'Remove existing plumbing fixtures',
+  'Haul away debris',
+];
+
+export function EstimatePage({ projectId }: EstimatePageProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const projectId = searchParams.get('project');
-  const [loading, setLoading] = useState(true);
-  const [contractor, setContractor] = useState<Contractor | null>(null);
-  const [project, setProject] = useState<Project | null>(null);
-  const [totals, setTotals] = useState<EstimateTotals>({
-    labor_total: 0,
-    material_total: 0,
-    subtotal: 0,
-    tax: 0,
-    grand_total: 0,
-  });
+  const { data: project, isLoading } = useProject(projectId);
+  const [selectedCategory, setSelectedCategory] = useState('demolition');
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set(['demolition-tasks'])
+  );
+  const [taskStates, setTaskStates] = useState<Record<string, boolean>>({});
 
-  const loadEstimateData = useCallback(async () => {
-    // Load contractor info
-    const { data: contractorData } = await supabase
-      .from('contractors')
-      .select('*')
-      .eq('user_id', user?.id)
-      .single();
-
-    setContractor(contractorData);
-
-    // Mock project data
-    setProject({
-      id: '1',
-      user_id: user?.id || '',
-      contractor_id: contractorData?.id || '',
-      client_name: 'John Smith',
-      client_email: 'john@example.com',
-      client_phone: '(555) 123-4567',
-      project_name: 'Master Bathroom Renovation',
-      project_address: '123 Main St, Toronto, ON',
-      notes: 'Complete bathroom renovation with walk-in shower',
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
-
-    // Mock totals data
-    setTotals({
-      labor_total: 2816.33,
-      material_total: 475.0,
-      subtotal: 3291.33,
-      tax: 427.87,
-      grand_total: 3719.2,
-    });
-
-    setLoading(false);
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      loadEstimateData();
-    }
-  }, [user, loadEstimateData]);
-
-  const handleExportPDF = () => {
-    if (!hasActiveSubscription) {
-      // Redirect to subscription page
-      router.push('/subscription');
-      return;
-    }
-
-    // In a real app, this would generate and download the PDF
-    console.log('Exporting PDF...');
-    alert('PDF export functionality would be implemented here');
-  };
-
-  const handleSubscribe = () => {
-    router.push('/subscription');
-  };
-
-  const handleBack = () => {
-    if (projectId) {
-      router.push(`/project/${projectId}`);
+  const toggleSection = (sectionId: string) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(sectionId)) {
+      newExpanded.delete(sectionId);
     } else {
-      router.push('/');
+      newExpanded.add(sectionId);
     }
+    setExpandedSections(newExpanded);
   };
 
-  if (loading) {
+  const toggleTask = (taskId: string) => {
+    setTaskStates((prev) => ({
+      ...prev,
+      [taskId]: !prev[taskId],
+    }));
+  };
+
+  if (isLoading) {
     return (
       <div className='min-h-screen flex items-center justify-center'>
         <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
@@ -106,147 +110,123 @@ export function EstimatePage() {
     );
   }
 
-  return (
-    <div className='min-h-screen bg-gray-50'>
-      <AppHeader
-        title='Estimate'
-        subtitle={
-          project
-            ? `Project: ${project.project_name}`
-            : 'Bathroom Renovation Estimate'
-        }
-        showBackButton={true}
-        backButtonText={projectId ? 'Back to Project' : 'Back to Dashboard'}
-        onBackClick={handleBack}
-      />
+  if (!project) {
+    router.push('/');
+    return null;
+  }
 
-      {/* Workflow Navigation - Top Icons */}
-      <WorkflowNavigation />
+  return (
+    <div className='bg-white min-h-screen'>
+      {/* Project Header */}
+      <div className='p-4 border-b border-slate-200'>
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center space-x-3'>
+            <h1 className='text-xl font-bold text-slate-800'>
+              {project.project_name}
+            </h1>
+          </div>
+          <Button
+            onClick={() => router.back()}
+            variant='ghost'
+            size='sm'
+            title='Back'
+            aria-label='Go back'
+          >
+            <ArrowLeft size={20} />
+          </Button>
+        </div>
+        <p className='text-sm text-slate-600 ml-8'>{project.client_name}</p>
+      </div>
+
+      {/* Category Navigation */}
+      <div className='p-4'>
+        <div className='flex space-x-4 overflow-x-auto pb-2'>
+          {CATEGORIES.map((category) => {
+            const Icon = category.icon;
+            const isSelected = selectedCategory === category.id;
+            return (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`flex-shrink-0 w-24 h-20 rounded-lg border-2 flex flex-col items-center justify-center space-y-2 ${
+                  isSelected
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 bg-white'
+                }`}
+              >
+                <Icon
+                  size={24}
+                  className={isSelected ? 'text-blue-600' : 'text-gray-600'}
+                />
+                <span
+                  className={`text-xs font-medium ${
+                    isSelected ? 'text-blue-600' : 'text-gray-600'
+                  }`}
+                >
+                  {category.name}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Main Content */}
-      <div className='py-6 px-4 pb-20'>
-        <div className='max-w-4xl mx-auto'>
-          {/* Project Info */}
-          <Card className='mb-6'>
-            <CardHeader>
-              <CardTitle>Project Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                <div>
-                  <h3 className='font-semibold text-gray-900 mb-2'>Client</h3>
-                  <p className='text-gray-600'>{project?.client_name}</p>
-                  <p className='text-gray-600'>{project?.client_email}</p>
-                  <p className='text-gray-600'>{project?.client_phone}</p>
-                </div>
-                <div>
-                  <h3 className='font-semibold text-gray-900 mb-2'>Project</h3>
-                  <p className='text-gray-600'>{project?.project_name}</p>
-                  <p className='text-gray-600'>{project?.project_address}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <div className='p-4 space-y-4'>
+        <h2 className='text-2xl font-bold text-slate-800 capitalize'>
+          {CATEGORIES.find((cat) => cat.id === selectedCategory)?.name}
+        </h2>
 
-          {/* Contractor Info */}
-          {contractor && (
-            <Card className='mb-6'>
+        {/* Demolition Tasks Section */}
+        {selectedCategory === 'demolition' && (
+          <Card>
+            <div
+              className='cursor-pointer'
+              onClick={() => toggleSection('demolition-tasks')}
+            >
               <CardHeader>
-                <CardTitle>Contractor Information</CardTitle>
+                <div className='flex items-center justify-between'>
+                  <CardTitle className='text-lg'>Demolition Tasks</CardTitle>
+                  {expandedSections.has('demolition-tasks') ? (
+                    <ChevronUp size={20} className='text-blue-600' />
+                  ) : (
+                    <ChevronDown size={20} className='text-gray-400' />
+                  )}
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                  <div>
-                    <h3 className='font-semibold text-gray-900 mb-2'>
-                      Company
-                    </h3>
-                    <p className='text-gray-600'>{contractor.name}</p>
-                    <p className='text-gray-600'>{contractor.address}</p>
-                    <p className='text-gray-600'>{contractor.postal_code}</p>
+            </div>
+            {expandedSections.has('demolition-tasks') && (
+              <CardContent className='space-y-3'>
+                {DEMOLITION_TASKS.map((task, index) => (
+                  <div
+                    key={index}
+                    className='flex items-center justify-between py-2'
+                  >
+                    <span className='text-slate-700'>{task}</span>
+                    <Toggle
+                      checked={taskStates[`demolition-${index}`] || false}
+                      onChange={() => toggleTask(`demolition-${index}`)}
+                      title={`Toggle ${task}`}
+                      aria-label={`Toggle ${task}`}
+                    />
                   </div>
-                  <div>
-                    <h3 className='font-semibold text-gray-900 mb-2'>
-                      Contact
-                    </h3>
-                    <p className='text-gray-600'>{contractor.phone}</p>
-                    <p className='text-gray-600'>{contractor.email}</p>
-                  </div>
-                </div>
+                ))}
               </CardContent>
-            </Card>
-          )}
+            )}
+          </Card>
+        )}
 
-          {/* Estimate Summary */}
-          <Card className='mb-6'>
-            <CardHeader>
-              <CardTitle>Estimate Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='space-y-4'>
-                <div className='flex justify-between'>
-                  <span className='text-gray-600'>Labor</span>
-                  <span className='font-medium'>
-                    {formatCurrency(totals.labor_total)}
-                  </span>
-                </div>
-                <div className='flex justify-between'>
-                  <span className='text-gray-600'>Materials</span>
-                  <span className='font-medium'>
-                    {formatCurrency(totals.material_total)}
-                  </span>
-                </div>
-                <div className='flex justify-between border-t pt-4'>
-                  <span className='font-semibold text-gray-900'>Subtotal</span>
-                  <span className='font-semibold'>
-                    {formatCurrency(totals.subtotal)}
-                  </span>
-                </div>
-                <div className='flex justify-between'>
-                  <span className='text-gray-600'>
-                    Tax ({(contractor?.tax_rate || 0.13) * 100}%)
-                  </span>
-                  <span className='font-medium'>
-                    {formatCurrency(totals.tax)}
-                  </span>
-                </div>
-                <div className='flex justify-between border-t pt-4 text-lg'>
-                  <span className='font-bold text-gray-900'>Total</span>
-                  <span className='font-bold text-blue-600'>
-                    {formatCurrency(totals.grand_total)}
-                  </span>
-                </div>
-              </div>
+        {/* Placeholder for other categories */}
+        {selectedCategory !== 'demolition' && (
+          <Card>
+            <CardContent className='p-6 text-center'>
+              <p className='text-slate-500'>
+                {CATEGORIES.find((cat) => cat.id === selectedCategory)?.name}{' '}
+                tasks coming soon...
+              </p>
             </CardContent>
           </Card>
-
-          {/* Actions */}
-          <div className='flex justify-center'>
-            {hasActiveSubscription ? (
-              <Button onClick={handleExportPDF} className='px-8'>
-                <Download className='h-4 w-4 mr-2' />
-                Export PDF
-              </Button>
-            ) : (
-              <div className='space-y-4 text-center'>
-                <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-4'>
-                  <div className='flex items-center justify-center'>
-                    <CreditCard className='h-5 w-5 text-yellow-600 mr-2' />
-                    <span className='text-yellow-800 font-medium'>
-                      Subscription Required
-                    </span>
-                  </div>
-                  <p className='text-yellow-700 text-sm mt-1'>
-                    You need an active subscription to export PDF estimates.
-                  </p>
-                </div>
-                <Button onClick={handleSubscribe} className='px-8'>
-                  <CreditCard className='h-4 w-4 mr-2' />
-                  Subscribe to Export PDFs
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

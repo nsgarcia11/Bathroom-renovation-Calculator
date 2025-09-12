@@ -4,7 +4,7 @@ import { SetupPage } from '@/components/pages/SetupPage';
 
 export default function Setup() {
   return (
-    <Layout showBottomNav={false}>
+    <Layout showBottomNav={false} showHeader={false}>
       <AuthGuard>
         <SetupPage />
       </AuthGuard>

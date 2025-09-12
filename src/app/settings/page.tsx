@@ -4,7 +4,7 @@ import { SettingsPage } from '@/components/pages/SettingsPage';
 
 export default function Settings() {
   return (
-    <Layout showBottomNav={false}>
+    <Layout showBottomNav={true} showHeader={true}>
       <AuthGuard>
         <SettingsPage />
       </AuthGuard>

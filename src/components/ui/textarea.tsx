@@ -37,7 +37,7 @@ export const Textarea: React.FC<TextareaProps> = ({
       onChange={onChange}
       placeholder={placeholder}
       rows={rows}
-      className={`block w-full p-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 ${className}`}
+      className={`w-full text-sm border border-slate-300 rounded-md px-3 py-2 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 ${className}`}
     />
     {helperText && <p className='mt-2 text-xs text-slate-500'>{helperText}</p>}
   </div>

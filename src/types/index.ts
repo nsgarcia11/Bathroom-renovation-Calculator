@@ -8,6 +8,8 @@ export interface Contractor {
   email: string;
   province: string;
   tax_rate: number;
+  hourly_rate: number;
+  currency: string;
   created_at: string;
   updated_at: string;
 }

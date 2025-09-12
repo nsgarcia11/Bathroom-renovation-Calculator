@@ -1,15 +1,18 @@
 import React from 'react';
 
 interface InputProps {
-  id: string;
+  id?: string;
   name?: string;
-  label: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  label?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   type?: string;
   readOnly?: boolean;
   className?: string;
+  // React Hook Form compatibility
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  ref?: React.Ref<HTMLInputElement>;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -18,27 +21,33 @@ export const Input: React.FC<InputProps> = ({
   label,
   value,
   onChange,
+  onBlur,
+  ref,
   placeholder,
   type = 'text',
   readOnly = false,
   className = '',
 }) => (
   <div>
-    <label
-      htmlFor={id}
-      className='block text-sm font-medium text-slate-600 mb-1'
-    >
-      {label}
-    </label>
+    {label && (
+      <label
+        htmlFor={id}
+        className='block text-sm font-medium text-slate-600 mb-1'
+      >
+        {label}
+      </label>
+    )}
     <input
       type={type}
       id={id}
       name={name || id}
       value={value}
       onChange={onChange}
+      onBlur={onBlur}
+      ref={ref}
       placeholder={placeholder}
       readOnly={readOnly}
-      className={`block w-full p-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 ${className}`}
+      className={`w-full text-sm border border-slate-300 rounded-md px-3 py-2 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 ${className}`}
     />
   </div>
 );
