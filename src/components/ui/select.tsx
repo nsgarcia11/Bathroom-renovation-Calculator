@@ -22,7 +22,7 @@ export const Select: React.FC<SelectProps> = ({
   <div>
     <label
       htmlFor={id}
-      className='block text-sm font-medium text-slate-600 mb-1'
+      className='block text-lg sm:text-sm font-medium text-slate-600 mb-1'
     >
       {label}
     </label>
@@ -31,7 +31,7 @@ export const Select: React.FC<SelectProps> = ({
       name={name || id}
       value={value}
       onChange={onChange}
-      className={`w-full text-sm border border-slate-300 rounded-md px-3 py-2 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${className}`}
+      className={`w-full h-12 sm:h-10 text-lg sm:text-sm border border-slate-300 rounded-md px-3 py-2 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${className}`}
     >
       {children}
     </select>

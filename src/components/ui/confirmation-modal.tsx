@@ -70,7 +70,7 @@ export function ConfirmationModal({
             className='text-slate-400 hover:text-slate-600 transition-colors'
             disabled={isLoading}
           >
-            <X size={20} />
+            <X size={24} className='sm:w-[20px] sm:h-[20px]' />
           </button>
         </div>
 

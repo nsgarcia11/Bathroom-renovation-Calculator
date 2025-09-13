@@ -118,7 +118,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
   return (
     <div className='bg-white min-h-screen'>
       {/* Project Header */}
-      <div className='p-4 border-b border-slate-200'>
+      <div className='p-4 sm:p-6 lg:p-8 border-b border-slate-200 max-w-7xl mx-auto'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center space-x-3'>
             <h1 className='text-xl font-bold text-slate-800'>
@@ -132,14 +132,14 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
             title='Back'
             aria-label='Go back'
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={24} className='sm:w-[20px] sm:h-[20px]' />
           </Button>
         </div>
         <p className='text-sm text-slate-600 ml-8'>{project.client_name}</p>
       </div>
 
       {/* Category Navigation */}
-      <div className='p-4'>
+      <div className='p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto'>
         <div className='flex space-x-4 overflow-x-auto pb-2'>
           {CATEGORIES.map((category) => {
             const Icon = category.icon;
@@ -172,7 +172,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
       </div>
 
       {/* Main Content */}
-      <div className='p-4 space-y-4'>
+      <div className='p-4 sm:p-6 lg:p-8 space-y-4 max-w-7xl mx-auto'>
         <h2 className='text-2xl font-bold text-slate-800 capitalize'>
           {CATEGORIES.find((cat) => cat.id === selectedCategory)?.name}
         </h2>

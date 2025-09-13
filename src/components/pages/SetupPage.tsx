@@ -39,6 +39,20 @@ export function SetupPage() {
       router.push('/');
     } catch (error) {
       console.error('❌ Setup error:', error);
+
+      // If it's an auth error, redirect to login
+      if (
+        error.message?.includes('JWT') ||
+        error.message?.includes('User from sub claim')
+      ) {
+        console.log('🔄 Session expired, redirecting to login...');
+        router.push('/auth/login');
+        return;
+      }
+
+      // For other errors, redirect to login as well
+      console.log('🔄 Authentication error, redirecting to login...');
+      router.push('/auth/login');
     }
   };
 

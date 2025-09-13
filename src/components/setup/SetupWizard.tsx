@@ -71,12 +71,12 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
       case 1:
         return (
           <div className='text-center max-w-2xl mx-auto'>
-            <Wrench className='w-16 h-16 mx-auto text-blue-500 mb-4' />
+            <Wrench className='w-12 h-12 mx-auto text-blue-500 mb-3' />
             <h1 className='text-2xl sm:text-3xl font-bold text-slate-800'>
               Welcome to the Calculator
             </h1>
 
-            <div className='relative bg-white border-l-4 border-blue-500 shadow-md rounded-lg p-5 my-6 text-left'>
+            <div className='relative bg-white border-l-4 border-blue-500 shadow-md rounded-lg p-4 my-4 text-left'>
               <div className='absolute -top-4 -right-4 bg-blue-600 p-2 rounded-full shadow-lg'>
                 <Award className='w-6 h-6 text-white' />
               </div>
@@ -92,7 +92,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
               </p>
             </div>
 
-            <div className='p-4 bg-white rounded-lg shadow-sm border border-slate-200 text-left'>
+            <div className='p-3 bg-white rounded-lg shadow-sm border border-slate-200 text-left'>
               <div className='flex items-center space-x-3 border-b pb-2 mb-4'>
                 <Info className='w-5 h-5 text-blue-500' />
                 <h3 className='font-semibold text-lg sm:text-md text-slate-800'>
@@ -133,6 +133,13 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
                   </span>
                 </li>
               </ul>
+            </div>
+
+            {/* Get Started Button */}
+            <div className='mt-6'>
+              <Button onClick={nextStep} className='w-full sm:w-auto px-6 py-3'>
+                Get Started
+              </Button>
             </div>
           </div>
         );
@@ -275,11 +282,11 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
   };
 
   return (
-    <div className='h-full bg-slate-50 flex flex-col p-4 sm:p-8'>
-      <div className='flex-1 overflow-y-auto py-4 sm:py-8'>{renderStep()}</div>
-      <div className='flex-shrink-0 pb-4 sm:pb-6 pt-4 border-t border-slate-200 bg-white -mx-4 sm:-mx-8 px-4 sm:px-8'>
-        {step > 1 && (
-          <div className='flex items-center justify-between'>
+    <div className='min-h-screen bg-slate-50'>
+      <div className='p-4 sm:p-8 py-4 sm:py-8'>{renderStep()}</div>
+      {step > 1 && (
+        <div className='px-4 sm:px-8 py-4 sm:py-6 flex justify-center'>
+          <div className='w-full max-w-md flex justify-between'>
             <Button
               onClick={prevStep}
               variant='outline'
@@ -304,13 +311,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
               </Button>
             )}
           </div>
-        )}
-        {step === 1 && (
-          <Button onClick={nextStep} className='w-full px-6 py-3'>
-            Get Started
-          </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

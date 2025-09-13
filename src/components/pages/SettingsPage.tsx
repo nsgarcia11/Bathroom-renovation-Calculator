@@ -154,7 +154,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className='p-4 space-y-6'>
+    <div className='p-4 sm:p-6 lg:p-8 space-y-6 max-w-4xl mx-auto'>
       {/* Form */}
       <form onSubmit={handleSubmit} className='space-y-6'>
         <Card>
@@ -229,7 +229,7 @@ export function SettingsPage() {
                   className='p-1 text-blue-600 hover:bg-blue-50 rounded-md ml-1'
                   title='Add phone'
                 >
-                  <Plus size={22} />
+                  <Plus size={28} className='sm:w-[22px] sm:h-[22px]' />
                 </button>
               </label>
               {formData.companyPhones.map((phone, index) => (
@@ -257,7 +257,7 @@ export function SettingsPage() {
                       className='p-1 text-red-600 hover:bg-red-50 rounded-md flex-shrink-0 ml-1'
                       title='Remove phone'
                     >
-                      <Trash2 size={22} />
+                      <Trash2 size={28} className='sm:w-[22px] sm:h-[22px]' />
                     </button>
                   )}
                 </div>

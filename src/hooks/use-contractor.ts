@@ -43,7 +43,14 @@ export function useUpdateContractor() {
 
   return useMutation({
     mutationFn: async (contractorData: Partial<Contractor>) => {
-      
+      // First try to refresh the session
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.refreshSession();
+
+      if (sessionError) {
+        console.error('Session refresh error:', sessionError);
+      }
+
       const {
         data: { user },
         error: authError,

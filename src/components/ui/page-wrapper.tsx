@@ -22,7 +22,7 @@ export const PageWrapper: React.FC<PageWrapperProps> = ({
           onClick={onBack}
           className='text-slate-500 hover:text-slate-900'
         >
-          <ArrowLeft size={22} />
+          <ArrowLeft size={28} className='sm:w-[22px] sm:h-[22px]' />
         </button>
       )}
       <h2 className='text-xl font-bold text-slate-800'>{title}</h2>

@@ -126,29 +126,34 @@
     @apply absolute inset-0 bg-black;
     opacity: 0.3;
   }
-  
+
   /* Mobile-first responsive typography */
   .text-mobile-sm {
-    @apply text-sm sm:text-xs;
+    @apply text-base sm:text-xs;
   }
-  
+
   .text-mobile-base {
-    @apply text-base sm:text-sm;
+    @apply text-lg sm:text-sm;
   }
-  
+
   .text-mobile-lg {
-    @apply text-lg sm:text-base;
+    @apply text-xl sm:text-base;
   }
-  
+
   .text-mobile-xl {
-    @apply text-xl sm:text-lg;
+    @apply text-2xl sm:text-lg;
   }
-  
+
   .text-mobile-2xl {
-    @apply text-2xl sm:text-xl;
+    @apply text-3xl sm:text-xl;
   }
-  
+
   .text-mobile-3xl {
-    @apply text-3xl sm:text-2xl;
+    @apply text-4xl sm:text-2xl;
+  }
+
+  /* Mobile viewport fixes */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
   }
 }

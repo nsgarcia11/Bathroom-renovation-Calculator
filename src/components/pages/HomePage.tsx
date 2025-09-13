@@ -59,12 +59,19 @@ export function HomePage() {
   const confirmDelete = async () => {
     if (!projectToDelete) return;
 
+    console.log(
+      '🗑️ Attempting to delete project:',
+      projectToDelete.id,
+      projectToDelete.project_name
+    );
+
     try {
       await deleteProject.mutateAsync(projectToDelete.id);
+      console.log('✅ Project deleted successfully');
       setShowDeleteModal(false);
       setProjectToDelete(null);
     } catch (error) {
-      console.error('Failed to delete project:', error);
+      console.error('❌ Failed to delete project:', error);
       // You could add a toast notification here instead of alert
       alert('Failed to delete project. Please try again.');
     }
@@ -89,7 +96,7 @@ export function HomePage() {
   }
 
   return (
-    <div className='p-4 space-y-6'>
+    <div className='p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto'>
       <div className='space-y-4'>
         <div className='flex justify-between items-center'>
           <h2 className='text-2xl sm:text-3xl font-bold text-slate-800'>
@@ -124,7 +131,7 @@ export function HomePage() {
             onClick={handleNewProject}
             className='flex items-center space-x-2 text-base sm:text-sm bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors'
           >
-            <Plus size={18} />
+            <Plus size={24} className='sm:w-[18px] sm:h-[18px]' />
             <span>Add Project</span>
           </button>
         </div>
@@ -140,37 +147,39 @@ export function HomePage() {
             </p>
           </div>
         ) : (
-          <div className='space-y-3'>
+          <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4'>
             {(projects || []).map((project) => (
               <div
                 key={project.id}
-                className='bg-white rounded-lg shadow-sm flex items-center transition-all hover:shadow-md'
+                className='bg-white rounded-lg shadow-sm transition-all hover:shadow-md flex flex-col'
               >
                 <button
                   onClick={() => router.push(`/project/${project.id}/estimate`)}
                   className='flex-grow p-4 text-left'
                 >
-                  <h3 className='font-bold text-slate-800 text-base sm:text-sm'>
+                  <h3 className='font-bold text-slate-800 text-base sm:text-sm mb-2'>
                     {project.project_name || 'Untitled Project'}
                   </h3>
                   <p className='text-base sm:text-sm text-slate-500'>
                     {project.client_name || 'No customer name'}
                   </p>
                 </button>
-                <button
-                  title='Edit Project'
-                  onClick={() => handleEditProject(project)}
-                  className='p-4 text-slate-500 hover:text-blue-700'
-                >
-                  <Pencil size={22} />
-                </button>
-                <button
-                  title='Delete Project'
-                  onClick={() => handleDeleteProject(project)}
-                  className='p-4 text-red-500 hover:text-red-700'
-                >
-                  <Trash2 size={22} />
-                </button>
+                <div className='flex justify-end space-x-2 p-4 pt-0 border-t border-slate-100'>
+                  <button
+                    title='Edit Project'
+                    onClick={() => handleEditProject(project)}
+                    className='p-2 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors'
+                  >
+                    <Pencil size={20} className='sm:w-[18px] sm:h-[18px]' />
+                  </button>
+                  <button
+                    title='Delete Project'
+                    onClick={() => handleDeleteProject(project)}
+                    className='p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors'
+                  >
+                    <Trash2 size={20} className='sm:w-[18px] sm:h-[18px]' />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

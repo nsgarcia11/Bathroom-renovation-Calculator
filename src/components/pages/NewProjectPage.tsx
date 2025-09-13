@@ -100,7 +100,7 @@ export function NewProjectPage() {
   };
 
   return (
-    <div className='p-4 space-y-6'>
+    <div className='p-4 sm:p-6 lg:p-8 space-y-6 max-w-4xl mx-auto'>
       <form onSubmit={handleSave} className='space-y-6'>
         {/* Project Details */}
         <Card>

@@ -20,6 +20,7 @@ interface LayoutProps {
   showBottomNav?: boolean;
   showHeader?: boolean;
   bottomNavType?: 'default' | 'estimate';
+  allowFullHeight?: boolean;
 }
 
 function LayoutContent({
@@ -27,6 +28,7 @@ function LayoutContent({
   showBottomNav = true,
   showHeader = true,
   bottomNavType = 'default',
+  allowFullHeight = false,
 }: LayoutProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
@@ -43,7 +45,11 @@ function LayoutContent({
   };
 
   return (
-    <div className='bg-slate-50 h-screen flex flex-col'>
+    <div
+      className={`bg-slate-50 ${
+        allowFullHeight ? 'h-screen overflow-hidden' : 'flex flex-col h-screen'
+      }`}
+    >
       {/* Header */}
       {showHeader && user && (
         <header className='text-center pt-12 pb-6 bg-white border-b border-slate-200 sticky top-0 z-20 flex-shrink-0 flex items-center justify-center'>
@@ -54,11 +60,15 @@ function LayoutContent({
       )}
 
       {/* Main Content */}
-      <main
-        className={`flex-1 overflow-y-auto ${showBottomNav ? 'pb-20' : ''}`}
-      >
-        {children}
-      </main>
+      {allowFullHeight ? (
+        <div className='h-full'>{children}</div>
+      ) : (
+        <main
+          className={`flex-1 overflow-y-auto ${showBottomNav ? 'pb-20' : ''}`}
+        >
+          {children}
+        </main>
+      )}
 
       {/* Bottom Navigation */}
       {showBottomNav && user && (
@@ -145,6 +155,7 @@ export function Layout({
   showBottomNav = true,
   showHeader = true,
   bottomNavType = 'default',
+  allowFullHeight = false,
 }: LayoutProps) {
   return (
     <AuthProvider>
@@ -152,6 +163,7 @@ export function Layout({
         showBottomNav={showBottomNav}
         showHeader={showHeader}
         bottomNavType={bottomNavType}
+        allowFullHeight={allowFullHeight}
       >
         {children}
       </LayoutContent>
