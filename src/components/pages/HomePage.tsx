@@ -92,7 +92,9 @@ export function HomePage() {
     <div className='p-4 space-y-6'>
       <div className='space-y-4'>
         <div className='flex justify-between items-center'>
-          <h2 className='text-2xl font-bold text-slate-800'>Overview</h2>
+          <h2 className='text-2xl sm:text-3xl font-bold text-slate-800'>
+            Overview
+          </h2>
         </div>
         <div className='flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4'>
           <DashboardCard
@@ -115,10 +117,12 @@ export function HomePage() {
 
       <div className='space-y-4'>
         <div className='flex justify-between items-center'>
-          <h2 className='text-2xl font-bold text-slate-800'>Projects</h2>
+          <h2 className='text-2xl sm:text-3xl font-bold text-slate-800'>
+            Projects
+          </h2>
           <button
             onClick={handleNewProject}
-            className='flex items-center space-x-2 text-sm bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors'
+            className='flex items-center space-x-2 text-base sm:text-sm bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors'
           >
             <Plus size={18} />
             <span>Add Project</span>
@@ -127,10 +131,10 @@ export function HomePage() {
         {(projects?.length || 0) === 0 ? (
           <div className='text-center py-10 px-4 bg-white rounded-lg shadow-sm'>
             <Users className='mx-auto text-slate-400 w-12 h-12' />
-            <h3 className='text-lg font-semibold text-slate-700 mt-4'>
+            <h3 className='text-lg sm:text-xl font-semibold text-slate-700 mt-4'>
               No Projects Yet
             </h3>
-            <p className='text-slate-500 text-sm mt-1'>
+            <p className='text-slate-500 text-base sm:text-sm mt-1'>
               Tap the &apos;Add Project&apos; button to create your first
               estimate.
             </p>
@@ -146,10 +150,10 @@ export function HomePage() {
                   onClick={() => router.push(`/project/${project.id}/estimate`)}
                   className='flex-grow p-4 text-left'
                 >
-                  <h3 className='font-bold text-slate-800'>
+                  <h3 className='font-bold text-slate-800 text-base sm:text-sm'>
                     {project.project_name || 'Untitled Project'}
                   </h3>
-                  <p className='text-sm text-slate-500'>
+                  <p className='text-base sm:text-sm text-slate-500'>
                     {project.client_name || 'No customer name'}
                   </p>
                 </button>

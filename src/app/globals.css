@@ -126,4 +126,29 @@
     @apply absolute inset-0 bg-black;
     opacity: 0.3;
   }
+  
+  /* Mobile-first responsive typography */
+  .text-mobile-sm {
+    @apply text-sm sm:text-xs;
+  }
+  
+  .text-mobile-base {
+    @apply text-base sm:text-sm;
+  }
+  
+  .text-mobile-lg {
+    @apply text-lg sm:text-base;
+  }
+  
+  .text-mobile-xl {
+    @apply text-xl sm:text-lg;
+  }
+  
+  .text-mobile-2xl {
+    @apply text-2xl sm:text-xl;
+  }
+  
+  .text-mobile-3xl {
+    @apply text-3xl sm:text-2xl;
+  }
 }

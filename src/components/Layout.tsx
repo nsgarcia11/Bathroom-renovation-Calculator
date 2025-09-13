@@ -47,7 +47,7 @@ function LayoutContent({
       {/* Header */}
       {showHeader && user && (
         <header className='text-center pt-12 pb-6 bg-white border-b border-slate-200 sticky top-0 z-20 flex-shrink-0 flex items-center justify-center'>
-          <h1 className='text-xl font-bold text-slate-800 tracking-tight'>
+          <h1 className='text-xl sm:text-2xl font-bold text-slate-800 tracking-tight'>
             Bathroom Calculator
           </h1>
         </header>
@@ -67,19 +67,21 @@ function LayoutContent({
             <div className='flex justify-around py-2'>
               <button className='flex flex-col items-center space-y-1 p-2 text-blue-600'>
                 <FileText size={20} />
-                <span className='text-xs font-medium'>Scope</span>
+                <span className='text-sm sm:text-xs font-medium'>Scope</span>
               </button>
               <button className='flex flex-col items-center space-y-1 p-2 text-gray-400'>
                 <Users size={20} />
-                <span className='text-xs font-medium'>Labor</span>
+                <span className='text-sm sm:text-xs font-medium'>Labor</span>
               </button>
               <button className='flex flex-col items-center space-y-1 p-2 text-gray-400'>
                 <Package size={20} />
-                <span className='text-xs font-medium'>Materials</span>
+                <span className='text-sm sm:text-xs font-medium'>
+                  Materials
+                </span>
               </button>
               <button className='flex flex-col items-center space-y-1 p-2 text-gray-400'>
                 <Calculator size={20} />
-                <span className='text-xs font-medium'>Estimate</span>
+                <span className='text-sm sm:text-xs font-medium'>Estimate</span>
               </button>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -126,7 +128,9 @@ function LayoutContent({
                 className='w-full px-4 py-3 text-left hover:bg-slate-50 flex items-center space-x-3'
               >
                 <LogOut size={20} className='text-slate-600' />
-                <span className='text-slate-800'>Exit</span>
+                <span className='text-slate-800 text-base sm:text-sm'>
+                  Exit
+                </span>
               </button>
             </div>
           </div>

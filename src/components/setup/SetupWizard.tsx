@@ -72,7 +72,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
         return (
           <div className='text-center'>
             <Wrench className='w-16 h-16 mx-auto text-blue-500 mb-4' />
-            <h1 className='text-2xl font-bold text-slate-800'>
+            <h1 className='text-2xl sm:text-3xl font-bold text-slate-800'>
               Welcome to the Calculator
             </h1>
 
@@ -80,7 +80,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
               <div className='absolute -top-4 -right-4 bg-blue-600 p-2 rounded-full shadow-lg'>
                 <Award className='w-6 h-6 text-white' />
               </div>
-              <p className='text-slate-700 text-sm leading-relaxed'>
+              <p className='text-slate-700 text-base sm:text-sm leading-relaxed'>
                 Built from nearly{' '}
                 <span className='font-bold text-slate-800'>15 years</span> of{' '}
                 <span className='font-bold text-slate-800'>award-winning</span>{' '}
@@ -95,11 +95,11 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
             <div className='p-4 bg-white rounded-lg shadow-sm border border-slate-200 text-left'>
               <div className='flex items-center space-x-3 border-b pb-2 mb-4'>
                 <Info className='w-5 h-5 text-blue-500' />
-                <h3 className='font-semibold text-md text-slate-800'>
+                <h3 className='font-semibold text-lg sm:text-md text-slate-800'>
                   Quick Guide
                 </h3>
               </div>
-              <ul className='space-y-2 text-sm text-slate-600'>
+              <ul className='space-y-2 text-base sm:text-sm text-slate-600'>
                 <li className='flex items-start'>
                   <span className='font-bold text-slate-700 mr-2 mt-1'>
                     &#8226;
@@ -141,7 +141,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
           <div>
             <div className='text-center mb-8'>
               <Building className='w-12 h-12 mx-auto text-blue-500 mb-4' />
-              <h2 className='text-xl font-bold text-slate-800'>
+              <h2 className='text-xl sm:text-2xl font-bold text-slate-800'>
                 Tell us about your business
               </h2>
             </div>
@@ -196,7 +196,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
           <div>
             <div className='text-center mb-8'>
               <Percent className='w-12 h-12 mx-auto text-blue-500 mb-4' />
-              <h2 className='text-xl font-bold text-slate-800'>
+              <h2 className='text-xl sm:text-2xl font-bold text-slate-800'>
                 Set your financials & taxes
               </h2>
             </div>
@@ -234,7 +234,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
                 />
               </div>
               <div>
-                <label className='block text-sm font-medium text-slate-600 mb-2'>
+                <label className='block text-base sm:text-sm font-medium text-slate-600 mb-2'>
                   Currency
                 </label>
                 <div className='flex rounded-md'>
