@@ -70,7 +70,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
     switch (step) {
       case 1:
         return (
-          <div className='text-center'>
+          <div className='text-center max-w-2xl mx-auto'>
             <Wrench className='w-16 h-16 mx-auto text-blue-500 mb-4' />
             <h1 className='text-2xl sm:text-3xl font-bold text-slate-800'>
               Welcome to the Calculator
@@ -138,7 +138,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
         );
       case 2:
         return (
-          <div>
+          <div className='max-w-md mx-auto'>
             <div className='text-center mb-8'>
               <Building className='w-12 h-12 mx-auto text-blue-500 mb-4' />
               <h2 className='text-xl sm:text-2xl font-bold text-slate-800'>
@@ -193,7 +193,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
         );
       case 3:
         return (
-          <div>
+          <div className='max-w-md mx-auto'>
             <div className='text-center mb-8'>
               <Percent className='w-12 h-12 mx-auto text-blue-500 mb-4' />
               <h2 className='text-xl sm:text-2xl font-bold text-slate-800'>
@@ -275,9 +275,9 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onFinish }) => {
   };
 
   return (
-    <div className='h-full bg-slate-50 flex flex-col gap-6 justify-between p-8'>
-      <div className='flex-grow flex items-center'>{renderStep()}</div>
-      <div className='flex-shrink-0 pb-6'>
+    <div className='h-full bg-slate-50 flex flex-col p-4 sm:p-8'>
+      <div className='flex-1 overflow-y-auto py-4 sm:py-8'>{renderStep()}</div>
+      <div className='flex-shrink-0 pb-4 sm:pb-6 pt-4 border-t border-slate-200 bg-white -mx-4 sm:-mx-8 px-4 sm:px-8'>
         {step > 1 && (
           <div className='flex items-center justify-between'>
             <Button
