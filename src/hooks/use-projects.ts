@@ -153,14 +153,10 @@ export function useDeleteProject() {
 
   return useMutation({
     mutationFn: async (projectId: string) => {
-      console.log('🔍 Delete project - Getting user...');
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
-
-      console.log('🔍 Delete project - User found:', user.id);
-      console.log('🔍 Delete project - Deleting project:', projectId);
 
       const { data, error } = await supabase
         .from('projects')
@@ -169,17 +165,11 @@ export function useDeleteProject() {
         .eq('user_id', user.id)
         .select();
 
-      console.log('🔍 Delete project - Response:', { data, error });
-
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
-      console.log('✅ Delete project - Success, invalidating queries');
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-    },
-    onError: (error) => {
-      console.error('❌ Delete project - Error:', error);
     },
   });
 }

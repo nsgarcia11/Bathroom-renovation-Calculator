@@ -59,19 +59,12 @@ export function HomePage() {
   const confirmDelete = async () => {
     if (!projectToDelete) return;
 
-    console.log(
-      '🗑️ Attempting to delete project:',
-      projectToDelete.id,
-      projectToDelete.project_name
-    );
-
     try {
       await deleteProject.mutateAsync(projectToDelete.id);
-      console.log('✅ Project deleted successfully');
       setShowDeleteModal(false);
       setProjectToDelete(null);
     } catch (error) {
-      console.error('❌ Failed to delete project:', error);
+      console.error('Failed to delete project:', error);
       // You could add a toast notification here instead of alert
       alert('Failed to delete project. Please try again.');
     }
