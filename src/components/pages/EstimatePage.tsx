@@ -9,14 +9,14 @@ import {
   ArrowLeft,
   Hammer,
   ShowerHead,
-  Square,
   Layers,
   Paintbrush,
-  Wrench,
-  Users,
   ChevronUp,
   ChevronDown,
 } from 'lucide-react';
+import { ShowerBaseIcon } from '@/components/icons/ShowerBaseIcon';
+import { TradeIcon } from '@/components/icons/TradeIcon';
+import { StructuralIcon } from '@/components/icons/StructuralIcon';
 import { useRouter } from 'next/navigation';
 
 interface EstimatePageProps {
@@ -39,7 +39,7 @@ const CATEGORIES = [
   {
     id: 'shower-base',
     name: 'Shower Base',
-    icon: Square,
+    icon: ShowerBaseIcon,
     color: 'bg-gray-100 text-gray-600',
   },
   {
@@ -57,13 +57,13 @@ const CATEGORIES = [
   {
     id: 'structural',
     name: 'Structural',
-    icon: Wrench,
+    icon: StructuralIcon,
     color: 'bg-gray-100 text-gray-600',
   },
   {
     id: 'trades',
     name: 'Trades',
-    icon: Users,
+    icon: TradeIcon,
     color: 'bg-gray-100 text-gray-600',
   },
 ];
@@ -83,7 +83,14 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['demolition-tasks'])
   );
-  const [taskStates, setTaskStates] = useState<Record<string, boolean>>({});
+  const [taskStates, setTaskStates] = useState<Record<string, boolean>>(() => {
+    // Initialize demolition tasks as checked by default
+    const initialState: Record<string, boolean> = {};
+    DEMOLITION_TASKS.forEach((_, index) => {
+      initialState[`demolition-${index}`] = true;
+    });
+    return initialState;
+  });
 
   const toggleSection = (sectionId: string) => {
     const newExpanded = new Set(expandedSections);

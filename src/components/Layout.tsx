@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import {
@@ -52,10 +53,19 @@ function LayoutContent({
     >
       {/* Header */}
       {showHeader && user && (
-        <header className='text-center pt-12 pb-6 bg-white border-b border-slate-200 sticky top-0 z-20 flex-shrink-0 flex items-center justify-center'>
-          <h1 className='text-xl sm:text-2xl font-bold text-slate-800 tracking-tight'>
-            Bathroom Calculator
-          </h1>
+        <header className='text-center bg-white border-b border-slate-200 sticky top-0 z-20 flex-shrink-0 flex items-center justify-center'>
+          <div className='flex items-center space-x-3'>
+            <Image
+              src='/logo.svg'
+              alt='Bathroom Calculator Logo'
+              width={100}
+              height={100}
+              className='w-32 h-32'
+            />
+            {/* <h1 className='text-xl sm:text-2xl font-bold text-slate-800 tracking-tight'>
+              Bathroom Calculator
+            </h1> */}
+          </div>
         </header>
       )}
 
@@ -73,46 +83,50 @@ function LayoutContent({
       {/* Bottom Navigation */}
       {showBottomNav && user && (
         <div className='fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-30'>
-          {bottomNavType === 'estimate' ? (
-            <div className='flex justify-around py-2'>
-              <button className='flex flex-col items-center space-y-1 p-2 text-blue-600'>
-                <FileText size={20} />
-                <span className='text-sm sm:text-xs font-medium'>Scope</span>
-              </button>
-              <button className='flex flex-col items-center space-y-1 p-2 text-gray-400'>
-                <Users size={20} />
-                <span className='text-sm sm:text-xs font-medium'>Labor</span>
-              </button>
-              <button className='flex flex-col items-center space-y-1 p-2 text-gray-400'>
-                <Package size={20} />
-                <span className='text-sm sm:text-xs font-medium'>
-                  Materials
-                </span>
-              </button>
-              <button className='flex flex-col items-center space-y-1 p-2 text-gray-400'>
-                <Calculator size={20} />
-                <span className='text-sm sm:text-xs font-medium'>Estimate</span>
-              </button>
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className='flex flex-col items-center space-y-1 p-2 text-gray-400'
-              >
-                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                <span className='text-xs font-medium'>Menu</span>
-              </button>
-            </div>
-          ) : (
-            <div className='p-4'>
-              <div className='flex justify-end'>
+          <div className='max-w-7xl mx-auto'>
+            {bottomNavType === 'estimate' ? (
+              <div className='flex justify-around py-2'>
+                <button className='flex flex-col items-center space-y-1 p-2 text-blue-600'>
+                  <FileText size={20} />
+                  <span className='text-sm sm:text-xs font-medium'>Scope</span>
+                </button>
+                <button className='flex flex-col items-center space-y-1 p-2 text-gray-400'>
+                  <Users size={20} />
+                  <span className='text-sm sm:text-xs font-medium'>Labor</span>
+                </button>
+                <button className='flex flex-col items-center space-y-1 p-2 text-gray-400'>
+                  <Package size={20} />
+                  <span className='text-sm sm:text-xs font-medium'>
+                    Materials
+                  </span>
+                </button>
+                <button className='flex flex-col items-center space-y-1 p-2 text-gray-400'>
+                  <Calculator size={20} />
+                  <span className='text-sm sm:text-xs font-medium'>
+                    Estimate
+                  </span>
+                </button>
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className='p-3 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors'
+                  className='flex flex-col items-center space-y-1 p-2 text-gray-400'
                 >
                   {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                  <span className='text-xs font-medium'>Menu</span>
                 </button>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className='p-4'>
+                <div className='flex justify-end'>
+                  <button
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    className='p-3 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors'
+                  >
+                    {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

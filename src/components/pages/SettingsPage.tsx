@@ -283,18 +283,6 @@ export function SettingsPage() {
                 }
                 placeholder='Enter postal code'
               />
-              <Select
-                id='province'
-                label='Province'
-                value={formData.province}
-                onChange={(e) => handleInputChange('province', e.target.value)}
-              >
-                {Object.entries(PROVINCES).map(([code, data]) => (
-                  <option key={code} value={code}>
-                    {data.name}
-                  </option>
-                ))}
-              </Select>
             </div>
           </CardContent>
         </Card>
@@ -315,6 +303,18 @@ export function SettingsPage() {
                 }
                 placeholder='Enter hourly rate'
               />
+              <Select
+                id='province'
+                label='Province'
+                value={formData.province}
+                onChange={(e) => handleInputChange('province', e.target.value)}
+              >
+                {Object.entries(PROVINCES).map(([code, data]) => (
+                  <option key={code} value={code}>
+                    {data.name}
+                  </option>
+                ))}
+              </Select>
               <Input
                 id='taxRate'
                 label='Tax Rate (%)'
