@@ -53,19 +53,14 @@ function LayoutContent({
     >
       {/* Header */}
       {showHeader && user && (
-        <header className='text-center bg-white border-b border-slate-200 sticky top-0 z-20 flex-shrink-0 flex items-center justify-center'>
-          <div className='flex items-center space-x-3'>
-            <Image
-              src='/logo.svg'
-              alt='Bathroom Calculator Logo'
-              width={100}
-              height={100}
-              className='w-32 h-32'
-            />
-            {/* <h1 className='text-xl sm:text-2xl font-bold text-slate-800 tracking-tight'>
-              Bathroom Calculator
-            </h1> */}
-          </div>
+        <header className='bg-white border-b border-slate-200 sticky top-0 z-20 flex-shrink-0 flex items-center justify-center py-3'>
+          <Image
+            src='/logo.svg'
+            alt='Bathroom Calculator Logo'
+            width={10}
+            height={10}
+            className='w-auto h-14'
+          />
         </header>
       )}
 
