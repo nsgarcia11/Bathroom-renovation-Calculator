@@ -1,6 +1,7 @@
 import { Layout } from '@/components/Layout';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { EstimatePage } from '@/components/pages/EstimatePage';
+import { EstimateProvider } from '@/contexts/EstimateContext';
 
 interface EstimatePageProps {
   params: {
@@ -10,10 +11,12 @@ interface EstimatePageProps {
 
 export default function Estimate({ params }: EstimatePageProps) {
   return (
-    <Layout showBottomNav={true} showHeader={true} bottomNavType='estimate'>
-      <AuthGuard>
-        <EstimatePage projectId={params.id} />
-      </AuthGuard>
-    </Layout>
+    <EstimateProvider>
+      <Layout showBottomNav={true} showHeader={true} bottomNavType='estimate'>
+        <AuthGuard>
+          <EstimatePage projectId={params.id} />
+        </AuthGuard>
+      </Layout>
+    </EstimateProvider>
   );
 }

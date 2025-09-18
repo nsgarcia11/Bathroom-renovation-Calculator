@@ -5,16 +5,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthProvider } from '@/contexts/AuthContext';
-import {
-  Settings,
-  Menu,
-  X,
-  LogOut,
-  FileText,
-  Users,
-  Package,
-  Calculator,
-} from 'lucide-react';
+import { Settings, Menu, X, LogOut } from 'lucide-react';
+import { EstimateNavigation } from '@/components/EstimateNavigation';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -80,35 +72,7 @@ function LayoutContent({
         <div className='fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-30'>
           <div className='max-w-7xl mx-auto'>
             {bottomNavType === 'estimate' ? (
-              <div className='flex justify-around py-2'>
-                <button className='flex flex-col items-center space-y-1 p-2 text-blue-600'>
-                  <FileText size={20} />
-                  <span className='text-sm sm:text-xs font-medium'>Scope</span>
-                </button>
-                <button className='flex flex-col items-center space-y-1 p-2 text-gray-400'>
-                  <Users size={20} />
-                  <span className='text-sm sm:text-xs font-medium'>Labor</span>
-                </button>
-                <button className='flex flex-col items-center space-y-1 p-2 text-gray-400'>
-                  <Package size={20} />
-                  <span className='text-sm sm:text-xs font-medium'>
-                    Materials
-                  </span>
-                </button>
-                <button className='flex flex-col items-center space-y-1 p-2 text-gray-400'>
-                  <Calculator size={20} />
-                  <span className='text-sm sm:text-xs font-medium'>
-                    Estimate
-                  </span>
-                </button>
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className='flex flex-col items-center space-y-1 p-2 text-gray-400'
-                >
-                  {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                  <span className='text-xs font-medium'>Menu</span>
-                </button>
-              </div>
+              <EstimateNavigation />
             ) : (
               <div className='p-4'>
                 <div className='flex justify-end'>
