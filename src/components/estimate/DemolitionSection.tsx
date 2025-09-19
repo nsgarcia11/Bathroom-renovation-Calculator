@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -305,75 +305,92 @@ export function DemolitionSection({
     setFlatFeeItems,
   ]);
 
-  const handleChoiceChange = (
-    field: keyof DemolitionChoices,
-    value: 'yes' | 'no'
-  ) => {
-    // Don't allow toggling demolition tasks when in flat fee mode
-    if (isDemolitionFlatFee === 'yes') {
-      return;
-    }
-
-    setDemolitionChoices({
-      ...demolitionChoices,
-      [field]: value,
-    });
-
-    // Only manage labor items if not using flat fee
-    if (isDemolitionFlatFee === 'no') {
-      const costKey = DEMOLITION_TASK_MAPPING[field];
-      const costData = COST_DATA[costKey];
-
-      if (value === 'yes' && costData?.labor?.[0]) {
-        // Add labor item
-        const laborData = costData.labor[0];
-        if (laborData.hours !== undefined) {
-          const newLaborItem: LaborItem = {
-            id: `lab-${field}-${Date.now()}`,
-            name: laborData.name,
-            hours: laborData.hours.toString(),
-            rate: DEFAULT_TRADE_RATES.demolition.toString(),
-          };
-
-          setLaborItems([...laborItems, newLaborItem]);
-        }
-      } else if (value === 'no') {
-        // Remove labor item for this task
-        setLaborItems(
-          laborItems.filter((item) => !item.id.startsWith(`lab-${field}-`))
-        );
+  const handleChoiceChange = useCallback(
+    (field: keyof DemolitionChoices, value: 'yes' | 'no') => {
+      // Don't allow toggling demolition tasks when in flat fee mode
+      if (isDemolitionFlatFee === 'yes') {
+        return;
       }
-    }
-  };
 
-  // Handle flat fee toggle changes
-  const handleFlatFeeToggle = (checked: boolean) => {
-    setIsDemolitionFlatFee(checked ? 'yes' : 'no');
-    // The useEffect will handle creating/removing the appropriate labor items
-  };
+      setDemolitionChoices({
+        ...demolitionChoices,
+        [field]: value,
+      });
 
-  const noteChips = [
-    '+ Mold/Asbestos',
-    '+ Moving plumbing/electrical',
-    '+ Load-Bearing Wall',
-    '+ Pre-Demo Photos',
-    '+ Protect Finishes',
-  ];
+      // Only manage labor items if not using flat fee
+      if (isDemolitionFlatFee === 'no') {
+        const costKey = DEMOLITION_TASK_MAPPING[field];
+        const costData = COST_DATA[costKey];
 
-  const handleChipClick = (chipText: string) => {
-    const textToAdd = chipText.substring(2); // Remove "+ "
-    const noteText = `- ${textToAdd}: `;
+        if (value === 'yes' && costData?.labor?.[0]) {
+          // Add labor item
+          const laborData = costData.labor[0];
+          if (laborData.hours !== undefined) {
+            const newLaborItem: LaborItem = {
+              id: `lab-${field}-${Date.now()}`,
+              name: laborData.name,
+              hours: laborData.hours.toString(),
+              rate: DEFAULT_TRADE_RATES.demolition.toString(),
+            };
 
-    // Check if this note already exists
-    if (demolitionNotes && demolitionNotes.includes(noteText)) {
-      return; // Don't add if already exists
-    }
+            setLaborItems([...laborItems, newLaborItem]);
+          }
+        } else if (value === 'no') {
+          // Remove labor item for this task
+          setLaborItems(
+            laborItems.filter((item) => !item.id.startsWith(`lab-${field}-`))
+          );
+        }
+      }
+    },
+    [
+      isDemolitionFlatFee,
+      demolitionChoices,
+      setDemolitionChoices,
+      laborItems,
+      setLaborItems,
+    ]
+  );
 
-    const newNotes = demolitionNotes
-      ? `${demolitionNotes}\n${noteText}`
-      : noteText;
-    setDemolitionNotes(newNotes);
-  };
+  // Memoized flat fee toggle handler
+  const handleFlatFeeToggle = useCallback(
+    (checked: boolean) => {
+      setIsDemolitionFlatFee(checked ? 'yes' : 'no');
+      // The useEffect will handle creating/removing the appropriate labor items
+    },
+    [setIsDemolitionFlatFee]
+  );
+
+  // Memoized note chips
+  const noteChips = useMemo(
+    () => [
+      '+ Mold/Asbestos',
+      '+ Moving plumbing/electrical',
+      '+ Load-Bearing Wall',
+      '+ Pre-Demo Photos',
+      '+ Protect Finishes',
+    ],
+    []
+  );
+
+  // Memoized chip click handler
+  const handleChipClick = useCallback(
+    (chipText: string) => {
+      const textToAdd = chipText.substring(2); // Remove "+ "
+      const noteText = `- ${textToAdd}: `;
+
+      // Check if this note already exists
+      if (demolitionNotes && demolitionNotes.includes(noteText)) {
+        return; // Don't add if already exists
+      }
+
+      const newNotes = demolitionNotes
+        ? `${demolitionNotes}\n${noteText}`
+        : noteText;
+      setDemolitionNotes(newNotes);
+    },
+    [demolitionNotes, setDemolitionNotes]
+  );
 
   return (
     <div className='space-y-6'>

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,87 +53,100 @@ export function LaborSection({
   handleDeleteFlatFeeItem,
   isDemolitionFlatFee,
 }: LaborSectionProps) {
-  // Ensure arrays are always defined
-  const labor = laborItems || [];
-  const flatFees = flatFeeItems || [];
+  // Memoized calculations
+  const labor = useMemo(() => laborItems || [], [laborItems]);
+  const flatFees = useMemo(() => flatFeeItems || [], [flatFeeItems]);
 
-  const hourlyTotal = labor.reduce(
-    (sum, item) =>
-      sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
-    0
+  const hourlyTotal = useMemo(
+    () =>
+      labor.reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      ),
+    [labor]
   );
-  const flatFeeTotal = flatFees.reduce(
-    (sum, item) => sum + (parseFloat(item.price) || 0),
-    0
-  );
-  const total = isDemolitionFlatFee === 'yes' ? flatFeeTotal : hourlyTotal;
 
-  const renderLaborItem = (item: LaborItem) => {
-    if (!item) return null;
-    return (
-      <div
-        key={item.id}
-        className={`p-3 rounded-lg border bg-white shadow-sm w-full ${
-          item.color || 'border-slate-200'
-        }`}
-      >
-        <div className='flex items-center gap-2 mb-2 w-full'>
-          <Input
-            type='text'
-            value={item.name}
-            onChange={(e) =>
-              handleLaborItemChange(item.id, 'name', e.target.value)
-            }
-            placeholder='Labor Task'
-            className='border-b-2 border-slate-200 focus:border-blue-500 focus:outline-none bg-transparent w-44 sm:w-full'
-          />
-          <Button
-            onClick={() => handleDeleteLaborItem(item.id)}
-            variant='ghost'
-            size='sm'
-            className='text-red-500 hover:text-red-700 p-1 h-auto flex-shrink-0'
-          >
-            <Trash2 size={16} />
-          </Button>
-        </div>
-        <div className='grid grid-cols-3 gap-3 w-full'>
-          <div className='w-full'>
-            <label className='text-xs text-slate-500'>Hours</label>
+  const flatFeeTotal = useMemo(
+    () =>
+      flatFees.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0),
+    [flatFees]
+  );
+
+  const total = useMemo(
+    () => (isDemolitionFlatFee === 'yes' ? flatFeeTotal : hourlyTotal),
+    [isDemolitionFlatFee, flatFeeTotal, hourlyTotal]
+  );
+
+  const renderLaborItem = useCallback(
+    (item: LaborItem) => {
+      if (!item) return null;
+      return (
+        <div
+          key={item.id}
+          className={`p-3 rounded-lg border bg-white shadow-sm w-full ${
+            item.color || 'border-slate-200'
+          }`}
+        >
+          <div className='flex items-center gap-2 mb-2 w-full'>
             <Input
-              type='number'
-              value={item.hours}
+              type='text'
+              value={item.name}
               onChange={(e) =>
-                handleLaborItemChange(item.id, 'hours', e.target.value)
+                handleLaborItemChange(item.id, 'name', e.target.value)
               }
-              placeholder='0'
-              className='text-center w-full'
+              placeholder='Labor Task'
+              className='border-b-2 border-slate-200 focus:border-blue-500 focus:outline-none bg-transparent w-44 sm:w-full'
             />
+            <Button
+              onClick={() => handleDeleteLaborItem(item.id)}
+              variant='ghost'
+              size='sm'
+              className='text-red-500 hover:text-red-700 p-1 h-auto flex-shrink-0'
+            >
+              <Trash2 size={16} />
+            </Button>
           </div>
-          <div className='w-full'>
-            <label className='text-xs text-slate-500'>Rate ($/hr)</label>
-            <Input
-              type='number'
-              value={item.rate}
-              onChange={(e) =>
-                handleLaborItemChange(item.id, 'rate', e.target.value)
-              }
-              placeholder='0'
-              className='text-center w-full'
-            />
-          </div>
-          <div className='w-full'>
-            <label className='text-xs text-slate-500'>Total</label>
-            <div className='w-full p-2 text-center font-semibold text-slate-800 bg-slate-50 rounded-md'>
-              $
-              {(
-                (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0)
-              ).toFixed(2)}
+          <div className='grid grid-cols-3 gap-3 w-full'>
+            <div className='w-full'>
+              <label className='text-xs text-slate-500'>Hours</label>
+              <Input
+                type='number'
+                value={item.hours}
+                onChange={(e) =>
+                  handleLaborItemChange(item.id, 'hours', e.target.value)
+                }
+                placeholder='0'
+                className='text-center w-full'
+              />
+            </div>
+            <div className='w-full'>
+              <label className='text-xs text-slate-500'>Rate ($/hr)</label>
+              <Input
+                type='number'
+                value={item.rate}
+                onChange={(e) =>
+                  handleLaborItemChange(item.id, 'rate', e.target.value)
+                }
+                placeholder='0'
+                className='text-center w-full'
+              />
+            </div>
+            <div className='w-full'>
+              <label className='text-xs text-slate-500'>Total</label>
+              <div className='w-full p-2 text-center font-semibold text-slate-800 bg-slate-50 rounded-md'>
+                $
+                {(
+                  (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0)
+                ).toFixed(2)}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    );
-  };
+      );
+    },
+    [handleLaborItemChange, handleDeleteLaborItem]
+  );
 
   const renderFlatFeeItem = (item: FlatFeeItem) => {
     const isDemoFee = item.id === 'flat-fee-demolition';

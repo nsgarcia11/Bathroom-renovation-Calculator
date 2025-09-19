@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useProject } from '@/hooks/use-projects';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -387,27 +387,33 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
     },
   });
 
-  // Helper functions to get/set category-specific workflow data
-  const getCategoryWorkflowData = (
-    category: ConstructionCategory,
-    section: 'labor' | 'materials' | 'estimate'
-  ) => {
-    return categoryWorkflowData[category][section];
-  };
+  // Memoized helper functions to get/set category-specific workflow data
+  const getCategoryWorkflowData = useCallback(
+    (
+      category: ConstructionCategory,
+      section: 'labor' | 'materials' | 'estimate'
+    ) => {
+      return categoryWorkflowData[category][section];
+    },
+    [categoryWorkflowData]
+  );
 
-  const updateCategoryWorkflowData = (
-    category: ConstructionCategory,
-    section: 'labor' | 'materials' | 'estimate',
-    data: CategoryWorkflowData[keyof CategoryWorkflowData]
-  ) => {
-    setCategoryWorkflowData((prev) => ({
-      ...prev,
-      [category]: {
-        ...prev[category],
-        [section]: data,
-      },
-    }));
-  };
+  const updateCategoryWorkflowData = useCallback(
+    (
+      category: ConstructionCategory,
+      section: 'labor' | 'materials' | 'estimate',
+      data: CategoryWorkflowData[keyof CategoryWorkflowData]
+    ) => {
+      setCategoryWorkflowData((prev) => ({
+        ...prev,
+        [category]: {
+          ...prev[category],
+          [section]: data,
+        },
+      }));
+    },
+    []
+  );
 
   // Initialize category workflow data for new categories
   useEffect(() => {
@@ -431,193 +437,182 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
     });
   }, [categoryWorkflowData]);
 
-  // Labor Handlers - Category-specific
-  const handleAddLaborItem = (category: ConstructionCategory) => {
-    const currentData = getCategoryWorkflowData(
-      category,
-      'labor'
-    ) as CategoryWorkflowData['labor'];
-    updateCategoryWorkflowData(category, 'labor', {
-      ...currentData,
-      laborItems: [
-        ...currentData.laborItems,
-        { id: `custom-${Date.now()}`, name: '', hours: '1', rate: '95' },
-      ],
+  // Memoized Labor Handlers - Category-specific
+  const handleAddLaborItem = useCallback(
+    (category: ConstructionCategory) => {
+      const currentData = getCategoryWorkflowData(
+        category,
+        'labor'
+      ) as CategoryWorkflowData['labor'];
+      updateCategoryWorkflowData(category, 'labor', {
+        ...currentData,
+        laborItems: [
+          ...currentData.laborItems,
+          { id: `custom-${Date.now()}`, name: '', hours: '1', rate: '95' },
+        ],
+      });
+    },
+    [getCategoryWorkflowData, updateCategoryWorkflowData]
+  );
+
+  const handleDeleteLaborItem = useCallback(
+    (category: ConstructionCategory, id: string) => {
+      const currentData = getCategoryWorkflowData(
+        category,
+        'labor'
+      ) as CategoryWorkflowData['labor'];
+      updateCategoryWorkflowData(category, 'labor', {
+        ...currentData,
+        laborItems: currentData.laborItems.filter(
+          (item: LaborItem) => item.id !== id
+        ),
+      });
+    },
+    [getCategoryWorkflowData, updateCategoryWorkflowData]
+  );
+
+  const handleLaborItemChange = useCallback(
+    (
+      category: ConstructionCategory,
+      id: string,
+      field: keyof LaborItem,
+      value: string
+    ) => {
+      const currentData = getCategoryWorkflowData(
+        category,
+        'labor'
+      ) as CategoryWorkflowData['labor'];
+      updateCategoryWorkflowData(category, 'labor', {
+        ...currentData,
+        laborItems: currentData.laborItems.map((item: LaborItem) =>
+          item.id === id ? { ...item, [field]: value } : item
+        ),
+      });
+    },
+    [getCategoryWorkflowData, updateCategoryWorkflowData]
+  );
+
+  // Memoized Flat Fee Handlers - Category-specific
+  const handleAddFlatFeeItem = useCallback(
+    (category: ConstructionCategory) => {
+      const currentData = getCategoryWorkflowData(
+        category,
+        'labor'
+      ) as CategoryWorkflowData['labor'];
+      updateCategoryWorkflowData(category, 'labor', {
+        ...currentData,
+        flatFeeItems: [
+          ...currentData.flatFeeItems,
+          { id: `flat-${Date.now()}`, name: '', price: '' },
+        ],
+      });
+    },
+    [getCategoryWorkflowData, updateCategoryWorkflowData]
+  );
+
+  const handleDeleteFlatFeeItem = useCallback(
+    (category: ConstructionCategory, id: string) => {
+      const currentData = getCategoryWorkflowData(
+        category,
+        'labor'
+      ) as CategoryWorkflowData['labor'];
+      updateCategoryWorkflowData(category, 'labor', {
+        ...currentData,
+        flatFeeItems: currentData.flatFeeItems.filter(
+          (item: FlatFeeItem) => item.id !== id
+        ),
+      });
+    },
+    [getCategoryWorkflowData, updateCategoryWorkflowData]
+  );
+
+  const handleFlatFeeItemChange = useCallback(
+    (
+      category: ConstructionCategory,
+      id: string,
+      field: keyof FlatFeeItem,
+      value: string
+    ) => {
+      const currentData = getCategoryWorkflowData(
+        category,
+        'labor'
+      ) as CategoryWorkflowData['labor'];
+      updateCategoryWorkflowData(category, 'labor', {
+        ...currentData,
+        flatFeeItems: currentData.flatFeeItems.map((item: FlatFeeItem) =>
+          item.id === id ? { ...item, [field]: value } : item
+        ),
+      });
+    },
+    [getCategoryWorkflowData, updateCategoryWorkflowData]
+  );
+
+  // Memoized Supply Handlers - Category-specific
+  const handleDeleteSupply = useCallback(
+    (category: ConstructionCategory, id: string) => {
+      const currentData = getCategoryWorkflowData(
+        category,
+        'materials'
+      ) as CategoryWorkflowData['materials'];
+      updateCategoryWorkflowData(category, 'materials', {
+        constructionMaterials: currentData.constructionMaterials.filter(
+          (item: MaterialItem) => item.id !== id
+        ),
+      });
+    },
+    [getCategoryWorkflowData, updateCategoryWorkflowData]
+  );
+
+  // Memoized calculation for category totals
+  const categoryTotals = useMemo(() => {
+    const totals: Record<ConstructionCategory, number> = {} as Record<
+      ConstructionCategory,
+      number
+    >;
+
+    Object.keys(categoryWorkflowData).forEach((category) => {
+      const cat = category as ConstructionCategory;
+      const laborData = categoryWorkflowData[cat].labor;
+      const materialsData = categoryWorkflowData[cat].materials;
+
+      // Calculate labor total (flat fee and hourly are mutually exclusive)
+      const flatFeeTotal = laborData.flatFeeItems.reduce(
+        (sum, item) => sum + (parseFloat(item.price) || 0),
+        0
+      );
+
+      // If we have flat fee items, ignore hourly labor items (they are mutually exclusive)
+      const hourlyLaborTotal =
+        laborData.flatFeeItems.length > 0
+          ? 0
+          : laborData.laborItems.reduce(
+              (sum, item) =>
+                sum +
+                (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+              0
+            );
+
+      const laborTotal = flatFeeTotal + hourlyLaborTotal;
+
+      // Calculate materials total
+      const materialsTotal = materialsData.constructionMaterials.reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      );
+
+      totals[cat] = laborTotal + materialsTotal;
     });
-  };
 
-  const handleDeleteLaborItem = (
-    category: ConstructionCategory,
-    id: string
-  ) => {
-    const currentData = getCategoryWorkflowData(
-      category,
-      'labor'
-    ) as CategoryWorkflowData['labor'];
-    updateCategoryWorkflowData(category, 'labor', {
-      ...currentData,
-      laborItems: currentData.laborItems.filter(
-        (item: LaborItem) => item.id !== id
-      ),
-    });
-  };
+    return totals;
+  }, [categoryWorkflowData]);
 
-  const handleLaborItemChange = (
-    category: ConstructionCategory,
-    id: string,
-    field: keyof LaborItem,
-    value: string
-  ) => {
-    const currentData = getCategoryWorkflowData(
-      category,
-      'labor'
-    ) as CategoryWorkflowData['labor'];
-    updateCategoryWorkflowData(category, 'labor', {
-      ...currentData,
-      laborItems: currentData.laborItems.map((item: LaborItem) =>
-        item.id === id ? { ...item, [field]: value } : item
-      ),
-    });
-  };
-
-  // Flat Fee Handlers - Category-specific
-  const handleAddFlatFeeItem = (category: ConstructionCategory) => {
-    const currentData = getCategoryWorkflowData(
-      category,
-      'labor'
-    ) as CategoryWorkflowData['labor'];
-    updateCategoryWorkflowData(category, 'labor', {
-      ...currentData,
-      flatFeeItems: [
-        ...currentData.flatFeeItems,
-        { id: `flat-${Date.now()}`, name: '', price: '' },
-      ],
-    });
-  };
-
-  const handleDeleteFlatFeeItem = (
-    category: ConstructionCategory,
-    id: string
-  ) => {
-    const currentData = getCategoryWorkflowData(
-      category,
-      'labor'
-    ) as CategoryWorkflowData['labor'];
-    updateCategoryWorkflowData(category, 'labor', {
-      ...currentData,
-      flatFeeItems: currentData.flatFeeItems.filter(
-        (item: FlatFeeItem) => item.id !== id
-      ),
-    });
-  };
-
-  const handleFlatFeeItemChange = (
-    category: ConstructionCategory,
-    id: string,
-    field: keyof FlatFeeItem,
-    value: string
-  ) => {
-    const currentData = getCategoryWorkflowData(
-      category,
-      'labor'
-    ) as CategoryWorkflowData['labor'];
-    updateCategoryWorkflowData(category, 'labor', {
-      ...currentData,
-      flatFeeItems: currentData.flatFeeItems.map((item: FlatFeeItem) =>
-        item.id === id ? { ...item, [field]: value } : item
-      ),
-    });
-  };
-
-  // Supply Handlers - Category-specific
-  const handleDeleteSupply = (category: ConstructionCategory, id: string) => {
-    const currentData = getCategoryWorkflowData(
-      category,
-      'materials'
-    ) as CategoryWorkflowData['materials'];
-    updateCategoryWorkflowData(category, 'materials', {
-      constructionMaterials: currentData.constructionMaterials.filter(
-        (item: MaterialItem) => item.id !== id
-      ),
-    });
-  };
-
-  // Totals Calculation - Calculate across all categories
-  const calculateCategoryTotal = (category: ConstructionCategory) => {
-    const laborData = getCategoryWorkflowData(
-      category,
-      'labor'
-    ) as CategoryWorkflowData['labor'];
-    const materialsData = getCategoryWorkflowData(
-      category,
-      'materials'
-    ) as CategoryWorkflowData['materials'];
-
-    // Calculate labor total (flat fee and hourly are mutually exclusive)
-    const flatFeeTotal = laborData.flatFeeItems.reduce(
-      (sum, item) => sum + (parseFloat(item.price) || 0),
-      0
-    );
-
-    // If we have flat fee items, ignore hourly labor items (they are mutually exclusive)
-    const hourlyLaborTotal =
-      laborData.flatFeeItems.length > 0
-        ? 0
-        : laborData.laborItems.reduce(
-            (sum, item) =>
-              sum +
-              (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
-            0
-          );
-
-    const laborTotal = flatFeeTotal + hourlyLaborTotal;
-
-    // Calculate materials total
-    const materialsTotal = materialsData.constructionMaterials.reduce(
-      (sum, item) =>
-        sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
-      0
-    );
-
-    return laborTotal + materialsTotal;
-  };
-
-  // Calculate grand total - only include selected category for now
+  // Memoized grand total calculation - only include selected category for now
   // TODO: In the future, we might want to include all categories
-  const grandTotal = calculateCategoryTotal(selectedCategory);
-
-  // Debug logging to see what's being calculated
-  if (selectedCategory === 'demolition') {
-    const laborData = getCategoryWorkflowData(
-      'demolition',
-      'labor'
-    ) as CategoryWorkflowData['labor'];
-    const materialsData = getCategoryWorkflowData(
-      'demolition',
-      'materials'
-    ) as CategoryWorkflowData['materials'];
-
-    const flatFeeTotal = laborData.flatFeeItems.reduce(
-      (sum, item) => sum + (parseFloat(item.price) || 0),
-      0
-    );
-
-    // If we have flat fee items, ignore hourly labor items (they are mutually exclusive)
-    const hourlyLaborTotal =
-      laborData.flatFeeItems.length > 0
-        ? 0
-        : laborData.laborItems.reduce(
-            (sum, item) =>
-              sum +
-              (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
-            0
-          );
-    const materialsTotal = materialsData.constructionMaterials.reduce(
-      (sum, item) =>
-        sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
-      0
-    );
-  }
+  const grandTotal = useMemo(() => {
+    return categoryTotals[selectedCategory] || 0;
+  }, [categoryTotals, selectedCategory]);
 
   // Load saved data when available
   useEffect(() => {
@@ -650,8 +645,8 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
     }
   }, [savedData]);
 
-  // Manual save function
-  const handleManualSave = async () => {
+  // Memoized manual save function
+  const handleManualSave = useCallback(async () => {
     setIsSaving(true);
     try {
       await saveEstimateData.mutateAsync({
@@ -674,7 +669,18 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [
+    saveEstimateData,
+    projectId,
+    demolitionChoices,
+    debrisDisposal,
+    isDemolitionFlatFee,
+    flatFeeAmount,
+    flatFeeDescription,
+    demolitionNotes,
+    projectNotes,
+    categoryWorkflowData,
+  ]);
 
   if (isLoading || isLoadingData) {
     return (
@@ -744,7 +750,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
                 key={category.id}
                 onClick={() => {
                   setSelectedCategory(category.id as ConstructionCategory);
-                  setActiveSection('scope'); // Reset bottom nav to scope when changing category
+                  setActiveSection('design'); // Reset bottom nav to scope when changing category
                 }}
                 className={`flex-shrink-0 w-24 h-20 rounded-lg border-2 flex flex-col items-center justify-center space-y-2 ${
                   isSelected
@@ -774,7 +780,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
         {/* Demolition Category - Complete Workflow */}
         {selectedCategory === 'demolition' && (
           <>
-            {activeSection === 'scope' && (
+            {activeSection === 'design' && (
               <DemolitionSection
                 demolitionChoices={demolitionChoices}
                 setDemolitionChoices={setDemolitionChoices}
@@ -938,7 +944,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
         {/* Shower Base Category - Complete Workflow */}
         {selectedCategory === 'shower-base' && (
           <>
-            {activeSection === 'scope' && (
+            {activeSection === 'design' && (
               <ShowerBaseSection
                 measurements={showerBase.measurements}
                 setMeasurements={(measurements) =>
@@ -1063,7 +1069,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
         {/* Shower Walls Category - Complete Workflow */}
         {selectedCategory === 'shower-walls' && (
           <>
-            {activeSection === 'scope' && (
+            {activeSection === 'design' && (
               <ShowerWallsSection
                 walls={showerWalls.walls}
                 setWalls={(walls) =>
@@ -1184,7 +1190,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
         {/* Floor Category - Complete Workflow */}
         {selectedCategory === 'floors' && (
           <>
-            {activeSection === 'scope' && (
+            {activeSection === 'design' && (
               <FloorSection
                 floorChoices={floorData.floorChoices}
                 setFloorChoices={(choices) =>
@@ -1333,7 +1339,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
         {/* Finishings Category - Complete Workflow */}
         {selectedCategory === 'finishings' && (
           <>
-            {activeSection === 'scope' && (
+            {activeSection === 'design' && (
               <FinishingsSection
                 designChoices={finishingsData.designChoices}
                 setDesignChoices={(choices) =>
@@ -1464,7 +1470,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
         {/* Structural Category - Complete Workflow */}
         {selectedCategory === 'structural' && (
           <>
-            {activeSection === 'scope' && (
+            {activeSection === 'design' && (
               <StructuralSection
                 choices={structuralData.choices}
                 onTaskToggle={(category, taskId) => {
@@ -1582,7 +1588,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
         {/* Trades Category - Complete Workflow */}
         {selectedCategory === 'trades' && (
           <>
-            {activeSection === 'scope' && (
+            {activeSection === 'design' && (
               <TradesSection
                 choices={tradesData.choices}
                 onTaskChange={(category, taskId, hasQuantity, newQuantity) => {
@@ -1700,7 +1706,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
           'trades',
         ].includes(selectedCategory) && (
           <>
-            {activeSection === 'scope' && (
+            {activeSection === 'design' && (
               <div className='space-y-6'>
                 <Card>
                   <CardContent className='p-6 text-center'>

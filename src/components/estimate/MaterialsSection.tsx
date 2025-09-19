@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,23 +26,25 @@ export function MaterialsSection({
   setConstructionMaterials,
   handleDeleteSupply,
 }: MaterialsSectionProps) {
-  // Ensure constructionMaterials is always an array
-  const materials = constructionMaterials || [];
+  // Memoized materials array
+  const materials = useMemo(
+    () => constructionMaterials || [],
+    [constructionMaterials]
+  );
 
-  const handleConstructionMaterialChange = (
-    id: string,
-    field: keyof MaterialItem,
-    value: string
-  ) => {
-    const updatedMaterials = (materials || []).map((mat) =>
-      mat.id === id ? { ...mat, [field]: value } : mat
-    );
-    setConstructionMaterials(updatedMaterials);
-  };
+  const handleConstructionMaterialChange = useCallback(
+    (id: string, field: keyof MaterialItem, value: string) => {
+      const updatedMaterials = materials.map((mat) =>
+        mat.id === id ? { ...mat, [field]: value } : mat
+      );
+      setConstructionMaterials(updatedMaterials);
+    },
+    [materials, setConstructionMaterials]
+  );
 
-  const handleAddCustomSupply = () => {
+  const handleAddCustomSupply = useCallback(() => {
     setConstructionMaterials([
-      ...(materials || []),
+      ...materials,
       {
         id: `custom-supply-${Date.now()}`,
         name: '',
@@ -51,92 +53,100 @@ export function MaterialsSection({
         unit: 'each',
       },
     ]);
-  };
+  }, [materials, setConstructionMaterials]);
 
-  const total = materials.reduce(
-    (sum, item) =>
-      sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
-    0
+  const total = useMemo(
+    () =>
+      materials.reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      ),
+    [materials]
   );
 
-  const renderMaterialItem = (material: MaterialItem) => {
-    return (
-      <div
-        key={material.id}
-        className={`p-3 bg-white rounded-lg border ${
-          material.color || 'border-slate-300'
-        }`}
-      >
-        <div className='flex items-center gap-2 mb-2'>
-          <Input
-            type='text'
-            value={material.name}
-            onChange={(e) =>
-              handleConstructionMaterialChange(
-                material.id,
-                'name',
-                e.target.value
-              )
-            }
-            placeholder='Supply Name'
-            className='border-b-2 bg-transparent border-slate-200 focus:border-blue-500 focus:outline-none'
-          />
-          <Button
-            onClick={() => handleDeleteSupply(material.id)}
-            variant='ghost'
-            size='sm'
-            className='text-red-500 hover:text-red-700 p-1 h-auto'
-          >
-            <Trash2 size={16} />
-          </Button>
-        </div>
-        <div className='grid grid-cols-3 gap-3'>
-          <div>
-            <label className='text-xs text-slate-500'>Quantity</label>
+  const renderMaterialItem = useCallback(
+    (material: MaterialItem) => {
+      return (
+        <div
+          key={material.id}
+          className={`p-3 bg-white rounded-lg border ${
+            material.color || 'border-slate-300'
+          }`}
+        >
+          <div className='flex items-center gap-2 mb-2'>
             <Input
-              type='number'
-              value={material.quantity}
+              type='text'
+              value={material.name}
               onChange={(e) =>
                 handleConstructionMaterialChange(
                   material.id,
-                  'quantity',
+                  'name',
                   e.target.value
                 )
               }
-              placeholder='0'
-              className='text-center'
+              placeholder='Supply Name'
+              className='border-b-2 bg-transparent border-slate-200 focus:border-blue-500 focus:outline-none'
             />
+            <Button
+              onClick={() => handleDeleteSupply(material.id)}
+              variant='ghost'
+              size='sm'
+              className='text-red-500 hover:text-red-700 p-1 h-auto'
+            >
+              <Trash2 size={16} />
+            </Button>
           </div>
-          <div>
-            <label className='text-xs text-slate-500'>Price/Unit ($)</label>
-            <Input
-              type='number'
-              value={material.price}
-              onChange={(e) =>
-                handleConstructionMaterialChange(
-                  material.id,
-                  'price',
-                  e.target.value
-                )
-              }
-              placeholder='0.00'
-              className='text-center'
-            />
-          </div>
-          <div>
-            <label className='text-xs text-slate-500'>Total</label>
-            <div className='w-full p-2 text-center font-semibold text-slate-800 bg-slate-50 rounded-md'>
-              $
-              {(
-                (parseFloat(material.quantity) || 0) *
-                (parseFloat(material.price) || 0)
-              ).toFixed(2)}
+          <div className='grid grid-cols-3 gap-3'>
+            <div>
+              <label className='text-xs text-slate-500'>Quantity</label>
+              <Input
+                type='number'
+                value={material.quantity}
+                onChange={(e) =>
+                  handleConstructionMaterialChange(
+                    material.id,
+                    'quantity',
+                    e.target.value
+                  )
+                }
+                placeholder='0'
+                className='text-center'
+              />
+            </div>
+            <div>
+              <label className='text-xs text-slate-500'>Price/Unit ($)</label>
+              <Input
+                type='number'
+                value={material.price}
+                onChange={(e) =>
+                  handleConstructionMaterialChange(
+                    material.id,
+                    'price',
+                    e.target.value
+                  )
+                }
+                placeholder='0.00'
+                className='text-center'
+              />
+            </div>
+            <div>
+              <label className='text-xs text-slate-500'>Total</label>
+              <div className='w-full p-2 text-center font-semibold text-slate-800 bg-slate-50 rounded-md'>
+                $
+                {(
+                  (parseFloat(material.quantity) || 0) *
+                  (parseFloat(material.price) || 0)
+                ).toFixed(2)}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    );
-  };
+      );
+    },
+    [handleConstructionMaterialChange, handleDeleteSupply]
+  );
 
   return (
     <div className='space-y-5'>

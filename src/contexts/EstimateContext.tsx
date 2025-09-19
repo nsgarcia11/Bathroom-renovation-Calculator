@@ -1,8 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useMemo,
+} from 'react';
 
-export type EstimateSection = 'scope' | 'labor' | 'materials' | 'estimate';
+export type EstimateSection = 'design' | 'labor' | 'materials' | 'estimate';
 export type ConstructionCategory =
   | 'demolition'
   | 'shower-base'
@@ -28,19 +34,23 @@ interface EstimateProviderProps {
 }
 
 export function EstimateProvider({ children }: EstimateProviderProps) {
-  const [activeSection, setActiveSection] = useState<EstimateSection>('scope');
+  const [activeSection, setActiveSection] = useState<EstimateSection>('design');
   const [selectedCategory, setSelectedCategory] =
     useState<ConstructionCategory>('demolition');
 
+  // Memoized context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      activeSection,
+      setActiveSection,
+      selectedCategory,
+      setSelectedCategory,
+    }),
+    [activeSection, selectedCategory]
+  );
+
   return (
-    <EstimateContext.Provider
-      value={{
-        activeSection,
-        setActiveSection,
-        selectedCategory,
-        setSelectedCategory,
-      }}
-    >
+    <EstimateContext.Provider value={contextValue}>
       {children}
     </EstimateContext.Provider>
   );
