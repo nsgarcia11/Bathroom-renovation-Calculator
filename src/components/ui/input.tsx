@@ -28,7 +28,7 @@ export const Input: React.FC<InputProps> = ({
   readOnly = false,
   className = '',
 }) => (
-  <div>
+  <div className='w-full'>
     {label && (
       <label
         htmlFor={id}

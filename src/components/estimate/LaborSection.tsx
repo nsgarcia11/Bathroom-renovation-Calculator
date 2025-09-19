@@ -73,11 +73,11 @@ export function LaborSection({
     return (
       <div
         key={item.id}
-        className={`p-3 rounded-lg border bg-white shadow-sm ${
+        className={`p-3 rounded-lg border bg-white shadow-sm w-full ${
           item.color || 'border-slate-200'
         }`}
       >
-        <div className='flex items-center gap-2 mb-2'>
+        <div className='flex items-center gap-2 mb-2 w-full'>
           <Input
             type='text'
             value={item.name}
@@ -85,19 +85,19 @@ export function LaborSection({
               handleLaborItemChange(item.id, 'name', e.target.value)
             }
             placeholder='Labor Task'
-            className='border-b-2 border-slate-200 focus:border-blue-500 focus:outline-none bg-transparent'
+            className='border-b-2 border-slate-200 focus:border-blue-500 focus:outline-none bg-transparent w-44 sm:w-full'
           />
           <Button
             onClick={() => handleDeleteLaborItem(item.id)}
             variant='ghost'
             size='sm'
-            className='text-red-500 hover:text-red-700 p-1 h-auto'
+            className='text-red-500 hover:text-red-700 p-1 h-auto flex-shrink-0'
           >
             <Trash2 size={16} />
           </Button>
         </div>
-        <div className='grid grid-cols-3 gap-3'>
-          <div>
+        <div className='grid grid-cols-3 gap-3 w-full'>
+          <div className='w-full'>
             <label className='text-xs text-slate-500'>Hours</label>
             <Input
               type='number'
@@ -106,10 +106,10 @@ export function LaborSection({
                 handleLaborItemChange(item.id, 'hours', e.target.value)
               }
               placeholder='0'
-              className='text-center'
+              className='text-center w-full'
             />
           </div>
-          <div>
+          <div className='w-full'>
             <label className='text-xs text-slate-500'>Rate ($/hr)</label>
             <Input
               type='number'
@@ -118,10 +118,10 @@ export function LaborSection({
                 handleLaborItemChange(item.id, 'rate', e.target.value)
               }
               placeholder='0'
-              className='text-center'
+              className='text-center w-full'
             />
           </div>
-          <div>
+          <div className='w-full'>
             <label className='text-xs text-slate-500'>Total</label>
             <div className='w-full p-2 text-center font-semibold text-slate-800 bg-slate-50 rounded-md'>
               $
@@ -140,11 +140,11 @@ export function LaborSection({
     return (
       <div
         key={item.id}
-        className={`p-3 rounded-lg border shadow-sm ${
+        className={`p-3 rounded-lg border shadow-sm w-full ${
           isDemoFee ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200'
         }`}
       >
-        <div className='flex items-center gap-2 mb-2'>
+        <div className='flex items-center gap-2 mb-2 w-full'>
           <Input
             type='text'
             value={item.name}
@@ -152,7 +152,7 @@ export function LaborSection({
               handleFlatFeeItemChange(item.id, 'name', e.target.value)
             }
             placeholder='Flat Fee Task'
-            className={`border-b-2 border-slate-200 focus:border-blue-500 focus:outline-none bg-transparent ${
+            className={`border-b-2 border-slate-200 focus:border-blue-500 focus:outline-none bg-transparent w-full ${
               isDemoFee ? 'bg-slate-50 cursor-not-allowed' : ''
             }`}
             readOnly={isDemoFee}
@@ -162,13 +162,13 @@ export function LaborSection({
               onClick={() => handleDeleteFlatFeeItem(item.id)}
               variant='ghost'
               size='sm'
-              className='text-red-500 hover:text-red-700 p-1 h-auto'
+              className='text-red-500 hover:text-red-700 p-1 h-auto flex-shrink-0'
             >
               <Trash2 size={16} />
             </Button>
           )}
         </div>
-        <div>
+        <div className='w-full'>
           <label className='text-xs text-slate-500'>Total ($)</label>
           <Input
             type='number'
@@ -177,7 +177,7 @@ export function LaborSection({
               handleFlatFeeItemChange(item.id, 'price', e.target.value)
             }
             placeholder='0.00'
-            className='text-center'
+            className='text-center w-full'
             readOnly={isDemoFee}
           />
         </div>
@@ -196,7 +196,9 @@ export function LaborSection({
     <div className='space-y-5'>
       <div className='flex justify-between items-baseline'>
         <h2 className='text-2xl font-bold text-slate-800'>Labor Costs</h2>
-        <p className='font-bold text-blue-600 text-lg'>${total.toFixed(2)}</p>
+        <p className='font-bold text-blue-600 text-sm sm:text-lg'>
+          ${total.toFixed(2)}
+        </p>
       </div>
 
       <Card>

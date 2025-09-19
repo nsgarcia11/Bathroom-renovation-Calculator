@@ -19,19 +19,19 @@ interface EstimateData {
   flatFeeAmount: string;
   flatFeeDescription: string;
   demolitionNotes: string;
-  laborItems: Array<{
+  laborItems?: Array<{
     id: string;
     name: string;
     hours: string;
     rate: string;
     color?: string;
   }>;
-  flatFeeItems: Array<{
+  flatFeeItems?: Array<{
     id: string;
     name: string;
     price: string;
   }>;
-  constructionMaterials: Array<{
+  constructionMaterials?: Array<{
     id: string;
     name: string;
     quantity: string;
@@ -40,6 +40,32 @@ interface EstimateData {
     color?: string;
   }>;
   projectNotes: string;
+  categoryWorkflowData?: Record<
+    string,
+    {
+      labor: {
+        laborItems: Array<{
+          id: string;
+          name: string;
+          hours: string;
+          rate: string;
+          color?: string;
+        }>;
+        flatFeeItems: Array<{ id: string; name: string; price: string }>;
+      };
+      materials: {
+        constructionMaterials: Array<{
+          id: string;
+          name: string;
+          quantity: string;
+          price: string;
+          unit: string;
+          color?: string;
+        }>;
+      };
+      estimate: { projectNotes: string };
+    }
+  >;
 }
 
 export function useEstimateData(projectId: string) {

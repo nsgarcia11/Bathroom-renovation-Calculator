@@ -337,12 +337,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
     province: 'ON',
   });
 
-  // Line items state
-  const [laborItems, setLaborItems] = useState<LaborItem[]>([]);
-  const [flatFeeItems, setFlatFeeItems] = useState<FlatFeeItem[]>([]);
-  const [constructionMaterials, setConstructionMaterials] = useState<
-    MaterialItem[]
-  >([]);
+  // Project notes state
   const [projectNotes, setProjectNotes] = useState('');
 
   // Category-specific data structure for labor, materials, and estimates
@@ -547,24 +542,82 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
     });
   };
 
-  // Totals Calculation
-  const flatFeeTotal = flatFeeItems.reduce(
-    (sum, item) => sum + (parseFloat(item.price) || 0),
-    0
-  );
-  const hourlyLaborTotal = laborItems.reduce(
-    (sum, item) =>
-      sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
-    0
-  );
-  const laborTotal =
-    isDemolitionFlatFee === 'yes' ? flatFeeTotal : hourlyLaborTotal;
-  const suppliesTotal = constructionMaterials.reduce(
-    (sum, item) =>
-      sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
-    0
-  );
-  const grandTotal = laborTotal + suppliesTotal;
+  // Totals Calculation - Calculate across all categories
+  const calculateCategoryTotal = (category: ConstructionCategory) => {
+    const laborData = getCategoryWorkflowData(
+      category,
+      'labor'
+    ) as CategoryWorkflowData['labor'];
+    const materialsData = getCategoryWorkflowData(
+      category,
+      'materials'
+    ) as CategoryWorkflowData['materials'];
+
+    // Calculate labor total (flat fee and hourly are mutually exclusive)
+    const flatFeeTotal = laborData.flatFeeItems.reduce(
+      (sum, item) => sum + (parseFloat(item.price) || 0),
+      0
+    );
+
+    // If we have flat fee items, ignore hourly labor items (they are mutually exclusive)
+    const hourlyLaborTotal =
+      laborData.flatFeeItems.length > 0
+        ? 0
+        : laborData.laborItems.reduce(
+            (sum, item) =>
+              sum +
+              (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+            0
+          );
+
+    const laborTotal = flatFeeTotal + hourlyLaborTotal;
+
+    // Calculate materials total
+    const materialsTotal = materialsData.constructionMaterials.reduce(
+      (sum, item) =>
+        sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+      0
+    );
+
+    return laborTotal + materialsTotal;
+  };
+
+  // Calculate grand total - only include selected category for now
+  // TODO: In the future, we might want to include all categories
+  const grandTotal = calculateCategoryTotal(selectedCategory);
+
+  // Debug logging to see what's being calculated
+  if (selectedCategory === 'demolition') {
+    const laborData = getCategoryWorkflowData(
+      'demolition',
+      'labor'
+    ) as CategoryWorkflowData['labor'];
+    const materialsData = getCategoryWorkflowData(
+      'demolition',
+      'materials'
+    ) as CategoryWorkflowData['materials'];
+
+    const flatFeeTotal = laborData.flatFeeItems.reduce(
+      (sum, item) => sum + (parseFloat(item.price) || 0),
+      0
+    );
+
+    // If we have flat fee items, ignore hourly labor items (they are mutually exclusive)
+    const hourlyLaborTotal =
+      laborData.flatFeeItems.length > 0
+        ? 0
+        : laborData.laborItems.reduce(
+            (sum, item) =>
+              sum +
+              (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+            0
+          );
+    const materialsTotal = materialsData.constructionMaterials.reduce(
+      (sum, item) =>
+        sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+      0
+    );
+  }
 
   // Load saved data when available
   useEffect(() => {
@@ -588,10 +641,12 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
         savedData.flatFeeDescription || 'Demolition & Debris Removal'
       );
       setDemolitionNotes(savedData.demolitionNotes || '');
-      setLaborItems(savedData.laborItems || []);
-      setFlatFeeItems(savedData.flatFeeItems || []);
-      setConstructionMaterials(savedData.constructionMaterials || []);
       setProjectNotes(savedData.projectNotes || '');
+
+      // Load category workflow data if available
+      if (savedData.categoryWorkflowData) {
+        setCategoryWorkflowData(savedData.categoryWorkflowData);
+      }
     }
   }, [savedData]);
 
@@ -608,10 +663,8 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
           flatFeeAmount,
           flatFeeDescription,
           demolitionNotes,
-          laborItems,
-          flatFeeItems,
-          constructionMaterials,
           projectNotes,
+          categoryWorkflowData,
         },
       });
       setSaveError(null);
@@ -735,6 +788,57 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
                 setFlatFeeDescription={setFlatFeeDescription}
                 demolitionNotes={demolitionNotes}
                 setDemolitionNotes={setDemolitionNotes}
+                laborItems={
+                  (
+                    getCategoryWorkflowData(
+                      'demolition',
+                      'labor'
+                    ) as CategoryWorkflowData['labor']
+                  ).laborItems
+                }
+                setLaborItems={(items) =>
+                  updateCategoryWorkflowData('demolition', 'labor', {
+                    ...(getCategoryWorkflowData(
+                      'demolition',
+                      'labor'
+                    ) as CategoryWorkflowData['labor']),
+                    laborItems: items,
+                  })
+                }
+                flatFeeItems={
+                  (
+                    getCategoryWorkflowData(
+                      'demolition',
+                      'labor'
+                    ) as CategoryWorkflowData['labor']
+                  ).flatFeeItems
+                }
+                setFlatFeeItems={(items) =>
+                  updateCategoryWorkflowData('demolition', 'labor', {
+                    ...(getCategoryWorkflowData(
+                      'demolition',
+                      'labor'
+                    ) as CategoryWorkflowData['labor']),
+                    flatFeeItems: items,
+                  })
+                }
+                constructionMaterials={
+                  (
+                    getCategoryWorkflowData(
+                      'demolition',
+                      'materials'
+                    ) as CategoryWorkflowData['materials']
+                  ).constructionMaterials
+                }
+                setConstructionMaterials={(items) =>
+                  updateCategoryWorkflowData('demolition', 'materials', {
+                    ...(getCategoryWorkflowData(
+                      'demolition',
+                      'materials'
+                    ) as CategoryWorkflowData['materials']),
+                    constructionMaterials: items,
+                  })
+                }
               />
             )}
             {activeSection === 'labor' && (

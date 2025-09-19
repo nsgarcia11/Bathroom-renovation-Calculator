@@ -8,11 +8,13 @@ interface EditProjectProps {
   };
 }
 
-export default function EditProject({ params }: EditProjectProps) {
+export default async function EditProject({ params }: EditProjectProps) {
+  const { id } = await params;
+
   return (
     <Layout showBottomNav={true} showHeader={true}>
       <AuthGuard>
-        <EditProjectPage projectId={params.id} />
+        <EditProjectPage projectId={id} />
       </AuthGuard>
     </Layout>
   );

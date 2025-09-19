@@ -9,7 +9,7 @@ export const COST_DATA: { [key: string]: CostData } = {
     labor: [
       {
         id: 'lab-demo-vanity',
-        name: 'Demolish and remove vanity',
+        name: 'Remove Vanity',
         hours: 1.5,
         rateKey: 'demolition',
         pricingModel: 'hourly',
@@ -24,8 +24,8 @@ export const COST_DATA: { [key: string]: CostData } = {
     labor: [
       {
         id: 'lab-demo-toilet',
-        name: 'Demolish and remove toilet',
-        hours: 1,
+        name: 'Remove Toilet',
+        hours: 0.5,
         rateKey: 'demolition',
         pricingModel: 'hourly',
         category: 'demolition',
@@ -39,7 +39,7 @@ export const COST_DATA: { [key: string]: CostData } = {
     labor: [
       {
         id: 'lab-demo-shower',
-        name: 'Demolish shower surround to studs',
+        name: 'Remove Shower Wall',
         hours: 4,
         rateKey: 'demolition',
         pricingModel: 'hourly',
@@ -54,8 +54,68 @@ export const COST_DATA: { [key: string]: CostData } = {
     labor: [
       {
         id: 'lab-demo-floor',
-        name: 'Demolish flooring and underlayment',
+        name: 'Remove Flooring',
+        hours: 4,
+        rateKey: 'demolition',
+        pricingModel: 'hourly',
+        category: 'demolition',
+        totalCost: 0,
+      },
+    ],
+    materials: [],
+  },
+  demolish_shower_base: {
+    category: 'demolition',
+    labor: [
+      {
+        id: 'lab-demo-shower-base',
+        name: 'Remove Shower Base',
         hours: 3,
+        rateKey: 'demolition',
+        pricingModel: 'hourly',
+        category: 'demolition',
+        totalCost: 0,
+      },
+    ],
+    materials: [],
+  },
+  demolish_tub: {
+    category: 'demolition',
+    labor: [
+      {
+        id: 'lab-demo-tub',
+        name: 'Remove Tub',
+        hours: 2,
+        rateKey: 'demolition',
+        pricingModel: 'hourly',
+        category: 'demolition',
+        totalCost: 0,
+      },
+    ],
+    materials: [],
+  },
+  demolish_accessories: {
+    category: 'demolition',
+    labor: [
+      {
+        id: 'lab-demo-accessories',
+        name: 'Remove Accessories',
+        hours: 1,
+        rateKey: 'demolition',
+        pricingModel: 'hourly',
+        category: 'demolition',
+        totalCost: 0,
+      },
+    ],
+    materials: [],
+  },
+  demolish_wall: {
+    category: 'demolition',
+    labor: [
+      {
+        id: 'lab-demo-wall',
+        name: 'Remove Wall',
+        hours: 6,
         rateKey: 'demolition',
         pricingModel: 'hourly',
         category: 'demolition',
@@ -733,7 +793,7 @@ export const PROVINCE_TAX_RATES: ProvinceTaxRates = {
 };
 
 export const DEFAULT_TRADE_RATES: TradeRates = {
-  demolition: 75,
+  demolition: 95,
   flooring: 85,
   plumbing: 110,
   electrical: 95,

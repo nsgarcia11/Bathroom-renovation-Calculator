@@ -9,12 +9,14 @@ interface EstimatePageProps {
   };
 }
 
-export default function Estimate({ params }: EstimatePageProps) {
+export default async function Estimate({ params }: EstimatePageProps) {
+  const { id } = await params;
+
   return (
     <EstimateProvider>
       <Layout showBottomNav={true} showHeader={true} bottomNavType='estimate'>
         <AuthGuard>
-          <EstimatePage projectId={params.id} />
+          <EstimatePage projectId={id} />
         </AuthGuard>
       </Layout>
     </EstimateProvider>

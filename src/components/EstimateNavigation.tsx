@@ -19,7 +19,7 @@ export function EstimateNavigation() {
         }`}
       >
         <FileText size={20} />
-        <span className='text-sm sm:text-xs font-medium'>Scope</span>
+        <span className='text-sm sm:text-xs font-medium'>Design</span>
       </button>
       <button
         onClick={() => setActiveSection('labor')}
