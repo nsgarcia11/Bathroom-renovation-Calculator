@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface LaborItem {
   id: string;
@@ -12,6 +12,7 @@ interface LaborItem {
   hours: string;
   rate: string;
   color?: string;
+  scope?: string;
 }
 
 interface FlatFeeItem {
@@ -53,18 +54,49 @@ export function LaborSection({
   handleDeleteFlatFeeItem,
   isDemolitionFlatFee,
 }: LaborSectionProps) {
+  const [isDemolitionOpen, setIsDemolitionOpen] = useState(true);
+  const [isCustomTasksOpen, setIsCustomTasksOpen] = useState(true);
+
   // Memoized calculations
   const labor = useMemo(() => laborItems || [], [laborItems]);
   const flatFees = useMemo(() => flatFeeItems || [], [flatFeeItems]);
 
-  const hourlyTotal = useMemo(
+  // Filter demolition tasks only
+  const demolitionTasks = useMemo(
+    () => labor.filter((item) => item && item.id.startsWith('lab-')),
+    [labor]
+  );
+
+  // Filter custom tasks
+  const customTasks = useMemo(
+    () => labor.filter((item) => item && item.id.startsWith('custom-')),
+    [labor]
+  );
+
+  // Calculate totals
+  const demolitionTotal = useMemo(
     () =>
-      labor.reduce(
+      demolitionTasks.reduce(
         (sum, item) =>
           sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
         0
       ),
-    [labor]
+    [demolitionTasks]
+  );
+
+  const customTasksTotal = useMemo(
+    () =>
+      customTasks.reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      ),
+    [customTasks]
+  );
+
+  const hourlyTotal = useMemo(
+    () => demolitionTotal + customTasksTotal,
+    [demolitionTotal, customTasksTotal]
   );
 
   const flatFeeTotal = useMemo(
@@ -77,6 +109,18 @@ export function LaborSection({
     () => (isDemolitionFlatFee === 'yes' ? flatFeeTotal : hourlyTotal),
     [isDemolitionFlatFee, flatFeeTotal, hourlyTotal]
   );
+
+  // Calculate total hours
+  const totalHours = useMemo(() => {
+    if (isDemolitionFlatFee === 'yes') return 0;
+    return (
+      demolitionTasks.reduce(
+        (sum, item) => sum + (parseFloat(item.hours) || 0),
+        0
+      ) +
+      customTasks.reduce((sum, item) => sum + (parseFloat(item.hours) || 0), 0)
+    );
+  }, [isDemolitionFlatFee, demolitionTasks, customTasks]);
 
   const renderLaborItem = useCallback(
     (item: LaborItem) => {
@@ -198,84 +242,183 @@ export function LaborSection({
     );
   };
 
-  const predefinedTasks = labor.filter(
-    (item) => item && item.id.startsWith('lab-')
-  );
-  const customTasks = labor.filter(
-    (item) => item && item.id.startsWith('custom-')
-  );
-
   return (
     <div className='space-y-5'>
       <div className='flex justify-between items-baseline'>
-        <h2 className='text-2xl font-bold text-slate-800'>Labor Costs</h2>
+        <h2 className='text-2xl font-bold text-slate-800'>Labor</h2>
         <p className='font-bold text-blue-600 text-sm sm:text-lg'>
           ${total.toFixed(2)}
         </p>
       </div>
 
-      <Card>
-        <CardContent className='p-3 space-y-3'>
-          {isDemolitionFlatFee === 'yes' ? (
-            <>
-              <h3 className='text-lg font-semibold text-slate-700 px-1'>
-                Flat Fee Tasks
-              </h3>
-              {flatFees.length > 0 ? (
-                flatFees.map(renderFlatFeeItem)
-              ) : (
-                <p className='text-sm text-slate-500 text-center py-4'>
-                  No flat fee tasks added.
-                </p>
-              )}
-              <Button
-                onClick={handleAddFlatFeeItem}
-                variant='outline'
-                className='w-full mt-2 flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold border-blue-200'
+      <div className='space-y-4'>
+        {isDemolitionFlatFee === 'yes' ? (
+          /* Flat Fee Mode */
+          <Card>
+            <CardContent className='p-3 space-y-3'>
+              <div
+                className='flex justify-between items-center cursor-pointer'
+                onClick={() => setIsDemolitionOpen(!isDemolitionOpen)}
               >
-                <Plus size={16} />
-                Add Custom Flat Fee Task
-              </Button>
-            </>
-          ) : (
-            <>
-              <h3 className='text-lg font-semibold text-slate-700 px-1'>
-                Hourly Tasks
-              </h3>
-              {predefinedTasks.length > 0 ? (
-                <div className='space-y-2 pt-2'>
-                  <p className='text-xs font-semibold uppercase text-slate-500 px-1'>
-                    Predefined Tasks
-                  </p>
-                  {predefinedTasks.map(renderLaborItem)}
+                <div className='flex items-center gap-2'>
+                  {isDemolitionOpen ? (
+                    <ChevronDown className='h-4 w-4 text-slate-600' />
+                  ) : (
+                    <ChevronRight className='h-4 w-4 text-slate-600' />
+                  )}
+                  <h3 className='text-lg font-semibold text-slate-700'>
+                    Demolition & Prep
+                  </h3>
                 </div>
-              ) : (
-                <p className='text-sm text-slate-500 text-center py-4'>
-                  No predefined tasks available.
+                <p className='font-bold text-blue-600 text-sm'>
+                  ${flatFeeTotal.toFixed(2)}
                 </p>
+              </div>
+              {isDemolitionOpen && (
+                <>
+                  {flatFees.length > 0 ? (
+                    flatFees.map(renderFlatFeeItem)
+                  ) : (
+                    <p className='text-sm text-slate-500 text-center py-4'>
+                      No flat fee tasks added.
+                    </p>
+                  )}
+                  <Button
+                    onClick={handleAddFlatFeeItem}
+                    variant='outline'
+                    className='w-full mt-2 flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold border-blue-200'
+                  >
+                    <Plus size={16} />
+                    Add Custom Flat Fee Task
+                  </Button>
+                </>
               )}
+            </CardContent>
+          </Card>
+        ) : (
+          /* Hourly Mode */
+          <>
+            {/* Demolition & Prep Section */}
+            {demolitionTasks.length > 0 && (
+              <Card>
+                <CardContent className='p-3 space-y-3'>
+                  <div
+                    className='flex justify-between items-center cursor-pointer'
+                    onClick={() => setIsDemolitionOpen(!isDemolitionOpen)}
+                  >
+                    <div className='flex items-center gap-2'>
+                      {isDemolitionOpen ? (
+                        <ChevronDown className='h-4 w-4 text-slate-600' />
+                      ) : (
+                        <ChevronRight className='h-4 w-4 text-slate-600' />
+                      )}
+                      <h3 className='text-lg font-semibold text-slate-700'>
+                        Demolition & Prep
+                      </h3>
+                    </div>
+                    <div className='flex items-center gap-4'>
+                      <span className='text-sm text-slate-600'>
+                        {demolitionTasks
+                          .reduce(
+                            (sum, item) => sum + (parseFloat(item.hours) || 0),
+                            0
+                          )
+                          .toFixed(1)}{' '}
+                        hrs
+                      </span>
+                      <p className='font-bold text-blue-600 text-sm'>
+                        ${demolitionTotal.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                  {isDemolitionOpen && (
+                    <div className='space-y-2'>
+                      {demolitionTasks.map(renderLaborItem)}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
-              {customTasks.length > 0 && (
-                <div className='space-y-2 pt-2'>
-                  <p className='text-xs font-semibold uppercase text-slate-500 px-1'>
-                    Custom Tasks
-                  </p>
-                  {customTasks.map(renderLaborItem)}
+            {/* Custom Tasks Section */}
+            <Card>
+              <CardContent className='p-3 space-y-3'>
+                <div
+                  className='flex justify-between items-center cursor-pointer'
+                  onClick={() => setIsCustomTasksOpen(!isCustomTasksOpen)}
+                >
+                  <div className='flex items-center gap-2'>
+                    {isCustomTasksOpen ? (
+                      <ChevronDown className='h-4 w-4 text-slate-600' />
+                    ) : (
+                      <ChevronRight className='h-4 w-4 text-slate-600' />
+                    )}
+                    <h3 className='text-lg font-semibold text-slate-700'>
+                      Custom Tasks
+                    </h3>
+                  </div>
+                  <div className='flex items-center gap-4'>
+                    <span className='text-sm text-slate-600'>
+                      {customTasks
+                        .reduce(
+                          (sum, item) => sum + (parseFloat(item.hours) || 0),
+                          0
+                        )
+                        .toFixed(1)}{' '}
+                      hrs
+                    </span>
+                    <p className='font-bold text-blue-600 text-sm'>
+                      ${customTasksTotal.toFixed(2)}
+                    </p>
+                  </div>
                 </div>
-              )}
+                {isCustomTasksOpen && (
+                  <>
+                    {customTasks.length > 0 ? (
+                      <div className='space-y-2'>
+                        {customTasks.map(renderLaborItem)}
+                      </div>
+                    ) : (
+                      <p className='text-sm text-slate-500 text-center py-4'>
+                        No custom tasks added.
+                      </p>
+                    )}
+                    <Button
+                      onClick={handleAddLaborItem}
+                      variant='outline'
+                      className='w-full mt-2 flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold border-blue-200'
+                    >
+                      <Plus size={16} />
+                      Add Custom Labor Task
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
 
-              <Button
-                onClick={handleAddLaborItem}
-                variant='outline'
-                className='w-full mt-2 flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold border-blue-200'
-              >
-                <Plus size={16} />
-                Add Custom Hourly Task
-              </Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
+        {/* Total Labor Cost Section */}
+        <Card>
+          <CardContent className='p-4'>
+            <div className='flex justify-between items-center'>
+              <h3 className='text-lg font-bold text-slate-800'>
+                Total Labor Cost
+              </h3>
+              <div className='flex items-center gap-4'>
+                {isDemolitionFlatFee === 'no' && (
+                  <span className='text-sm text-slate-600'>
+                    {totalHours.toFixed(1)} hrs
+                  </span>
+                )}
+                <p className='text-2xl font-bold text-blue-600'>
+                  ${total.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

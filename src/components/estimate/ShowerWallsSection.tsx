@@ -10,6 +10,7 @@ import { CollapsibleNotesSection } from './CollapsibleNotesSection';
 import { EditDimensionsModal } from './EditDimensionsModal';
 import { WallRow } from './WallRow';
 import { AlertTriangle, X } from 'lucide-react';
+import { useShowerWallsCalculations } from '@/hooks/use-shower-walls-calculations';
 
 interface Wall {
   id: string;
@@ -54,7 +55,6 @@ export function ShowerWallsSection({
   setDesign,
   wasteNote,
 }: ShowerWallsSectionProps) {
-  const [totalSqft, setTotalSqft] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingWall, setEditingWall] = useState<Wall | null>(null);
   const [editingField, setEditingField] = useState<'height' | 'width' | null>(
@@ -63,11 +63,18 @@ export function ShowerWallsSection({
   const [showWasteNote, setShowWasteNote] = useState(true);
   const [showClientSuppliesNote, setShowClientSuppliesNote] = useState(true);
 
+  // Use the calculator hook for all calculations
+  const { totalSqft, wasteNote: calculatedWasteNote } =
+    useShowerWallsCalculations({
+      walls,
+      design,
+    });
+
   useEffect(() => {
-    if (wasteNote) {
+    if (wasteNote || calculatedWasteNote) {
       setShowWasteNote(true);
     }
-  }, [wasteNote]);
+  }, [wasteNote, calculatedWasteNote]);
 
   useEffect(() => {
     if (design.clientSuppliesBase === 'No') {
@@ -75,17 +82,12 @@ export function ShowerWallsSection({
     }
   }, [design.clientSuppliesBase]);
 
-  // Calculate square footage for each wall
+  // Calculate square footage for each wall for display
   const wallsWithSqft = walls.map((wall) => {
     const heightInFeet = wall.height.ft + wall.height.inch / 12;
     const widthInFeet = wall.width.ft + wall.width.inch / 12;
     return { ...wall, sqft: heightInFeet * widthInFeet };
   });
-
-  useEffect(() => {
-    const total = wallsWithSqft.reduce((acc, wall) => acc + wall.sqft, 0);
-    setTotalSqft(total);
-  }, [wallsWithSqft]);
 
   const handleEdit = (wallId: string, field: 'height' | 'width') => {
     const wall = walls.find((w) => w.id === wallId);
@@ -305,10 +307,12 @@ export function ShowerWallsSection({
                 )}
               </div>
             </div>
-            {wasteNote && showWasteNote && (
+            {(wasteNote || calculatedWasteNote) && showWasteNote && (
               <div className='text-orange-500 text-sm p-3 flex items-start space-x-3 mt-2'>
                 <AlertTriangle className='w-5 h-5 flex-shrink-0 mt-0.5' />
-                <div className='flex-grow'>{wasteNote}</div>
+                <div className='flex-grow'>
+                  {wasteNote || calculatedWasteNote}
+                </div>
                 <button
                   onClick={() => setShowWasteNote(false)}
                   className='text-orange-600 hover:text-orange-800 p-0.5 rounded-full hover:bg-orange-100 -mt-1 -mr-1'

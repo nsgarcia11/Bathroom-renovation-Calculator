@@ -35,7 +35,7 @@ export function EstimateNavigation() {
   const navigationItems = useMemo(
     () => [
       {
-        id: 'scope',
+        id: 'design',
         icon: FileText,
         label: 'Design',
         onClick: () => setActiveSection('design'),

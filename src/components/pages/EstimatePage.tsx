@@ -18,8 +18,12 @@ import { useRouter } from 'next/navigation';
 import { DemolitionSection } from '@/components/estimate/DemolitionSection';
 import { ShowerBaseSection } from '@/components/estimate/ShowerBaseSection';
 import { ShowerWallsSection } from '@/components/estimate/ShowerWallsSection';
+import { ShowerWallsAutoUpdate } from '@/components/estimate/ShowerWallsAutoUpdate';
+import { ShowerBaseAutoUpdate } from '@/components/estimate/ShowerBaseAutoUpdate';
 import { FloorSection } from '@/components/estimate/FloorSection';
-import type { ExtraMeasurement } from '@/types/floor';
+import { FloorAutoUpdate } from '@/components/estimate/FloorAutoUpdate';
+import { FloorLaborSection } from '@/components/estimate/FloorLaborSection';
+import { FloorMaterialsSection } from '@/components/estimate/FloorMaterialsSection';
 import type { StructuralItem } from '@/types/structural';
 import type { TradeItem, TradeSelection } from '@/types/trades';
 import { FinishingsSection } from '@/components/estimate/FinishingsSection';
@@ -27,6 +31,11 @@ import { StructuralSection } from '@/components/estimate/StructuralSection';
 import { TradesSection } from '@/components/estimate/TradesSection';
 import { MaterialsSection } from '@/components/estimate/MaterialsSection';
 import { LaborSection } from '@/components/estimate/LaborSection';
+import ShowerWallsLaborSection from '@/components/estimate/ShowerWallsLaborSection';
+import ShowerWallsMaterialsSection from '@/components/estimate/ShowerWallsMaterialsSection';
+import ShowerBaseLaborSection from '@/components/estimate/ShowerBaseLaborSection';
+import ShowerBaseMaterialsSection from '@/components/estimate/ShowerBaseMaterialsSection';
+import WorkflowSection from '@/components/estimate/WorkflowSection';
 import { EstimateSummary } from '@/components/estimate/EstimateSummary';
 import { useEstimate } from '@/contexts/EstimateContext';
 import type { ConstructionCategory } from '@/contexts/EstimateContext';
@@ -102,6 +111,7 @@ interface LaborItem {
   hours: string;
   rate: string;
   color?: string;
+  scope?: string;
 }
 
 interface FlatFeeItem {
@@ -117,6 +127,7 @@ interface MaterialItem {
   price: string;
   unit: string;
   color?: string;
+  scope?: string;
 }
 
 export function EstimatePage({ projectId }: EstimatePageProps) {
@@ -135,6 +146,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
   const saveEstimateData = useSaveEstimateData();
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [wasteNote] = useState('');
 
   // Demolition state
   const [demolitionChoices, setDemolitionChoices] = useState<DemolitionChoices>(
@@ -225,9 +237,17 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
 
   // Floor state
   const [floorData, setFloorData] = useState({
-    floorChoices: {
-      dimensions: { width: '', length: '' },
-      extraMeasurements: [] as ExtraMeasurement[],
+    measurements: {
+      width: 0,
+      length: 0,
+      extraMeasurements: [] as Array<{
+        id: number;
+        label: string;
+        width: number;
+        length: number;
+      }>,
+    },
+    design: {
       tilePattern: 'select_option',
       customPattern: '',
       selectedTileSizeOption: 'select_option',
@@ -235,12 +255,14 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
       notes: '',
       constructionNotes: '',
     },
-    clientSuppliesTiles: false,
-    selectedPrepTasks: [] as string[],
-    plywoodThickness: '3/4',
-    isHeatedFloor: false,
-    heatedFloorType: 'schluter',
-    customHeatedFloorName: '',
+    construction: {
+      clientSuppliesTiles: false,
+      selectedPrepTasks: [] as string[],
+      plywoodThickness: '3/4',
+      isHeatedFloor: false,
+      heatedFloorType: 'schluter',
+      customHeatedFloorName: '',
+    },
   });
 
   // Finishings state
@@ -475,7 +497,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
     (
       category: ConstructionCategory,
       id: string,
-      field: keyof LaborItem,
+      field: string,
       value: string
     ) => {
       const currentData = getCategoryWorkflowData(
@@ -563,6 +585,81 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
     [getCategoryWorkflowData, updateCategoryWorkflowData]
   );
 
+  const handleAddMaterialItem = useCallback(
+    (category: ConstructionCategory) => {
+      const currentData = getCategoryWorkflowData(
+        category,
+        'materials'
+      ) as CategoryWorkflowData['materials'];
+      if (currentData) {
+        const newItem = {
+          id: crypto.randomUUID(),
+          name: 'New Material',
+          quantity: '1',
+          price: '0',
+          unit: 'each',
+          color: undefined,
+        };
+        updateCategoryWorkflowData(category, 'materials', {
+          ...currentData,
+          constructionMaterials: [
+            ...currentData.constructionMaterials,
+            newItem,
+          ],
+        });
+      }
+    },
+    [getCategoryWorkflowData, updateCategoryWorkflowData]
+  );
+
+  const handleMaterialItemChange = useCallback(
+    (
+      category: ConstructionCategory,
+      id: string,
+      field: string,
+      value: string | number
+    ) => {
+      const currentData = getCategoryWorkflowData(
+        category,
+        'materials'
+      ) as CategoryWorkflowData['materials'];
+      if (currentData) {
+        const updatedMaterials = currentData.constructionMaterials.map(
+          (item: MaterialItem) => {
+            if (item.id === id) {
+              const updatedItem = { ...item, [field]: value.toString() };
+              return updatedItem;
+            }
+            return item;
+          }
+        );
+        updateCategoryWorkflowData(category, 'materials', {
+          ...currentData,
+          constructionMaterials: updatedMaterials,
+        });
+      }
+    },
+    [getCategoryWorkflowData, updateCategoryWorkflowData]
+  );
+
+  const handleDeleteMaterialItem = useCallback(
+    (category: ConstructionCategory, id: string) => {
+      const currentData = getCategoryWorkflowData(
+        category,
+        'materials'
+      ) as CategoryWorkflowData['materials'];
+      if (currentData) {
+        updateCategoryWorkflowData(category, 'materials', {
+          ...currentData,
+          constructionMaterials: currentData.constructionMaterials.filter(
+            (item: MaterialItem) => item.id !== id
+          ),
+        });
+      }
+    },
+    [getCategoryWorkflowData, updateCategoryWorkflowData]
+  );
+
   // Memoized calculation for category totals
   const categoryTotals = useMemo(() => {
     const totals: Record<ConstructionCategory, number> = {} as Record<
@@ -613,6 +710,48 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
   const grandTotal = useMemo(() => {
     return categoryTotals[selectedCategory] || 0;
   }, [categoryTotals, selectedCategory]);
+
+  const renderWorkflowSection = (category: ConstructionCategory) => {
+    const laborData = getCategoryWorkflowData(
+      category,
+      'labor'
+    ) as CategoryWorkflowData['labor'];
+    const materialsData = getCategoryWorkflowData(
+      category,
+      'materials'
+    ) as CategoryWorkflowData['materials'];
+
+    // Convert MaterialItem to WorkflowMaterialItem
+    const workflowMaterials = materialsData.constructionMaterials.map(
+      (item) => ({
+        id: item.id,
+        name: item.name,
+        quantity: parseFloat(item.quantity) || 0,
+        price: parseFloat(item.price) || 0,
+        total: (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        scope: (item as MaterialItem & { scope?: string }).scope || category,
+      })
+    );
+
+    return (
+      <WorkflowSection
+        category={category}
+        laborItems={laborData.laborItems}
+        materialItems={workflowMaterials}
+        onAddLaborItem={() => handleAddLaborItem(category)}
+        onLaborItemChange={(id, field, value) =>
+          handleLaborItemChange(category, id, field, value)
+        }
+        onDeleteLaborItem={(id) => handleDeleteLaborItem(category, id)}
+        onAddMaterialItem={() => handleAddMaterialItem(category)}
+        onMaterialItemChange={(id, field, value) =>
+          handleMaterialItemChange(category, id, field, value)
+        }
+        onDeleteMaterialItem={(id) => handleDeleteMaterialItem(category, id)}
+        wasteNote={category === 'shower-walls' ? wasteNote : undefined}
+      />
+    );
+  };
 
   // Load saved data when available
   useEffect(() => {
@@ -944,6 +1083,43 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
         {/* Shower Base Category - Complete Workflow */}
         {selectedCategory === 'shower-base' && (
           <>
+            {/* Auto-update labor and materials based on shower base design changes */}
+            <ShowerBaseAutoUpdate
+              measurements={showerBase.measurements}
+              design={showerBase.design}
+              construction={showerBase.construction}
+              currentLaborItems={
+                (
+                  getCategoryWorkflowData(
+                    'shower-base',
+                    'labor'
+                  ) as CategoryWorkflowData['labor']
+                ).laborItems
+              }
+              currentMaterialItems={
+                (
+                  getCategoryWorkflowData(
+                    'shower-base',
+                    'materials'
+                  ) as CategoryWorkflowData['materials']
+                ).constructionMaterials
+              }
+              onUpdateLabor={(items) =>
+                updateCategoryWorkflowData('shower-base', 'labor', {
+                  ...(getCategoryWorkflowData(
+                    'shower-base',
+                    'labor'
+                  ) as CategoryWorkflowData['labor']),
+                  laborItems: items,
+                })
+              }
+              onUpdateMaterials={(items) =>
+                updateCategoryWorkflowData('shower-base', 'materials', {
+                  constructionMaterials: items,
+                })
+              }
+            />
+
             {activeSection === 'design' && (
               <ShowerBaseSection
                 measurements={showerBase.measurements}
@@ -973,7 +1149,7 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
               />
             )}
             {activeSection === 'labor' && (
-              <LaborSection
+              <ShowerBaseLaborSection
                 laborItems={
                   (
                     getCategoryWorkflowData(
@@ -982,52 +1158,18 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
                     ) as CategoryWorkflowData['labor']
                   ).laborItems
                 }
-                setLaborItems={(items) =>
-                  updateCategoryWorkflowData('shower-base', 'labor', {
-                    ...(getCategoryWorkflowData(
-                      'shower-base',
-                      'labor'
-                    ) as CategoryWorkflowData['labor']),
-                    laborItems: items,
-                  })
-                }
-                flatFeeItems={
-                  (
-                    getCategoryWorkflowData(
-                      'shower-base',
-                      'labor'
-                    ) as CategoryWorkflowData['labor']
-                  ).flatFeeItems
-                }
-                setFlatFeeItems={(items) =>
-                  updateCategoryWorkflowData('shower-base', 'labor', {
-                    ...(getCategoryWorkflowData(
-                      'shower-base',
-                      'labor'
-                    ) as CategoryWorkflowData['labor']),
-                    flatFeeItems: items,
-                  })
-                }
-                handleAddLaborItem={() => handleAddLaborItem('shower-base')}
-                handleLaborItemChange={(id, field, value) =>
+                onAddLaborItem={() => handleAddLaborItem('shower-base')}
+                onLaborItemChange={(id, field, value) =>
                   handleLaborItemChange('shower-base', id, field, value)
                 }
-                handleDeleteLaborItem={(id) =>
+                onDeleteLaborItem={(id) =>
                   handleDeleteLaborItem('shower-base', id)
                 }
-                handleAddFlatFeeItem={() => handleAddFlatFeeItem('shower-base')}
-                handleFlatFeeItemChange={(id, field, value) =>
-                  handleFlatFeeItemChange('shower-base', id, field, value)
-                }
-                handleDeleteFlatFeeItem={(id) =>
-                  handleDeleteFlatFeeItem('shower-base', id)
-                }
-                isDemolitionFlatFee={'no'}
               />
             )}
             {activeSection === 'materials' && (
-              <MaterialsSection
-                constructionMaterials={
+              <ShowerBaseMaterialsSection
+                materialItems={
                   (
                     getCategoryWorkflowData(
                       'shower-base',
@@ -1035,13 +1177,12 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
                     ) as CategoryWorkflowData['materials']
                   ).constructionMaterials
                 }
-                setConstructionMaterials={(materials) =>
-                  updateCategoryWorkflowData('shower-base', 'materials', {
-                    constructionMaterials: materials,
-                  })
+                onAddMaterialItem={() => handleAddMaterialItem('shower-base')}
+                onMaterialItemChange={(id, field, value) =>
+                  handleMaterialItemChange('shower-base', id, field, value)
                 }
-                handleDeleteSupply={(id) =>
-                  handleDeleteSupply('shower-base', id)
+                onDeleteMaterialItem={(id) =>
+                  handleDeleteMaterialItem('shower-base', id)
                 }
               />
             )}
@@ -1066,6 +1207,42 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
           </>
         )}
 
+        {/* Auto-update labor and materials based on shower walls design changes */}
+        <ShowerWallsAutoUpdate
+          walls={showerWalls.walls}
+          design={showerWalls.design}
+          currentLaborItems={
+            (
+              getCategoryWorkflowData(
+                'shower-walls',
+                'labor'
+              ) as CategoryWorkflowData['labor']
+            ).laborItems
+          }
+          currentMaterialItems={
+            (
+              getCategoryWorkflowData(
+                'shower-walls',
+                'materials'
+              ) as CategoryWorkflowData['materials']
+            ).constructionMaterials
+          }
+          onUpdateLabor={(items) =>
+            updateCategoryWorkflowData('shower-walls', 'labor', {
+              ...(getCategoryWorkflowData(
+                'shower-walls',
+                'labor'
+              ) as CategoryWorkflowData['labor']),
+              laborItems: items,
+            })
+          }
+          onUpdateMaterials={(items) =>
+            updateCategoryWorkflowData('shower-walls', 'materials', {
+              constructionMaterials: items,
+            })
+          }
+        />
+
         {/* Shower Walls Category - Complete Workflow */}
         {selectedCategory === 'shower-walls' && (
           <>
@@ -1089,83 +1266,97 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
                         : design,
                   }))
                 }
+                wasteNote={undefined}
               />
             )}
-            {activeSection === 'labor' && (
-              <LaborSection
-                laborItems={
-                  (
-                    getCategoryWorkflowData(
-                      'shower-walls',
-                      'labor'
-                    ) as CategoryWorkflowData['labor']
-                  ).laborItems
-                }
-                setLaborItems={(items) =>
-                  updateCategoryWorkflowData('shower-walls', 'labor', {
-                    ...(getCategoryWorkflowData(
-                      'shower-walls',
-                      'labor'
-                    ) as CategoryWorkflowData['labor']),
-                    laborItems: items,
-                  })
-                }
-                flatFeeItems={
-                  (
-                    getCategoryWorkflowData(
-                      'shower-walls',
-                      'labor'
-                    ) as CategoryWorkflowData['labor']
-                  ).flatFeeItems
-                }
-                setFlatFeeItems={(items) =>
-                  updateCategoryWorkflowData('shower-walls', 'labor', {
-                    ...(getCategoryWorkflowData(
-                      'shower-walls',
-                      'labor'
-                    ) as CategoryWorkflowData['labor']),
-                    flatFeeItems: items,
-                  })
-                }
-                handleAddLaborItem={() => handleAddLaborItem('shower-walls')}
-                handleLaborItemChange={(id, field, value) =>
-                  handleLaborItemChange('shower-walls', id, field, value)
-                }
-                handleDeleteLaborItem={(id) =>
-                  handleDeleteLaborItem('shower-walls', id)
-                }
-                handleAddFlatFeeItem={() =>
-                  handleAddFlatFeeItem('shower-walls')
-                }
-                handleFlatFeeItemChange={(id, field, value) =>
-                  handleFlatFeeItemChange('shower-walls', id, field, value)
-                }
-                handleDeleteFlatFeeItem={(id) =>
-                  handleDeleteFlatFeeItem('shower-walls', id)
-                }
-                isDemolitionFlatFee={'no'}
-              />
-            )}
-            {activeSection === 'materials' && (
-              <MaterialsSection
-                constructionMaterials={
-                  (
-                    getCategoryWorkflowData(
-                      'shower-walls',
-                      'materials'
-                    ) as CategoryWorkflowData['materials']
-                  ).constructionMaterials
-                }
-                setConstructionMaterials={(materials) =>
-                  updateCategoryWorkflowData('shower-walls', 'materials', {
-                    constructionMaterials: materials,
-                  })
-                }
-                handleDeleteSupply={(id) =>
-                  handleDeleteSupply('shower-walls', id)
-                }
-              />
-            )}
+            {/* ShowerWallsAutoUpdate - Always active to update labor/materials */}
+            <ShowerWallsAutoUpdate
+              walls={showerWalls.walls}
+              design={showerWalls.design}
+              currentLaborItems={
+                (
+                  getCategoryWorkflowData(
+                    'shower-walls',
+                    'labor'
+                  ) as CategoryWorkflowData['labor']
+                ).laborItems
+              }
+              currentMaterialItems={
+                (
+                  getCategoryWorkflowData(
+                    'shower-walls',
+                    'materials'
+                  ) as CategoryWorkflowData['materials']
+                ).constructionMaterials
+              }
+              onUpdateLabor={(items) =>
+                updateCategoryWorkflowData('shower-walls', 'labor', {
+                  ...(getCategoryWorkflowData(
+                    'shower-walls',
+                    'labor'
+                  ) as CategoryWorkflowData['labor']),
+                  laborItems: items,
+                })
+              }
+              onUpdateMaterials={(items) =>
+                updateCategoryWorkflowData('shower-walls', 'materials', {
+                  ...(getCategoryWorkflowData(
+                    'shower-walls',
+                    'materials'
+                  ) as CategoryWorkflowData['materials']),
+                  constructionMaterials: items,
+                })
+              }
+            />
+
+            {activeSection === 'labor' &&
+              selectedCategory === 'shower-walls' && (
+                <ShowerWallsLaborSection
+                  laborItems={
+                    (
+                      getCategoryWorkflowData(
+                        'shower-walls',
+                        'labor'
+                      ) as CategoryWorkflowData['labor']
+                    ).laborItems
+                  }
+                  onAddLaborItem={() => handleAddLaborItem('shower-walls')}
+                  onLaborItemChange={(id, field, value) =>
+                    handleLaborItemChange('shower-walls', id, field, value)
+                  }
+                  onDeleteLaborItem={(id) =>
+                    handleDeleteLaborItem('shower-walls', id)
+                  }
+                />
+              )}
+            {activeSection === 'labor' &&
+              selectedCategory !== 'shower-walls' &&
+              renderWorkflowSection(selectedCategory)}
+            {activeSection === 'materials' &&
+              selectedCategory === 'shower-walls' && (
+                <ShowerWallsMaterialsSection
+                  materialItems={
+                    (
+                      getCategoryWorkflowData(
+                        'shower-walls',
+                        'materials'
+                      ) as CategoryWorkflowData['materials']
+                    ).constructionMaterials
+                  }
+                  onAddMaterialItem={() =>
+                    handleAddMaterialItem('shower-walls')
+                  }
+                  onMaterialItemChange={(id, field, value) =>
+                    handleMaterialItemChange('shower-walls', id, field, value)
+                  }
+                  onDeleteMaterialItem={(id) =>
+                    handleDeleteMaterialItem('shower-walls', id)
+                  }
+                />
+              )}
+            {activeSection === 'materials' &&
+              selectedCategory !== 'shower-walls' &&
+              renderWorkflowSection(selectedCategory)}
             {activeSection === 'estimate' && (
               <EstimateSummary
                 total={grandTotal}
@@ -1190,62 +1381,79 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
         {/* Floor Category - Complete Workflow */}
         {selectedCategory === 'floors' && (
           <>
+            {/* Auto-update labor and materials based on floor design changes */}
+            <FloorAutoUpdate
+              measurements={floorData.measurements}
+              design={floorData.design}
+              construction={floorData.construction}
+              currentLaborItems={
+                (
+                  getCategoryWorkflowData(
+                    'floors',
+                    'labor'
+                  ) as CategoryWorkflowData['labor']
+                ).laborItems
+              }
+              currentMaterialItems={
+                (
+                  getCategoryWorkflowData(
+                    'floors',
+                    'materials'
+                  ) as CategoryWorkflowData['materials']
+                ).constructionMaterials
+              }
+              onUpdateLabor={(items) =>
+                updateCategoryWorkflowData('floors', 'labor', {
+                  ...(getCategoryWorkflowData(
+                    'floors',
+                    'labor'
+                  ) as CategoryWorkflowData['labor']),
+                  laborItems: items,
+                })
+              }
+              onUpdateMaterials={(items) =>
+                updateCategoryWorkflowData('floors', 'materials', {
+                  constructionMaterials: items,
+                })
+              }
+            />
+
             {activeSection === 'design' && (
               <FloorSection
-                floorChoices={floorData.floorChoices}
-                setFloorChoices={(choices) =>
+                measurements={floorData.measurements}
+                setMeasurements={(measurements) =>
                   setFloorData((prev) => ({
                     ...prev,
-                    floorChoices:
-                      typeof choices === 'function'
-                        ? choices(prev.floorChoices)
-                        : choices,
+                    measurements:
+                      typeof measurements === 'function'
+                        ? measurements(prev.measurements)
+                        : measurements,
                   }))
                 }
-                totalSqFt={0} // TODO: Calculate from dimensions
-                clientSuppliesTiles={floorData.clientSuppliesTiles}
-                setClientSuppliesTiles={(value) =>
+                design={floorData.design}
+                setDesign={(design) =>
                   setFloorData((prev) => ({
                     ...prev,
-                    clientSuppliesTiles: value,
+                    design:
+                      typeof design === 'function'
+                        ? design(prev.design)
+                        : design,
                   }))
                 }
-                selectedPrepTasks={floorData.selectedPrepTasks}
-                setSelectedPrepTasks={(tasks) =>
+                construction={floorData.construction}
+                setConstruction={(construction) =>
                   setFloorData((prev) => ({
                     ...prev,
-                    selectedPrepTasks:
-                      typeof tasks === 'function'
-                        ? tasks(prev.selectedPrepTasks)
-                        : tasks,
-                  }))
-                }
-                plywoodThickness={floorData.plywoodThickness}
-                setPlywoodThickness={(thickness) =>
-                  setFloorData((prev) => ({
-                    ...prev,
-                    plywoodThickness: thickness,
-                  }))
-                }
-                isHeatedFloor={floorData.isHeatedFloor}
-                setIsHeatedFloor={(value) =>
-                  setFloorData((prev) => ({ ...prev, isHeatedFloor: value }))
-                }
-                heatedFloorType={floorData.heatedFloorType}
-                setHeatedFloorType={(type) =>
-                  setFloorData((prev) => ({ ...prev, heatedFloorType: type }))
-                }
-                customHeatedFloorName={floorData.customHeatedFloorName}
-                setCustomHeatedFloorName={(name) =>
-                  setFloorData((prev) => ({
-                    ...prev,
-                    customHeatedFloorName: name,
+                    construction:
+                      typeof construction === 'function'
+                        ? construction(prev.construction)
+                        : construction,
                   }))
                 }
               />
             )}
             {activeSection === 'labor' && (
-              <LaborSection
+              <FloorLaborSection
                 laborItems={
                   (
                     getCategoryWorkflowData(
@@ -1254,52 +1462,16 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
                     ) as CategoryWorkflowData['labor']
                   ).laborItems
                 }
-                setLaborItems={(items) =>
-                  updateCategoryWorkflowData('floors', 'labor', {
-                    ...(getCategoryWorkflowData(
-                      'floors',
-                      'labor'
-                    ) as CategoryWorkflowData['labor']),
-                    laborItems: items,
-                  })
-                }
-                flatFeeItems={
-                  (
-                    getCategoryWorkflowData(
-                      'floors',
-                      'labor'
-                    ) as CategoryWorkflowData['labor']
-                  ).flatFeeItems
-                }
-                setFlatFeeItems={(items) =>
-                  updateCategoryWorkflowData('floors', 'labor', {
-                    ...(getCategoryWorkflowData(
-                      'floors',
-                      'labor'
-                    ) as CategoryWorkflowData['labor']),
-                    flatFeeItems: items,
-                  })
-                }
-                handleAddLaborItem={() => handleAddLaborItem('floors')}
-                handleLaborItemChange={(id, field, value) =>
+                onAddLaborItem={() => handleAddLaborItem('floors')}
+                onLaborItemChange={(id, field, value) =>
                   handleLaborItemChange('floors', id, field, value)
                 }
-                handleDeleteLaborItem={(id) =>
-                  handleDeleteLaborItem('floors', id)
-                }
-                handleAddFlatFeeItem={() => handleAddFlatFeeItem('floors')}
-                handleFlatFeeItemChange={(id, field, value) =>
-                  handleFlatFeeItemChange('floors', id, field, value)
-                }
-                handleDeleteFlatFeeItem={(id) =>
-                  handleDeleteFlatFeeItem('floors', id)
-                }
-                isDemolitionFlatFee={'no'}
+                onDeleteLaborItem={(id) => handleDeleteLaborItem('floors', id)}
               />
             )}
             {activeSection === 'materials' && (
-              <MaterialsSection
-                constructionMaterials={
+              <FloorMaterialsSection
+                materialItems={
                   (
                     getCategoryWorkflowData(
                       'floors',
@@ -1307,12 +1479,13 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
                     ) as CategoryWorkflowData['materials']
                   ).constructionMaterials
                 }
-                setConstructionMaterials={(materials) =>
-                  updateCategoryWorkflowData('floors', 'materials', {
-                    constructionMaterials: materials,
-                  })
+                onAddMaterialItem={() => handleAddMaterialItem('floors')}
+                onMaterialItemChange={(id, field, value) =>
+                  handleMaterialItemChange('floors', id, field, value)
                 }
-                handleDeleteSupply={(id) => handleDeleteSupply('floors', id)}
+                onDeleteMaterialItem={(id) =>
+                  handleDeleteMaterialItem('floors', id)
+                }
               />
             )}
             {activeSection === 'estimate' && (
@@ -1781,26 +1954,9 @@ export function EstimatePage({ projectId }: EstimatePageProps) {
                 isDemolitionFlatFee={'no'}
               />
             )}
-            {activeSection === 'materials' && (
-              <MaterialsSection
-                constructionMaterials={
-                  (
-                    getCategoryWorkflowData(
-                      selectedCategory,
-                      'materials'
-                    ) as CategoryWorkflowData['materials']
-                  ).constructionMaterials
-                }
-                setConstructionMaterials={(materials) =>
-                  updateCategoryWorkflowData(selectedCategory, 'materials', {
-                    constructionMaterials: materials,
-                  })
-                }
-                handleDeleteSupply={(id) =>
-                  handleDeleteSupply(selectedCategory, id)
-                }
-              />
-            )}
+            {activeSection === 'materials' &&
+              selectedCategory !== 'shower-walls' &&
+              renderWorkflowSection(selectedCategory)}
             {activeSection === 'estimate' && (
               <EstimateSummary
                 total={grandTotal}
