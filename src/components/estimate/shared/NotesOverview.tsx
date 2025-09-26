@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import { Hammer, ShowerHead } from 'lucide-react';
+import { ShowerBaseIcon } from '@/components/icons/ShowerBaseIcon';
 
 export default function NotesOverview() {
   const { getDesignData, getNotes } = useEstimateWorkflowContext();
@@ -89,6 +90,56 @@ export default function NotesOverview() {
     };
   }, [getDesignData]);
 
+  // Get shower base notes data
+  const showerBaseNotes = useMemo(() => {
+    const designData = getDesignData('showerBase') as {
+      walls: unknown[];
+      design: {
+        designContractorNotes?: string;
+        designClientNotes?: string;
+        constructionContractorNotes?: string;
+        constructionClientNotes?: string;
+        [key: string]: unknown;
+      };
+    } | null;
+
+    // Combine design and construction notes
+    const designContractorNotes =
+      designData?.design?.designContractorNotes?.trim() || '';
+    const designClientNotes =
+      designData?.design?.designClientNotes?.trim() || '';
+    const constructionContractorNotes =
+      designData?.design?.constructionContractorNotes?.trim() || '';
+    const constructionClientNotes =
+      designData?.design?.constructionClientNotes?.trim() || '';
+
+    // Check if shower base has any notes or design data
+    const hasNotes =
+      designContractorNotes ||
+      designClientNotes ||
+      constructionContractorNotes ||
+      constructionClientNotes ||
+      (designData && Object.keys(designData).length > 0);
+
+    if (!hasNotes) return null;
+
+    return {
+      id: 'showerBase',
+      name: 'Shower Base',
+      icon: <ShowerBaseIcon size={24} />,
+      color: 'text-blue-600',
+      designNotes: {
+        contractorNotes: designContractorNotes,
+        clientNotes: designClientNotes,
+      },
+      constructionNotes: {
+        contractorNotes: constructionContractorNotes,
+        clientNotes: constructionClientNotes,
+      },
+      hasNotes: true,
+    };
+  }, [getDesignData]);
+
   // Create workflows array
   const workflows = useMemo(() => {
     const workflowList = [];
@@ -98,8 +149,11 @@ export default function NotesOverview() {
     if (showerWallsNotes) {
       workflowList.push(showerWallsNotes);
     }
+    if (showerBaseNotes) {
+      workflowList.push(showerBaseNotes);
+    }
     return workflowList;
-  }, [demolitionNotes, showerWallsNotes]);
+  }, [demolitionNotes, showerWallsNotes, showerBaseNotes]);
 
   return (
     <div className='space-y-6'>

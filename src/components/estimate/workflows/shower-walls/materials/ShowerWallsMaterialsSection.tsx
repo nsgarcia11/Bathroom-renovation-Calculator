@@ -494,10 +494,6 @@ export default function ShowerWallsMaterialsSection() {
         </h2>
         <div className='text-right'>
           <p className='font-bold text-blue-600 text-lg'>${total.toFixed(2)}</p>
-          <p className='text-sm text-slate-600'>
-            Area: {totalSqft.toFixed(2)} sq/ft | Waste: {wasteFactor} | Tile:{' '}
-            {tileNeeded.toFixed(2)} sq/ft
-          </p>
         </div>
       </div>
 

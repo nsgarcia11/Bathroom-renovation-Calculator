@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import { Hammer, ShowerHead } from 'lucide-react';
+import { ShowerBaseIcon } from '@/components/icons/ShowerBaseIcon';
 
 export default function EstimatesOverview() {
   const {
@@ -110,6 +111,71 @@ export default function EstimatesOverview() {
     };
   }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
 
+  // Get shower base workflow data
+  const showerBaseData = useMemo(() => {
+    const designData = getDesignData('showerBase');
+    const laborItems = getLaborItems('showerBase');
+    const materialItems = getMaterialItems('showerBase');
+    const totals = getWorkflowTotals('showerBase');
+
+    // Check if there's any data
+    const hasData =
+      laborItems.length > 0 ||
+      materialItems.length > 0 ||
+      (designData && Object.keys(designData).length > 0);
+
+    if (!hasData) return null;
+
+    // Calculate scope-based totals
+    const designLabor = laborItems
+      .filter((item) => item.scope === 'design')
+      .reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      );
+
+    const constructionLabor = laborItems
+      .filter((item) => item.scope === 'construction')
+      .reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      );
+
+    const designMaterials = materialItems
+      .filter((item) => item.scope === 'design')
+      .reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      );
+
+    const constructionMaterials = materialItems
+      .filter((item) => item.scope === 'construction')
+      .reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      );
+
+    return {
+      id: 'showerBase',
+      name: 'Shower Base',
+      icon: <ShowerBaseIcon size={24} />,
+      color: 'text-blue-600',
+      designLabor,
+      constructionLabor,
+      designMaterials,
+      constructionMaterials,
+      totalLabor: totals.laborTotal,
+      totalMaterials: totals.materialsTotal,
+      total: totals.grandTotal,
+    };
+  }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
+
   // Create workflows array
   const workflows = useMemo(() => {
     const workflowList = [];
@@ -119,8 +185,11 @@ export default function EstimatesOverview() {
     if (showerWallsData) {
       workflowList.push(showerWallsData);
     }
+    if (showerBaseData) {
+      workflowList.push(showerBaseData);
+    }
     return workflowList;
-  }, [demolitionData, showerWallsData]);
+  }, [demolitionData, showerWallsData, showerBaseData]);
 
   // Get grand total from context
   const grandTotal = useMemo(() => getAllTotals().grandTotal, [getAllTotals]);

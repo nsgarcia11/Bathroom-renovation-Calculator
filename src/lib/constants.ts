@@ -382,3 +382,202 @@ export const DEFAULT_PRICES = {
   doorBlocking: 50.0,
   grabBar: 50.0,
 };
+
+// Shower Base labor items mapping
+export const SHOWER_BASE_LABOR_ITEMS = (contractorHourlyRate: number) => ({
+  // Tub/Acrylic Base Installation
+  installTub: {
+    id: 'lab-base-tub',
+    name: 'Install Tub',
+    hours: '4',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction',
+    source: 'auto',
+  },
+  installAcrylicBase: {
+    id: 'lab-base-acrylic',
+    name: 'Install Acrylic Base',
+    hours: '4',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction',
+    source: 'auto',
+  },
+
+  // Tiled Base - Design Labor
+  tileBase: {
+    id: 'lab-base-tile',
+    name: 'Tile Shower Base',
+    hours: '4',
+    rate: contractorHourlyRate.toString(),
+    scope: 'design',
+    source: 'auto',
+  },
+  buildCurb: {
+    id: 'lab-base-curb',
+    name: 'Build Curb',
+    hours: '2',
+    rate: contractorHourlyRate.toString(),
+    scope: 'design',
+    source: 'auto',
+  },
+  buildCurblessEntry: {
+    id: 'lab-base-curbless',
+    name: 'Build Curbless Entry',
+    hours: '8',
+    rate: contractorHourlyRate.toString(),
+    scope: 'design',
+    source: 'auto',
+  },
+  installRegularDrain: {
+    id: 'lab-base-drain-reg',
+    name: 'Install Regular Drain',
+    hours: '1.5',
+    rate: contractorHourlyRate.toString(),
+    scope: 'design',
+    source: 'auto',
+  },
+  installLinearDrain: {
+    id: 'lab-base-drain-linear',
+    name: 'Install Linear Drain',
+    hours: '3',
+    rate: contractorHourlyRate.toString(),
+    scope: 'design',
+    source: 'auto',
+  },
+
+  // Waterproofing Systems
+  installKerdiSystem: {
+    id: 'lab-base-kerdi',
+    name: 'Install Schluter-Kerdi System',
+    hours: '6',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction',
+    source: 'auto',
+  },
+  installLiquidMembrane: {
+    id: 'lab-base-liquid',
+    name: 'Install Liquid Membrane',
+    hours: '4',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction',
+    source: 'auto',
+  },
+  installKerdiBoard: {
+    id: 'lab-base-kerdi-board',
+    name: 'Install Kerdi-Board',
+    hours: '5',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction',
+    source: 'auto',
+  },
+
+  // General Construction
+  subfloorRepair: {
+    id: 'lab-base-subfloor',
+    name: 'Subfloor Repair',
+    hours: '4',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction',
+    source: 'auto',
+  },
+  joistModification: {
+    id: 'lab-base-joist',
+    name: 'Joist Modification',
+    hours: '6',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction',
+    source: 'auto',
+  },
+});
+
+// Shower Base materials items mapping
+export const SHOWER_BASE_MATERIALS_ITEMS = {
+  // Tub/Acrylic Base Materials
+  tub: {
+    id: 'mat-base-tub',
+    name: 'Tub',
+    quantity: '1',
+    unit: 'each',
+    price: '550.00',
+    scope: 'construction',
+    source: 'auto',
+  },
+  acrylicBase: {
+    id: 'mat-base-acrylic',
+    name: 'Acrylic Base',
+    quantity: '1',
+    unit: 'each',
+    price: '500.00',
+    scope: 'construction',
+    source: 'auto',
+  },
+
+  // Drain Materials
+  regularDrain: {
+    id: 'mat-base-drain-reg',
+    name: 'Regular Drain',
+    quantity: '1',
+    unit: 'each',
+    price: '50.00',
+    scope: 'design',
+    source: 'auto',
+  },
+  linearDrain: {
+    id: 'mat-base-drain-linear',
+    name: 'Linear Drain',
+    quantity: '1',
+    unit: 'each',
+    price: '350.00',
+    scope: 'design',
+    source: 'auto',
+  },
+
+  // Waterproofing Materials
+  kerdiKit: {
+    id: 'mat-base-kerdi-kit',
+    name: 'Schluter-Kerdi Kit',
+    quantity: '1',
+    unit: 'kit',
+    price: '200.00',
+    scope: 'construction',
+    source: 'auto',
+  },
+  liquidMembrane: {
+    id: 'mat-base-liquid-membrane',
+    name: 'Liquid Membrane',
+    quantity: '1',
+    unit: 'gallon',
+    price: '80.00',
+    scope: 'construction',
+    source: 'auto',
+  },
+  kerdiBoard: {
+    id: 'mat-base-kerdi-board',
+    name: 'Kerdi-Board',
+    quantity: '1',
+    unit: 'sheet',
+    price: '120.00',
+    scope: 'construction',
+    source: 'auto',
+  },
+
+  // General Construction Materials
+  subfloorPlywood: {
+    id: 'mat-base-subfloor',
+    name: 'Subfloor Plywood',
+    quantity: '1',
+    unit: 'sheet',
+    price: '45.00',
+    scope: 'construction',
+    source: 'auto',
+  },
+  joistLumber: {
+    id: 'mat-base-joist',
+    name: 'Joist Lumber',
+    quantity: '1',
+    unit: 'board',
+    price: '25.00',
+    scope: 'construction',
+    source: 'auto',
+  },
+};
