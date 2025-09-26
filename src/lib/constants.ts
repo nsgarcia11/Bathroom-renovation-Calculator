@@ -33,3 +33,352 @@ export const DEFAULT_SETTINGS = {
   taxRate: '13',
   currency: 'CAD',
 };
+
+// Demolition labor items mapping
+export const DEMOLITION_LABOR_ITEMS = (contractorHourlyRate: number) => ({
+  removeFlooring: {
+    id: 'lab-demo-floor',
+    name: 'Remove Flooring',
+    hours: '4',
+    rate: contractorHourlyRate.toString(),
+  },
+  removeShowerWall: {
+    id: 'lab-demo-shower',
+    name: 'Remove Shower Wall',
+    hours: '4',
+    rate: contractorHourlyRate.toString(),
+  },
+  removeShowerBase: {
+    id: 'lab-demo-shower-base',
+    name: 'Remove Shower Base',
+    hours: '2',
+    rate: contractorHourlyRate.toString(),
+  },
+  removeTub: {
+    id: 'lab-demo-tub',
+    name: 'Remove Tub',
+    hours: '3',
+    rate: contractorHourlyRate.toString(),
+  },
+  removeVanity: {
+    id: 'lab-demo-vanity',
+    name: 'Remove Vanity',
+    hours: '1.5',
+    rate: contractorHourlyRate.toString(),
+  },
+  removeToilet: {
+    id: 'lab-demo-toilet',
+    name: 'Remove Toilet',
+    hours: '0.5',
+    rate: contractorHourlyRate.toString(),
+  },
+  removeAccessories: {
+    id: 'lab-demo-accessories',
+    name: 'Remove Accessories',
+    hours: '1',
+    rate: contractorHourlyRate.toString(),
+  },
+  removeWall: {
+    id: 'lab-demo-wall',
+    name: 'Remove Wall',
+    hours: '6',
+    rate: contractorHourlyRate.toString(),
+  },
+});
+
+// Demolition materials items mapping
+export const DEMOLITION_MATERIALS_ITEMS = {
+  debrisDisposal: {
+    id: 'mat-demo-disposal',
+    name: 'Debris Disposal Fee',
+    unit: 'service',
+    price: '350.00',
+    quantity: '1',
+  },
+  contractorBags: {
+    id: 'mat-demo-bags',
+    name: 'Heavy-Duty Contractor Bags',
+    unit: 'box',
+    price: '25.00',
+    quantity: '1',
+  },
+  dustMasks: {
+    id: 'mat-demo-masks',
+    name: 'Dust Masks',
+    unit: 'box',
+    price: '20.00',
+    quantity: '1',
+  },
+};
+
+// Shower Walls labor items mapping
+export const SHOWER_WALLS_LABOR_ITEMS = (contractorHourlyRate: number) => ({
+  boarding: {
+    id: 'sw-boarding',
+    name: 'Boarding',
+    hours: '0', // Will be calculated based on totalSqft
+    rate: contractorHourlyRate.toString(),
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  tiling: {
+    id: 'sw-tiling',
+    name: 'Tiling Walls', // Pattern name will be appended
+    hours: '0', // Will be calculated based on totalSqft and pattern
+    rate: contractorHourlyRate.toString(),
+    scope: 'showerWalls_design',
+    source: 'calculated',
+  },
+  grouting: {
+    id: 'sw-grouting',
+    name: 'Grouting',
+    hours: '0', // Will be calculated based on totalSqft
+    rate: contractorHourlyRate.toString(),
+    scope: 'showerWalls_design',
+    source: 'calculated',
+  },
+  silicone: {
+    id: 'sw-silicone',
+    name: 'Silicone',
+    hours: '1.5',
+    rate: contractorHourlyRate.toString(),
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  waterproofing: {
+    id: 'sw-wp',
+    name: 'Waterproofing', // System name will be appended
+    hours: '0', // Will be calculated based on totalSqft and system
+    rate: contractorHourlyRate.toString(),
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  niche: {
+    id: 'sw-niche',
+    name: 'Niche Installation',
+    hours: '2.5',
+    rate: contractorHourlyRate.toString(),
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  door: {
+    id: 'sw-door',
+    name: 'Shower Door Installation',
+    hours: '3.0',
+    rate: contractorHourlyRate.toString(),
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  doorBlocking: {
+    id: 'sw-door-blocking',
+    name: 'Install Blocking for Shower Door',
+    hours: '2.0',
+    rate: contractorHourlyRate.toString(),
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  grabBar: {
+    id: 'sw-grabbar',
+    name: 'Install Grab Bar(s)', // Count will be appended
+    hours: '0', // Will be calculated as 1.5 * count
+    rate: contractorHourlyRate.toString(),
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  repair: {
+    id: 'sw-repair',
+    name: 'Wall Repair',
+    hours: '8.0',
+    rate: contractorHourlyRate.toString(),
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  reinsulate: {
+    id: 'sw-reinsulate',
+    name: 'Re-insulate exterior walls',
+    hours: '2.0',
+    rate: contractorHourlyRate.toString(),
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+});
+
+// Shower Walls materials items mapping
+export const SHOWER_WALLS_MATERIALS_ITEMS = {
+  wallTile: {
+    id: 'mat-walltile',
+    name: 'Wall Tile', // Size will be appended
+    unit: 'sq/ft',
+    price: '5.00',
+    quantity: '0', // Will be calculated as tileNeeded
+    scope: 'showerWalls_design',
+    source: 'calculated',
+  },
+  thinset: {
+    id: 'mat-thinset',
+    name: 'Thinset Mortar',
+    unit: 'bag',
+    price: '30.00',
+    quantity: '0', // Will be calculated as ceil(totalSqft / 50)
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  grout: {
+    id: 'mat-grout',
+    name: 'Grout',
+    unit: 'bag',
+    price: '40.00',
+    quantity: '0', // Will be calculated as max(1, ceil(totalSqft / 100))
+    scope: 'showerWalls_design',
+    source: 'calculated',
+  },
+  tileEdge: {
+    id: 'mat-tile-edge',
+    name: 'Tile Edge',
+    unit: 'piece',
+    price: '35.00',
+    quantity: '2',
+    scope: 'showerWalls_design',
+    source: 'calculated',
+  },
+  // Waterproofing materials
+  wpBoard: {
+    id: 'mat-wp-board',
+    name: 'Kerdi Board',
+    unit: 'sheet',
+    price: '100.00',
+    quantity: '0', // Will be calculated as ceil(totalSqft / 32)
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  wpBand: {
+    id: 'mat-wp-band',
+    name: 'Kerdi Band',
+    unit: 'roll',
+    price: '50.00',
+    quantity: '1',
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  wpScrews: {
+    id: 'mat-wp-screws',
+    name: 'Kerdi Screws/Washers',
+    unit: 'box',
+    price: '35.00',
+    quantity: '1',
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  wpLiquid: {
+    id: 'mat-wp-liquid',
+    name: 'Waterproofing Liquid', // System name will be appended
+    unit: 'gallon',
+    price: '120.00',
+    quantity: '0', // Will be calculated as ceil(totalSqft / 100)
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  wpFabric: {
+    id: 'mat-wp-fabric',
+    name: 'Reinforcing Fabric',
+    unit: 'roll',
+    price: '20.00',
+    quantity: '1',
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  wpDrywall: {
+    id: 'mat-wp-drywall',
+    name: 'Moisture-Resistant Drywall',
+    unit: 'sheet',
+    price: '25.00',
+    quantity: '0', // Will be calculated as ceil(totalSqft / 32)
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  wpMembrane: {
+    id: 'mat-wp-membrane',
+    name: 'Kerdi Membrane',
+    unit: 'sq/ft',
+    price: '2.50',
+    quantity: '0', // Will be calculated as totalSqft
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  wpOther: {
+    id: 'mat-wp-other',
+    name: 'Waterproofing Other', // Custom name will be appended
+    unit: 'kit',
+    price: '150.00',
+    quantity: '1',
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  // Other feature materials
+  insulation: {
+    id: 'mat-insulation',
+    name: 'Exterior Wall Insulation',
+    unit: 'roll',
+    price: '75.00',
+    quantity: '1',
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  niche: {
+    id: 'mat-niche',
+    name: 'Niche', // Size will be appended
+    unit: 'piece',
+    price: '100.00',
+    quantity: '1',
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  door: {
+    id: 'mat-door',
+    name: 'Shower Door', // Type will be appended
+    unit: 'piece',
+    price: '800.00',
+    quantity: '1',
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  doorBlocking: {
+    id: 'mat-door-blocking',
+    name: 'Blocking for Shower Glass Door',
+    unit: 'piece',
+    price: '50.00',
+    quantity: '1',
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+  grabBar: {
+    id: 'mat-grabbar',
+    name: 'Grab Bar & Blocking',
+    unit: 'piece',
+    price: '50.00',
+    quantity: '0', // Will be calculated as grabBar count
+    scope: 'showerWalls_construction',
+    source: 'calculated',
+  },
+};
+
+// Default prices for materials
+export const DEFAULT_PRICES = {
+  wallTile: 5.0,
+  thinset: 30.0,
+  grout: 40.0,
+  tileEdge: 35.0,
+  kerdiBoard: 100.0,
+  kerdiBand: 50.0,
+  kerdiScrews: 35.0,
+  waterproofingLiquid: 120.0,
+  reinforcingFabric: 20.0,
+  moistureResistantDrywall: 25.0,
+  kerdiMembrane: 2.5,
+  waterproofingOther: 150.0,
+  insulation: 75.0,
+  niche: 100.0,
+  showerDoor: 800.0,
+  doorBlocking: 50.0,
+  grabBar: 50.0,
+};

@@ -8,7 +8,7 @@ import React, {
   useMemo,
 } from 'react';
 
-export type EstimateSection = 'design' | 'labor' | 'materials' | 'estimate';
+export type EstimateSection = 'design' | 'labor' | 'materials' | 'estimate' | 'notes';
 export type ConstructionCategory =
   | 'demolition'
   | 'shower-base'

@@ -12,13 +12,15 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useState, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { NotebookPenIcon } from '@/components/icons/NotebookPenIcon';
 
 export function EstimateNavigation() {
   const { activeSection, setActiveSection } = useEstimate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const { signOut } = useAuth();
 
   const handleSettings = useCallback(() => {
@@ -58,6 +60,12 @@ export function EstimateNavigation() {
         label: 'Estimate',
         onClick: () => setActiveSection('estimate'),
       },
+      {
+        id: 'notes',
+        icon: NotebookPenIcon,
+        label: 'Notes',
+        onClick: () => setActiveSection('notes'),
+      },
     ],
     [setActiveSection]
   );
@@ -65,6 +73,9 @@ export function EstimateNavigation() {
   const toggleMenu = useCallback(() => {
     setIsMenuOpen((prev) => !prev);
   }, []);
+
+  // Check if we're on the estimate page
+  const isOnEstimatePage = pathname?.includes('/estimate');
 
   return (
     <>
@@ -83,13 +94,15 @@ export function EstimateNavigation() {
             <span className='text-sm sm:text-xs font-medium'>{label}</span>
           </button>
         ))}
-        <button
-          onClick={toggleMenu}
-          className='flex flex-col items-center space-y-1 p-2 text-gray-400 hover:text-blue-600 transition-colors'
-        >
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          <span className='text-xs font-medium'>Menu</span>
-        </button>
+        {!isOnEstimatePage && (
+          <button
+            onClick={toggleMenu}
+            className='flex flex-col items-center space-y-1 p-2 text-gray-400 hover:text-blue-600 transition-colors'
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            <span className='text-xs font-medium'>Menu</span>
+          </button>
+        )}
       </div>
 
       {/* Menu Overlay */}
