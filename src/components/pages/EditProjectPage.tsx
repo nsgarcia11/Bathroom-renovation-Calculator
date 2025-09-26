@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, Trash2 } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 interface EditProjectPageProps {
   projectId: string;
@@ -133,11 +134,7 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
   };
 
   if (projectLoading) {
-    return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!project) {
@@ -214,7 +211,7 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
                   key={`email-${index}`}
                   className='flex items-center -mx-7 px-7'
                 >
-                  <input
+                  <Input
                     type='email'
                     value={email}
                     onChange={(e) =>
@@ -256,7 +253,7 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
                   key={`phone-${index}`}
                   className='flex items-center -mx-7 px-7'
                 >
-                  <input
+                  <Input
                     type='tel'
                     value={phone}
                     onChange={(e) =>

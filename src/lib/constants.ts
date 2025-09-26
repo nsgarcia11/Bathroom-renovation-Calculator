@@ -391,16 +391,16 @@ export const SHOWER_BASE_LABOR_ITEMS = (contractorHourlyRate: number) => ({
     name: 'Install Tub',
     hours: '4',
     rate: contractorHourlyRate.toString(),
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
   installAcrylicBase: {
     id: 'lab-base-acrylic',
     name: 'Install Acrylic Base',
     hours: '4',
     rate: contractorHourlyRate.toString(),
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
 
   // Tiled Base - Design Labor
@@ -409,40 +409,40 @@ export const SHOWER_BASE_LABOR_ITEMS = (contractorHourlyRate: number) => ({
     name: 'Tile Shower Base',
     hours: '4',
     rate: contractorHourlyRate.toString(),
-    scope: 'design',
-    source: 'auto',
+    scope: 'design' as const,
+    source: 'auto' as const,
   },
   buildCurb: {
     id: 'lab-base-curb',
     name: 'Build Curb',
     hours: '2',
     rate: contractorHourlyRate.toString(),
-    scope: 'design',
-    source: 'auto',
+    scope: 'design' as const,
+    source: 'auto' as const,
   },
   buildCurblessEntry: {
     id: 'lab-base-curbless',
     name: 'Build Curbless Entry',
     hours: '8',
     rate: contractorHourlyRate.toString(),
-    scope: 'design',
-    source: 'auto',
+    scope: 'design' as const,
+    source: 'auto' as const,
   },
   installRegularDrain: {
     id: 'lab-base-drain-reg',
     name: 'Install Regular Drain',
     hours: '1.5',
     rate: contractorHourlyRate.toString(),
-    scope: 'design',
-    source: 'auto',
+    scope: 'design' as const,
+    source: 'auto' as const,
   },
   installLinearDrain: {
     id: 'lab-base-drain-linear',
     name: 'Install Linear Drain',
     hours: '3',
     rate: contractorHourlyRate.toString(),
-    scope: 'design',
-    source: 'auto',
+    scope: 'design' as const,
+    source: 'auto' as const,
   },
 
   // Waterproofing Systems
@@ -451,24 +451,24 @@ export const SHOWER_BASE_LABOR_ITEMS = (contractorHourlyRate: number) => ({
     name: 'Install Schluter-Kerdi System',
     hours: '6',
     rate: contractorHourlyRate.toString(),
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
   installLiquidMembrane: {
     id: 'lab-base-liquid',
     name: 'Install Liquid Membrane',
     hours: '4',
     rate: contractorHourlyRate.toString(),
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
   installKerdiBoard: {
     id: 'lab-base-kerdi-board',
     name: 'Install Kerdi-Board',
     hours: '5',
     rate: contractorHourlyRate.toString(),
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
 
   // General Construction
@@ -477,16 +477,16 @@ export const SHOWER_BASE_LABOR_ITEMS = (contractorHourlyRate: number) => ({
     name: 'Subfloor Repair',
     hours: '4',
     rate: contractorHourlyRate.toString(),
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
   joistModification: {
     id: 'lab-base-joist',
     name: 'Joist Modification',
     hours: '6',
     rate: contractorHourlyRate.toString(),
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
 });
 
@@ -499,8 +499,8 @@ export const SHOWER_BASE_MATERIALS_ITEMS = {
     quantity: '1',
     unit: 'each',
     price: '550.00',
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
   acrylicBase: {
     id: 'mat-base-acrylic',
@@ -508,8 +508,8 @@ export const SHOWER_BASE_MATERIALS_ITEMS = {
     quantity: '1',
     unit: 'each',
     price: '500.00',
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
 
   // Drain Materials
@@ -519,8 +519,8 @@ export const SHOWER_BASE_MATERIALS_ITEMS = {
     quantity: '1',
     unit: 'each',
     price: '50.00',
-    scope: 'design',
-    source: 'auto',
+    scope: 'design' as const,
+    source: 'auto' as const,
   },
   linearDrain: {
     id: 'mat-base-drain-linear',
@@ -528,8 +528,8 @@ export const SHOWER_BASE_MATERIALS_ITEMS = {
     quantity: '1',
     unit: 'each',
     price: '350.00',
-    scope: 'design',
-    source: 'auto',
+    scope: 'design' as const,
+    source: 'auto' as const,
   },
 
   // Waterproofing Materials
@@ -539,8 +539,8 @@ export const SHOWER_BASE_MATERIALS_ITEMS = {
     quantity: '1',
     unit: 'kit',
     price: '200.00',
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
   liquidMembrane: {
     id: 'mat-base-liquid-membrane',
@@ -548,8 +548,8 @@ export const SHOWER_BASE_MATERIALS_ITEMS = {
     quantity: '1',
     unit: 'gallon',
     price: '80.00',
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
   kerdiBoard: {
     id: 'mat-base-kerdi-board',
@@ -557,8 +557,8 @@ export const SHOWER_BASE_MATERIALS_ITEMS = {
     quantity: '1',
     unit: 'sheet',
     price: '120.00',
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
 
   // General Construction Materials
@@ -568,8 +568,8 @@ export const SHOWER_BASE_MATERIALS_ITEMS = {
     quantity: '1',
     unit: 'sheet',
     price: '45.00',
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
   joistLumber: {
     id: 'mat-base-joist',
@@ -577,7 +577,1087 @@ export const SHOWER_BASE_MATERIALS_ITEMS = {
     quantity: '1',
     unit: 'board',
     price: '25.00',
-    scope: 'construction',
-    source: 'auto',
+    scope: 'construction' as const,
+    source: 'auto' as const,
   },
 };
+
+// Floors labor items mapping
+export const FLOORS_LABOR_ITEMS = (contractorHourlyRate: number) => ({
+  // Core Tiling Labor
+  tileFloor: {
+    id: 'lab-floor-tile',
+    name: 'Tile Floor',
+    hours: '0', // Will be calculated as totalSqFt / 3
+    rate: contractorHourlyRate.toString(),
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+  groutFloor: {
+    id: 'lab-floor-grout',
+    name: 'Grout Floor',
+    hours: '0', // Will be calculated as totalSqFt / 30
+    rate: contractorHourlyRate.toString(),
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+
+  // Prep Work Labor
+  selfLeveling: {
+    id: 'lab-floor-leveling',
+    name: 'Self-Leveling',
+    hours: '0', // Will be calculated as totalSqFt / 75
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  installDitra: {
+    id: 'lab-floor-ditra',
+    name: 'Install Ditra Membrane',
+    hours: '0', // Will be calculated as totalSqFt / 100
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  installDitraXL: {
+    id: 'lab-floor-ditra-xl',
+    name: 'Install Ditra XL Membrane',
+    hours: '0', // Will be calculated as totalSqFt / 100
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  installPlywood: {
+    id: 'lab-floor-plywood',
+    name: 'Install Plywood Subfloor',
+    hours: '0', // Will be calculated as totalSqFt / 50
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  installHeatedFloor: {
+    id: 'lab-floor-heated',
+    name: 'Install Heated Floor System',
+    hours: '0', // Will be calculated as 2 + (totalSqFt / 20)
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Repair Work Labor
+  repairSubfloor: {
+    id: 'lab-floor-repair-subfloor',
+    name: 'Repair Portion of Subfloor',
+    hours: '3',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  repairJoist: {
+    id: 'lab-floor-repair-joist',
+    name: 'Repair Floor Joist',
+    hours: '4',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+});
+
+// Floors materials items mapping
+export const FLOORS_MATERIALS_ITEMS = {
+  // Design Materials
+  floorTile: {
+    id: 'mat-floor-tile',
+    name: 'Floor Tile',
+    quantity: '0', // Will be calculated as totalSqFt * wasteFactor
+    unit: 'sq/ft',
+    price: '5.00',
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+
+  // Construction Materials
+  thinset: {
+    id: 'mat-floor-thinset',
+    name: 'Thinset Mortar (50lb bag)',
+    quantity: '0', // Will be calculated based on coverage
+    unit: 'bag',
+    price: '30.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  grout: {
+    id: 'mat-floor-grout',
+    name: 'Sanded Grout (25lb bag)',
+    quantity: '0', // Will be calculated as ceil(totalSqFt / 125)
+    unit: 'bag',
+    price: '30.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Membrane Materials
+  ditra: {
+    id: 'mat-floor-ditra',
+    name: 'Ditra Uncoupling Membrane',
+    quantity: '0', // Will be calculated as ceil(totalSqFt / 54)
+    unit: 'roll',
+    price: '165.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  ditraXL: {
+    id: 'mat-floor-ditra-xl',
+    name: 'Ditra XL Uncoupling Membrane',
+    quantity: '0', // Will be calculated as ceil(totalSqFt / 175)
+    unit: 'roll',
+    price: '462.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Heated Floor Materials
+  heatedFloorKit: {
+    id: 'mat-floor-heated-kit',
+    name: 'Heated Floor Kit',
+    quantity: '0', // Will be calculated as ceil(totalSqFt / 40)
+    unit: 'kit',
+    price: '400.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  heatedFloorThermostat: {
+    id: 'mat-floor-thermostat',
+    name: 'Heated Floor Thermostat',
+    quantity: '1',
+    unit: 'each',
+    price: '220.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Structural Materials
+  selfLevelingCompound: {
+    id: 'mat-floor-leveling',
+    name: 'Self-Leveling Compound (50lb bag)',
+    quantity: '0', // Will be calculated as ceil(totalSqFt / 50)
+    unit: 'bag',
+    price: '45.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  plywood: {
+    id: 'mat-floor-plywood',
+    name: 'Plywood Subfloor',
+    quantity: '0', // Will be calculated as ceil(totalSqFt / 32)
+    unit: 'sheet',
+    price: '70.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  floorScrews: {
+    id: 'mat-floor-screws',
+    name: 'Floor Screws',
+    quantity: '1',
+    unit: 'box',
+    price: '18.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+};
+
+// Finishings labor items mapping
+export const FINISHINGS_LABOR_ITEMS = (contractorHourlyRate: number) => ({
+  // Paint Labor
+  paintWalls: {
+    id: 'lab-finish-paint-walls',
+    name: 'Paint Walls',
+    hours: '0', // Will be calculated based on wall area
+    rate: contractorHourlyRate.toString(),
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+  paintCeiling: {
+    id: 'lab-finish-paint-ceiling',
+    name: 'Paint Ceiling',
+    hours: '0', // Will be calculated based on ceiling area
+    rate: contractorHourlyRate.toString(),
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+  paintTrim: {
+    id: 'lab-finish-paint-trim',
+    name: 'Paint Trim & Baseboards',
+    hours: '0', // Will be calculated based on perimeter
+    rate: contractorHourlyRate.toString(),
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+
+  // Installation Labor
+  installVanity: {
+    id: 'lab-finish-vanity',
+    name: 'Install Vanity',
+    hours: '4', // Base hours + sink addon
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  installMirror: {
+    id: 'lab-finish-mirror',
+    name: 'Install Mirror',
+    hours: '2',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  installLighting: {
+    id: 'lab-finish-lighting',
+    name: 'Install Lighting',
+    hours: '3',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  installToilet: {
+    id: 'lab-finish-toilet',
+    name: 'Install Toilet',
+    hours: '2',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  installBaseboards: {
+    id: 'lab-finish-baseboards',
+    name: 'Install Baseboards',
+    hours: '0', // Will be calculated based on perimeter
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Accent Wall Labor
+  tileAccentWall: {
+    id: 'lab-finish-tile-accent',
+    name: 'Tile Accent Wall',
+    hours: '0', // Will be calculated based on wall area
+    rate: contractorHourlyRate.toString(),
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+  wainscotAccentWall: {
+    id: 'lab-finish-wainscot-accent',
+    name: 'Wainscot Accent Wall',
+    hours: '0', // Will be calculated based on wall area
+    rate: contractorHourlyRate.toString(),
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+  paintAccentWall: {
+    id: 'lab-finish-paint-accent',
+    name: 'Paint Accent Wall',
+    hours: '0', // Will be calculated based on wall area
+    rate: contractorHourlyRate.toString(),
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+});
+
+// Finishings materials items mapping
+export const FINISHINGS_MATERIALS_ITEMS = {
+  // Paint Materials
+  wallPaint: {
+    id: 'mat-finish-wall-paint',
+    name: 'Wall Paint',
+    quantity: '0', // Will be calculated based on wall area
+    unit: 'gallon',
+    price: '45.00',
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+  ceilingPaint: {
+    id: 'mat-finish-ceiling-paint',
+    name: 'Ceiling Paint',
+    quantity: '0', // Will be calculated based on ceiling area
+    unit: 'gallon',
+    price: '35.00',
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+  trimPaint: {
+    id: 'mat-finish-trim-paint',
+    name: 'Trim Paint',
+    quantity: '1',
+    unit: 'gallon',
+    price: '50.00',
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+  primer: {
+    id: 'mat-finish-primer',
+    name: 'Primer',
+    quantity: '0', // Will be calculated based on total area
+    unit: 'gallon',
+    price: '30.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Installation Materials
+  vanity: {
+    id: 'mat-finish-vanity',
+    name: 'Vanity',
+    quantity: '1',
+    unit: 'each',
+    price: '0.00', // User will set price
+    scope: 'design' as const,
+    source: 'custom' as const,
+  },
+  mirror: {
+    id: 'mat-finish-mirror',
+    name: 'Mirror',
+    quantity: '1',
+    unit: 'each',
+    price: '0.00', // User will set price
+    scope: 'design' as const,
+    source: 'custom' as const,
+  },
+  lighting: {
+    id: 'mat-finish-lighting',
+    name: 'Lighting Fixture',
+    quantity: '1',
+    unit: 'each',
+    price: '0.00', // User will set price
+    scope: 'design' as const,
+    source: 'custom' as const,
+  },
+  toilet: {
+    id: 'mat-finish-toilet',
+    name: 'Toilet',
+    quantity: '1',
+    unit: 'each',
+    price: '0.00', // User will set price
+    scope: 'design' as const,
+    source: 'custom' as const,
+  },
+  baseboards: {
+    id: 'mat-finish-baseboards',
+    name: 'Baseboards',
+    quantity: '0', // Will be calculated based on perimeter
+    unit: 'linear ft',
+    price: '8.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Accent Wall Materials
+  accentTile: {
+    id: 'mat-finish-accent-tile',
+    name: 'Accent Wall Tile',
+    quantity: '0', // Will be calculated based on wall area
+    unit: 'sq/ft',
+    price: '0.00', // User will set price
+    scope: 'design' as const,
+    source: 'custom' as const,
+  },
+  accentWainscot: {
+    id: 'mat-finish-accent-wainscot',
+    name: 'Wainscot Panels',
+    quantity: '0', // Will be calculated based on wall area
+    unit: 'sq/ft',
+    price: '0.00', // User will set price
+    scope: 'design' as const,
+    source: 'custom' as const,
+  },
+  accentPaint: {
+    id: 'mat-finish-accent-paint',
+    name: 'Accent Wall Paint',
+    quantity: '0', // Will be calculated based on wall area
+    unit: 'gallon',
+    price: '45.00',
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+
+  // Construction Materials
+  thinset: {
+    id: 'mat-finish-thinset',
+    name: 'Thinset Mortar',
+    quantity: '0', // Will be calculated if tiling
+    unit: 'bag',
+    price: '30.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  grout: {
+    id: 'mat-finish-grout',
+    name: 'Grout',
+    quantity: '0', // Will be calculated if tiling
+    unit: 'bag',
+    price: '30.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  drywallTape: {
+    id: 'mat-finish-drywall-tape',
+    name: 'Drywall Tape',
+    quantity: '2',
+    unit: 'roll',
+    price: '8.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  jointCompound: {
+    id: 'mat-finish-joint-compound',
+    name: 'Joint Compound',
+    quantity: '1',
+    unit: 'gallon',
+    price: '15.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+};
+
+// Structural labor items mapping
+export const STRUCTURAL_LABOR_ITEMS = (contractorHourlyRate: number) => ({
+  // Framing Labor
+  frameNewWall: {
+    id: 'lab-struct-frame-wall',
+    name: 'Frame New Wall',
+    hours: '8',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  removeWall: {
+    id: 'lab-struct-remove-wall',
+    name: 'Remove Existing Wall',
+    hours: '6',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  frameDoorway: {
+    id: 'lab-struct-frame-doorway',
+    name: 'Frame Doorway Opening',
+    hours: '4',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  frameWindow: {
+    id: 'lab-struct-frame-window',
+    name: 'Frame Window Opening',
+    hours: '3',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Structural Support
+  installBeam: {
+    id: 'lab-struct-install-beam',
+    name: 'Install Support Beam',
+    hours: '12',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  installHeader: {
+    id: 'lab-struct-install-header',
+    name: 'Install Header Beam',
+    hours: '6',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  reinforceJoists: {
+    id: 'lab-struct-reinforce-joists',
+    name: 'Reinforce Floor Joists',
+    hours: '8',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Subfloor Work
+  installPlywood: {
+    id: 'lab-struct-install-plywood',
+    name: 'Install Plywood Subfloor',
+    hours: '0', // Will be calculated based on area
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  repairSubfloor: {
+    id: 'lab-struct-repair-subfloor',
+    name: 'Repair Subfloor',
+    hours: '6',
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Insulation
+  installInsulation: {
+    id: 'lab-struct-install-insulation',
+    name: 'Install Wall Insulation',
+    hours: '0', // Will be calculated based on area
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  installVaporBarrier: {
+    id: 'lab-struct-vapor-barrier',
+    name: 'Install Vapor Barrier',
+    hours: '0', // Will be calculated based on area
+    rate: contractorHourlyRate.toString(),
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+});
+
+// Structural materials items mapping
+export const STRUCTURAL_MATERIALS_ITEMS = {
+  // Framing Materials
+  lumber2x4: {
+    id: 'mat-struct-2x4-lumber',
+    name: '2x4 Lumber (8ft)',
+    quantity: '0', // Will be calculated based on wall length
+    unit: 'piece',
+    price: '8.50',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  lumber2x6: {
+    id: 'mat-struct-2x6-lumber',
+    name: '2x6 Lumber (8ft)',
+    quantity: '0', // Will be calculated based on wall length
+    unit: 'piece',
+    price: '12.50',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  lumber2x8: {
+    id: 'mat-struct-2x8-lumber',
+    name: '2x8 Lumber (8ft)',
+    quantity: '0', // Will be calculated based on beam length
+    unit: 'piece',
+    price: '18.50',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  lumber2x10: {
+    id: 'mat-struct-2x10-lumber',
+    name: '2x10 Lumber (8ft)',
+    quantity: '0', // Will be calculated based on beam length
+    unit: 'piece',
+    price: '22.50',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Hardware
+  framingNails: {
+    id: 'mat-struct-framing-nails',
+    name: 'Framing Nails (3.5")',
+    quantity: '1',
+    unit: 'box',
+    price: '25.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  constructionScrews: {
+    id: 'mat-struct-construction-screws',
+    name: 'Construction Screws (3")',
+    quantity: '1',
+    unit: 'box',
+    price: '35.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  metalBrackets: {
+    id: 'mat-struct-metal-brackets',
+    name: 'Metal Brackets & Connectors',
+    quantity: '1',
+    unit: 'set',
+    price: '45.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Subfloor Materials
+  plywoodSubfloor: {
+    id: 'mat-struct-plywood-subfloor',
+    name: 'Plywood Subfloor (4x8)',
+    quantity: '0', // Will be calculated based on area
+    unit: 'sheet',
+    price: '0.00', // Will be set based on thickness
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  subfloorScrews: {
+    id: 'mat-struct-subfloor-screws',
+    name: 'Subfloor Screws (2.5")',
+    quantity: '1',
+    unit: 'box',
+    price: '28.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Insulation Materials
+  wallInsulation: {
+    id: 'mat-struct-wall-insulation',
+    name: 'Wall Insulation (R-20)',
+    quantity: '0', // Will be calculated based on area
+    unit: 'sq/ft',
+    price: '1.25',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  vaporBarrier: {
+    id: 'mat-struct-vapor-barrier',
+    name: 'Vapor Barrier (6 mil)',
+    quantity: '0', // Will be calculated based on area
+    unit: 'sq/ft',
+    price: '0.15',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  insulationTape: {
+    id: 'mat-struct-insulation-tape',
+    name: 'Insulation Tape',
+    quantity: '2',
+    unit: 'roll',
+    price: '8.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Beam Materials
+  steelBeam: {
+    id: 'mat-struct-steel-beam',
+    name: 'Steel Support Beam',
+    quantity: '0', // Will be calculated based on length
+    unit: 'linear ft',
+    price: '0.00', // User will set price
+    scope: 'design' as const,
+    source: 'custom' as const,
+  },
+  beamPockets: {
+    id: 'mat-struct-beam-pockets',
+    name: 'Beam Pockets & Hardware',
+    quantity: '1',
+    unit: 'set',
+    price: '85.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Drywall Materials
+  drywallSheets: {
+    id: 'mat-struct-drywall-sheets',
+    name: 'Drywall Sheets (4x8)',
+    quantity: '0', // Will be calculated based on area
+    unit: 'sheet',
+    price: '12.50',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  drywallScrews: {
+    id: 'mat-struct-drywall-screws',
+    name: 'Drywall Screws (1.25")',
+    quantity: '1',
+    unit: 'box',
+    price: '15.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  cornerBead: {
+    id: 'mat-struct-corner-bead',
+    name: 'Corner Bead (8ft)',
+    quantity: '0', // Will be calculated based on perimeter
+    unit: 'piece',
+    price: '3.50',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+};
+
+// Trade workflow constants
+export const TRADE_CATEGORIES = {
+  plumbing: {
+    id: 'plumbing',
+    name: 'Plumbing',
+    defaultRate: 110,
+    color: 'text-blue-600',
+    icon: '🔧',
+  },
+  electrical: {
+    id: 'electrical',
+    name: 'Electrical',
+    defaultRate: 120,
+    color: 'text-yellow-600',
+    icon: '⚡',
+  },
+  hvac: {
+    id: 'hvac',
+    name: 'HVAC',
+    defaultRate: 130,
+    color: 'text-green-600',
+    icon: '🌡️',
+  },
+  flooring: {
+    id: 'flooring',
+    name: 'Flooring',
+    defaultRate: 100,
+    color: 'text-purple-600',
+    icon: '🏠',
+  },
+  tiling: {
+    id: 'tiling',
+    name: 'Tiling',
+    defaultRate: 95,
+    color: 'text-orange-600',
+    icon: '🔲',
+  },
+  painting: {
+    id: 'painting',
+    name: 'Painting',
+    defaultRate: 85,
+    color: 'text-pink-600',
+    icon: '🎨',
+  },
+  carpentry: {
+    id: 'carpentry',
+    name: 'Carpentry',
+    defaultRate: 90,
+    color: 'text-amber-600',
+    icon: '🔨',
+  },
+  drywall: {
+    id: 'drywall',
+    name: 'Drywall',
+    defaultRate: 80,
+    color: 'text-gray-600',
+    icon: '📋',
+  },
+} as const;
+
+export const TRADE_TASKS = {
+  plumbing: [
+    {
+      id: 'install_toilet',
+      name: 'Install Toilet',
+      defaultHours: 2,
+      defaultPrice: 150,
+      pricingModel: 'flat' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'install_vanity',
+      name: 'Install Vanity',
+      defaultHours: 4,
+      defaultPrice: 200,
+      pricingModel: 'flat' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'install_shower_valve',
+      name: 'Install Shower Valve',
+      defaultHours: 3,
+      defaultPrice: 180,
+      pricingModel: 'flat' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'install_drain',
+      name: 'Install Drain',
+      defaultHours: 2,
+      defaultPrice: 120,
+      pricingModel: 'flat' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'rough_in_plumbing',
+      name: 'Rough-in Plumbing',
+      defaultHours: 8,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+  ],
+  electrical: [
+    {
+      id: 'install_outlets',
+      name: 'Install Outlets',
+      defaultHours: 1,
+      defaultPrice: 75,
+      pricingModel: 'flat' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'install_lighting',
+      name: 'Install Lighting',
+      defaultHours: 2,
+      defaultPrice: 100,
+      pricingModel: 'flat' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'install_switch',
+      name: 'Install Switch',
+      defaultHours: 0.5,
+      defaultPrice: 50,
+      pricingModel: 'flat' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'rough_in_electrical',
+      name: 'Rough-in Electrical',
+      defaultHours: 6,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'install_gfci',
+      name: 'Install GFCI Outlets',
+      defaultHours: 1.5,
+      defaultPrice: 90,
+      pricingModel: 'flat' as const,
+      scope: 'construction' as const,
+    },
+  ],
+  hvac: [
+    {
+      id: 'install_vent_fan',
+      name: 'Install Vent Fan',
+      defaultHours: 3,
+      defaultPrice: 200,
+      pricingModel: 'flat' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'install_ductwork',
+      name: 'Install Ductwork',
+      defaultHours: 4,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'install_thermostat',
+      name: 'Install Thermostat',
+      defaultHours: 1,
+      defaultPrice: 80,
+      pricingModel: 'flat' as const,
+      scope: 'construction' as const,
+    },
+  ],
+  flooring: [
+    {
+      id: 'install_flooring',
+      name: 'Install Flooring',
+      defaultHours: 0,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'prep_subfloor',
+      name: 'Prep Subfloor',
+      defaultHours: 2,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+  ],
+  tiling: [
+    {
+      id: 'install_tile',
+      name: 'Install Tile',
+      defaultHours: 0,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'grout_tile',
+      name: 'Grout Tile',
+      defaultHours: 0,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+  ],
+  painting: [
+    {
+      id: 'paint_walls',
+      name: 'Paint Walls',
+      defaultHours: 0,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'paint_ceiling',
+      name: 'Paint Ceiling',
+      defaultHours: 0,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'paint_trim',
+      name: 'Paint Trim',
+      defaultHours: 0,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+  ],
+  carpentry: [
+    {
+      id: 'install_baseboard',
+      name: 'Install Baseboard',
+      defaultHours: 0,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'install_crown_molding',
+      name: 'Install Crown Molding',
+      defaultHours: 0,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'build_cabinet',
+      name: 'Build Cabinet',
+      defaultHours: 0,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+  ],
+  drywall: [
+    {
+      id: 'install_drywall',
+      name: 'Install Drywall',
+      defaultHours: 0,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'tape_drywall',
+      name: 'Tape Drywall',
+      defaultHours: 0,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+    {
+      id: 'mud_drywall',
+      name: 'Mud Drywall',
+      defaultHours: 0,
+      defaultPrice: 0,
+      pricingModel: 'hourly' as const,
+      scope: 'construction' as const,
+    },
+  ],
+} as const;
+
+export const TRADE_MATERIALS = {
+  plumbing: [
+    {
+      id: 'mat-plumb-toilet',
+      name: 'Toilet',
+      quantity: '1',
+      unit: 'each',
+      price: '300.00',
+      scope: 'construction' as const,
+      source: 'auto' as const,
+    },
+    {
+      id: 'mat-plumb-vanity',
+      name: 'Vanity',
+      quantity: '1',
+      unit: 'each',
+      price: '500.00',
+      scope: 'construction' as const,
+      source: 'auto' as const,
+    },
+    {
+      id: 'mat-plumb-valve',
+      name: 'Shower Valve',
+      quantity: '1',
+      unit: 'each',
+      price: '150.00',
+      scope: 'construction' as const,
+      source: 'auto' as const,
+    },
+    {
+      id: 'mat-plumb-drain',
+      name: 'Drain Assembly',
+      quantity: '1',
+      unit: 'each',
+      price: '80.00',
+      scope: 'construction' as const,
+      source: 'auto' as const,
+    },
+  ],
+  electrical: [
+    {
+      id: 'mat-elect-outlet',
+      name: 'Outlet',
+      quantity: '4',
+      unit: 'each',
+      price: '15.00',
+      scope: 'construction' as const,
+      source: 'auto' as const,
+    },
+    {
+      id: 'mat-elect-switch',
+      name: 'Switch',
+      quantity: '2',
+      unit: 'each',
+      price: '12.00',
+      scope: 'construction' as const,
+      source: 'auto' as const,
+    },
+    {
+      id: 'mat-elect-wire',
+      name: 'Electrical Wire',
+      quantity: '100',
+      unit: 'ft',
+      price: '2.50',
+      scope: 'construction' as const,
+      source: 'auto' as const,
+    },
+  ],
+  hvac: [
+    {
+      id: 'mat-hvac-fan',
+      name: 'Vent Fan',
+      quantity: '1',
+      unit: 'each',
+      price: '120.00',
+      scope: 'construction' as const,
+      source: 'auto' as const,
+    },
+    {
+      id: 'mat-hvac-duct',
+      name: 'Ductwork',
+      quantity: '20',
+      unit: 'ft',
+      price: '8.00',
+      scope: 'construction' as const,
+      source: 'auto' as const,
+    },
+  ],
+} as const;

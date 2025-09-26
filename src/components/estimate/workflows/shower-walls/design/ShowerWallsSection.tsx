@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { ToggleSwitch } from '@/components/estimate/shared/ToggleSwitch';
 import { CollapsibleSection } from '@/components/estimate/shared/CollapsibleSection';
 import { WorkflowNotesSection } from '@/components/estimate/shared/WorkflowNotesSection';
@@ -44,8 +45,7 @@ interface ShowerWallsDesign {
 }
 
 export function ShowerWallsSection() {
-  const { getDesignData, updateDesign, updateNotes } =
-    useEstimateWorkflowContext();
+  const { getDesignData, updateDesign } = useEstimateWorkflowContext();
 
   // Get design data from context
   const designData = getDesignData('showerWalls') as {
@@ -260,13 +260,14 @@ export function ShowerWallsSection() {
                 <Label className='block text-sm font-medium text-slate-600 mb-1'>
                   Tile Size
                 </Label>
-                <select
+                <Select
+                  id="tileSize"
+                  label=""
                   value={design.tileSize}
                   onChange={(e) =>
                     setDesign((prev) => ({ ...prev, tileSize: e.target.value }))
                   }
                   className='w-full appearance-none bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                  aria-label='Tile Size'
                 >
                   <option value='Select tile size'>Select tile size</option>
                   <option value='12x24'>12x24</option>
@@ -275,7 +276,7 @@ export function ShowerWallsSection() {
                     Subway (3&quot;x6&quot; or small size tile)
                   </option>
                   <option value='Custom'>Custom</option>
-                </select>
+                </Select>
                 {design.tileSize === 'Custom' && (
                   <div className='flex items-center space-x-2 mt-2'>
                     <div className='flex-1'>
@@ -319,7 +320,9 @@ export function ShowerWallsSection() {
                 <Label className='block text-sm font-medium text-slate-600 mb-1'>
                   Tile Pattern
                 </Label>
-                <select
+                <Select
+                  id="tilePattern"
+                  label=""
                   value={design.tilePattern}
                   onChange={(e) =>
                     setDesign((prev) => ({
@@ -328,7 +331,6 @@ export function ShowerWallsSection() {
                     }))
                   }
                   className='w-full appearance-none bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                  aria-label='Tile Pattern'
                 >
                   <option value='Select Tile Pattern'>
                     Select Tile Pattern
@@ -338,7 +340,7 @@ export function ShowerWallsSection() {
                   <option value='1/3 Offset'>1/3 Offset</option>
                   <option value='Herringbone'>Herringbone</option>
                   <option value='Custom'>Custom</option>
-                </select>
+                </Select>
                 {design.tilePattern === 'Custom' && (
                   <Input
                     type='text'
@@ -374,25 +376,28 @@ export function ShowerWallsSection() {
                 <Label className='block text-sm font-medium text-slate-600 mb-1'>
                   Niche
                 </Label>
-                <select
+                <Select
+                  id="niche"
+                  label=""
                   value={design.niche}
                   onChange={(e) =>
                     setDesign((prev) => ({ ...prev, niche: e.target.value }))
                   }
                   className='w-full appearance-none bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                  aria-label='Niche'
                 >
                   <option value='None'>None</option>
                   <option value='12x12'>12x12</option>
                   <option value='Standard (12x24)'>Standard (12x24)</option>
                   <option value='Custom Size'>Custom Size</option>
-                </select>
+                </Select>
               </div>
               <div>
                 <Label className='block text-sm font-medium text-slate-600 mb-1'>
                   Shower Door
                 </Label>
-                <select
+                <Select
+                  id="showerDoor"
+                  label=""
                   value={design.showerDoor}
                   onChange={(e) =>
                     setDesign((prev) => ({
@@ -401,26 +406,24 @@ export function ShowerWallsSection() {
                     }))
                   }
                   className='w-full appearance-none bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                  aria-label='Shower Door'
                 >
                   <option value='None'>None</option>
                   <option value='Sliding Glass Door'>Sliding Glass Door</option>
                   <option value='Pivot Glass Door'>Pivot Glass Door</option>
                   <option value='Custom Glass'>Custom Glass</option>
-                </select>
+                </Select>
               </div>
               <div className='flex items-center justify-between'>
                 <Label className='font-medium text-slate-800'>
                   Number of Grab Bars
                 </Label>
-                <input
+                <Input
                   type='number'
-                  value={design.grabBar}
+                  value={design.grabBar.toString()}
                   onChange={(e) =>
                     setDesign((prev) => ({ ...prev, grabBar: e.target.value }))
                   }
                   className='w-24 bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-slate-800 text-center focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                  min={0}
                   aria-label='Number of Grab Bars'
                 />
               </div>
@@ -471,7 +474,9 @@ export function ShowerWallsSection() {
               <Label className='block text-sm font-medium text-slate-600 mb-1'>
                 Waterproofing
               </Label>
-              <select
+              <Select
+                id="waterproofingSystem"
+                label=""
                 value={design.waterproofingSystem}
                 onChange={(e) =>
                   setDesign((prev) => ({
@@ -480,7 +485,6 @@ export function ShowerWallsSection() {
                   }))
                 }
                 className='w-full appearance-none bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                aria-label='Waterproofing System'
               >
                 <option value='None / Select System...'>
                   None / Select System...
@@ -498,7 +502,7 @@ export function ShowerWallsSection() {
                   Drywall and Kerdi membrane
                 </option>
                 <option value='Other'>Other</option>
-              </select>
+              </Select>
               {design.waterproofingSystem === 'Other' && (
                 <div className='mt-2 space-y-2'>
                   <Input

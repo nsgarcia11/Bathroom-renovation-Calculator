@@ -1,587 +1,716 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ToggleSwitch } from '@/components/estimate/shared/ToggleSwitch';
+import { WorkflowNotesSection } from '@/components/estimate/shared/WorkflowNotesSection';
+import { CollapsibleSection } from '@/components/estimate/shared/CollapsibleSection';
+import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import { Plus, Trash2 } from 'lucide-react';
-import { FinishingsDesignData } from '@/types/estimate';
-import { CollapsibleCard } from '@/components/estimate/shared/CollapsibleCard';
-import { OptionToggle } from '@/components/estimate/shared/OptionToggle';
-import { PerformedByToggle } from '@/components/estimate/shared/PerformedByToggle';
-import { InfoMessage } from '@/components/estimate/shared/InfoMessage';
-import { ConfigurableTask } from '@/components/estimate/shared/ConfigurableTask';
-import { QuantityInput } from '@/components/estimate/shared/QuantityInput';
 
-interface FinishingsSectionProps {
-  designChoices: FinishingsDesignData['designChoices'];
-  setDesignChoices: (
-    choices:
-      | FinishingsDesignData['designChoices']
-      | ((
-          prev: FinishingsDesignData['designChoices']
-        ) => FinishingsDesignData['designChoices'])
-  ) => void;
-  finishingsScope: FinishingsDesignData['finishingsScope'];
-  setFinishingsScope: (
-    scope:
-      | FinishingsDesignData['finishingsScope']
-      | ((
-          prev: FinishingsDesignData['finishingsScope']
-        ) => FinishingsDesignData['finishingsScope'])
-  ) => void;
-  accentWalls: FinishingsDesignData['accentWalls'];
-  setAccentWalls: (
-    walls:
-      | FinishingsDesignData['accentWalls']
-      | ((
-          prev: FinishingsDesignData['accentWalls']
-        ) => FinishingsDesignData['accentWalls'])
-  ) => void;
+interface FinishingsDesignData {
+  // Dimensions
+  width: string;
+  length: string;
+  height: string;
+
+  // Painting options
+  fixWalls: boolean;
+  priming: boolean;
+  paintWalls: boolean;
+  paintCeiling: boolean;
+  paintTrim: boolean;
+  paintDoor: boolean;
+
+  // Installation options
+  installBaseboard: boolean;
+  installVanity: boolean;
+  vanitySinks: number;
+  installMirror: boolean;
+  installLighting: boolean;
+  lightingQuantity: number;
+  installToilet: boolean;
+
+  // Trade options
+  plumbingPerformedBy: 'me' | 'trade';
+  electricalPerformedBy: 'me' | 'trade';
+
+  // Accent walls
+  accentWalls: Array<{
+    id: string;
+    width: string;
+    height: string;
+    finishType: 'tile' | 'wainscot' | 'paint';
+  }>;
+
+  // Notes
+  designContractorNotes: string;
+  designClientNotes: string;
+  constructionContractorNotes: string;
+  constructionClientNotes: string;
+
+  [key: string]: unknown;
 }
 
-export function FinishingsSection({
-  designChoices,
-  setDesignChoices,
-  finishingsScope,
-  setFinishingsScope,
-  accentWalls,
-  setAccentWalls,
-}: FinishingsSectionProps) {
-  const [openSections, setOpenSections] = useState({
-    measurements: true,
-    painting: false,
-    installation: false,
-    accentWalls: false,
-  });
-  const [showPlumbingTradeMessage, setShowPlumbingTradeMessage] =
-    useState(false);
-  const [showElectricalTradeMessage, setShowElectricalTradeMessage] =
-    useState(false);
+export function FinishingsSection() {
+  const { getDesignData, updateDesign } = useEstimateWorkflowContext();
 
-  // --- HANDLERS ---
-  const handleDimensionChange = (
-    field: keyof FinishingsDesignData['designChoices'],
-    value: string
-  ) => {
-    setDesignChoices((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleScopeChange = (
-    key: keyof FinishingsDesignData['finishingsScope'],
-    field: string,
-    value: string | boolean | number
-  ) => {
-    setFinishingsScope((prev) => ({
-      ...prev,
-      [key]: {
-        [field]: value,
+  // Get design data from context
+  const designData = getDesignData('finishings') as FinishingsDesignData | null;
+  const design = useMemo(
+    () =>
+      designData || {
+        width: '60',
+        length: '96',
+        height: '96',
+        fixWalls: true,
+        priming: true,
+        paintWalls: true,
+        paintCeiling: true,
+        paintTrim: false,
+        paintDoor: false,
+        installBaseboard: false,
+        installVanity: true,
+        vanitySinks: 1,
+        installMirror: true,
+        installLighting: true,
+        lightingQuantity: 2,
+        installToilet: true,
+        plumbingPerformedBy: 'me' as const,
+        electricalPerformedBy: 'me' as const,
+        accentWalls: [],
+        designContractorNotes: '',
+        designClientNotes: '',
+        constructionContractorNotes: '',
+        constructionClientNotes: '',
       },
-    }));
-  };
+    [designData]
+  );
 
-  const handleCategoryPerformedByChange = (
-    category: 'plumbingPerformedBy' | 'electricalPerformedBy',
-    value: 'me' | 'trade'
-  ) => {
-    setFinishingsScope((prev) => ({ ...prev, [category]: value }));
-    if (value === 'trade') {
-      if (category === 'plumbingPerformedBy') setShowPlumbingTradeMessage(true);
-      if (category === 'electricalPerformedBy')
-        setShowElectricalTradeMessage(true);
-    } else {
-      if (category === 'plumbingPerformedBy')
-        setShowPlumbingTradeMessage(false);
-      if (category === 'electricalPerformedBy')
-        setShowElectricalTradeMessage(false);
+  // Local state for immediate UI updates
+  const [localDesign, setLocalDesign] = useState<FinishingsDesignData>(design);
+
+  // Sync local state with context
+  useEffect(() => {
+    setLocalDesign(design);
+  }, [design]);
+
+  // Update design in context
+  const setDesign = useCallback(
+    (updates: Partial<FinishingsDesignData>) => {
+      setLocalDesign((prev) => ({ ...prev, ...updates }));
+      updateDesign('finishings', updates);
+    },
+    [updateDesign]
+  );
+
+  // Handlers
+  const handleDimensionChange = useCallback(
+    (field: 'width' | 'length' | 'height', value: string) => {
+      setDesign({ [field]: value });
+    },
+    [setDesign]
+  );
+
+  const handleAccentWallAdd = useCallback(() => {
+    const newWall = {
+      id: `aw-${Date.now()}`,
+      width: '',
+      height: '',
+      finishType: 'tile' as const,
+    };
+
+    // Ensure accentWalls is an array
+    const currentWalls = Array.isArray(localDesign.accentWalls)
+      ? localDesign.accentWalls
+      : [];
+
+    setDesign({
+      accentWalls: [...currentWalls, newWall],
+    });
+  }, [localDesign.accentWalls, setDesign]);
+
+  const handleAccentWallChange = useCallback(
+    (id: string, field: string, value: string) => {
+      const currentWalls = Array.isArray(localDesign.accentWalls)
+        ? localDesign.accentWalls
+        : [];
+
+      setDesign({
+        accentWalls: currentWalls.map((wall) =>
+          wall.id === id ? { ...wall, [field]: value } : wall
+        ),
+      });
+    },
+    [localDesign.accentWalls, setDesign]
+  );
+
+  const handleAccentWallDelete = useCallback(
+    (id: string) => {
+      const currentWalls = Array.isArray(localDesign.accentWalls)
+        ? localDesign.accentWalls
+        : [];
+
+      setDesign({
+        accentWalls: currentWalls.filter((wall) => wall.id !== id),
+      });
+    },
+    [localDesign.accentWalls, setDesign]
+  );
+
+  // Calculate total square footage
+  const totalSqFt = useMemo(() => {
+    let totalArea = 0;
+    const mainWidth = parseFloat(localDesign.width) || 0;
+    const mainLength = parseFloat(localDesign.length) || 0;
+
+    if (mainWidth > 0 && mainLength > 0) {
+      totalArea += (mainWidth * mainLength) / 144;
     }
-  };
 
-  // --- Accent Wall Handlers ---
-  const handleAccentWallChange = (
-    field: keyof FinishingsDesignData['accentWalls'],
-    value: string | boolean
-  ) => {
-    setAccentWalls((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+    // Add null check for extraMeasurements
+    if (
+      localDesign.extraMeasurements &&
+      Array.isArray(localDesign.extraMeasurements)
+    ) {
+      localDesign.extraMeasurements.forEach((m) => {
+        const sideWidth = parseFloat(m.width) || 0;
+        const sideLength = parseFloat(m.length) || 0;
+        if (sideWidth > 0 && sideLength > 0) {
+          totalArea += (sideWidth * sideLength) / 144;
+        }
+      });
+    }
+
+    return totalArea;
+  }, [localDesign.width, localDesign.length, localDesign.extraMeasurements]);
+
+  // Calculate additional areas
+  const wallArea = useMemo(() => {
+    const w = parseFloat(localDesign.width) || 0;
+    const l = parseFloat(localDesign.length) || 0;
+    const h = parseFloat(localDesign.height) || 0;
+    if (w > 0 && l > 0 && h > 0) {
+      return (2 * (w + l) * h) / 144;
+    }
+    return 0;
+  }, [localDesign.width, localDesign.length, localDesign.height]);
+
+  const ceilingArea = useMemo(() => {
+    const w = parseFloat(localDesign.width) || 0;
+    const l = parseFloat(localDesign.length) || 0;
+    if (w > 0 && l > 0) {
+      return (w * l) / 144;
+    }
+    return 0;
+  }, [localDesign.width, localDesign.length]);
+
+  const perimeter = useMemo(() => {
+    const w = parseFloat(localDesign.width) || 0;
+    const l = parseFloat(localDesign.length) || 0;
+    if (w > 0 && l > 0) {
+      return (2 * (w + l)) / 12; // Convert to feet
+    }
+    return 0;
+  }, [localDesign.width, localDesign.length]);
 
   return (
-    <div className='space-y-4'>
-      <CollapsibleCard
+    <div className='space-y-6'>
+      <div className='pt-2'>
+        <h1 className='text-4xl font-bold text-slate-800 text-left'>
+          Finishings
+        </h1>
+      </div>
+
+      {/* Measurements Card */}
+      <CollapsibleSection
         title='Measurements'
-        isOpen={openSections.measurements}
-        onToggle={() =>
-          setOpenSections((prev) => ({
-            ...prev,
-            measurements: !prev.measurements,
-          }))
+        colorScheme='neutral'
+        summary={
+          <span className='text-blue-900 font-bold text-lg'>
+            {totalSqFt.toFixed(2)} sq/ft
+          </span>
         }
       >
+        <div className='flex items-center gap-3 mt-0 mb-4'>
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            className='h-5 w-5 text-slate-400 flex-shrink-0'
+            fill='none'
+            viewBox='0 0 24 24'
+            stroke='currentColor'
+            strokeWidth='2'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+            />
+          </svg>
+          <p className='text-xs text-slate-500'>
+            Enter the bathroom dimensions to calculate materials and labor
+          </p>
+        </div>
         <div className='grid grid-cols-3 gap-4'>
           <div>
-            <label className='block text-sm font-semibold text-slate-700 mb-1.5'>
+            <Label className='text-sm font-medium text-gray-700 mb-1.5 block'>
               Width (in)
-            </label>
+            </Label>
             <Input
               type='number'
-              value={designChoices.dimensions.width}
+              value={localDesign.width}
               onChange={(e) => handleDimensionChange('width', e.target.value)}
               placeholder='e.g., 60'
-              className='w-full p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+              className='w-full p-2.5 bg-slate-50 border border-blue-300 rounded-lg focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center'
             />
           </div>
           <div>
-            <label className='block text-sm font-semibold text-slate-700 mb-1.5'>
+            <Label className='text-sm font-medium text-gray-700 mb-1.5 block'>
               Length (in)
-            </label>
+            </Label>
             <Input
               type='number'
-              value={designChoices.dimensions.length}
+              value={localDesign.length}
               onChange={(e) => handleDimensionChange('length', e.target.value)}
               placeholder='e.g., 96'
-              className='w-full p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+              className='w-full p-2.5 bg-slate-50 border border-blue-300 rounded-lg focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center'
             />
           </div>
           <div>
-            <label className='block text-sm font-semibold text-slate-700 mb-1.5'>
+            <Label className='text-sm font-medium text-gray-700 mb-1.5 block'>
               Height (in)
-            </label>
+            </Label>
             <Input
               type='number'
-              value={designChoices.dimensions.height}
+              value={localDesign.height}
               onChange={(e) => handleDimensionChange('height', e.target.value)}
               placeholder='e.g., 96'
-              className='w-full p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+              className='w-full p-2.5 bg-slate-50 border border-blue-300 rounded-lg focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center'
             />
           </div>
         </div>
-      </CollapsibleCard>
 
-      <CollapsibleCard
-        title='Painting'
-        isOpen={openSections.painting}
-        onToggle={() =>
-          setOpenSections((prev) => ({ ...prev, painting: !prev.painting }))
-        }
-      >
-        <div className='pl-4 space-y-3'>
-          <OptionToggle
-            label='Drywall Repairs'
-            isEnabled={finishingsScope.fixWalls.selected}
-            onToggle={() =>
-              handleScopeChange(
-                'fixWalls',
-                'selected',
-                !finishingsScope.fixWalls.selected
-              )
-            }
-          />
-          <OptionToggle
-            label='Priming'
-            isEnabled={finishingsScope.priming.selected}
-            onToggle={() =>
-              handleScopeChange(
-                'priming',
-                'selected',
-                !finishingsScope.priming.selected
-              )
-            }
-          />
-          <OptionToggle
-            label='Paint Walls'
-            isEnabled={finishingsScope.paintWalls.selected}
-            onToggle={() =>
-              handleScopeChange(
-                'paintWalls',
-                'selected',
-                !finishingsScope.paintWalls.selected
-              )
-            }
-          />
-          <OptionToggle
-            label='Paint Ceiling'
-            isEnabled={finishingsScope.paintCeiling.selected}
-            onToggle={() =>
-              handleScopeChange(
-                'paintCeiling',
-                'selected',
-                !finishingsScope.paintCeiling.selected
-              )
-            }
-          />
-          <OptionToggle
-            label='Paint Trim'
-            isEnabled={finishingsScope.paintTrim.selected}
-            onToggle={() =>
-              handleScopeChange(
-                'paintTrim',
-                'selected',
-                !finishingsScope.paintTrim.selected
-              )
-            }
-          />
-          <OptionToggle
-            label='Paint Door'
-            isEnabled={finishingsScope.paintDoor.selected}
-            onToggle={() =>
-              handleScopeChange(
-                'paintDoor',
-                'selected',
-                !finishingsScope.paintDoor.selected
-              )
-            }
-          />
-        </div>
-      </CollapsibleCard>
-
-      <CollapsibleCard
-        title='Installation'
-        isOpen={openSections.installation}
-        onToggle={() =>
-          setOpenSections((prev) => ({
-            ...prev,
-            installation: !prev.installation,
-          }))
-        }
-      >
-        <div className='pl-4 space-y-4'>
-          <div>
-            <div className='flex justify-between items-center mb-2'>
-              <p className='text-sm font-semibold text-slate-600'>Plumbing</p>
-              <PerformedByToggle
-                performedBy={finishingsScope.plumbingPerformedBy}
-                onToggle={(v) =>
-                  handleCategoryPerformedByChange('plumbingPerformedBy', v)
-                }
-              />
+        {/* Calculated Areas Display */}
+        <div className='mt-4 p-3 bg-green-50 rounded-lg border border-green-200'>
+          <h4 className='text-sm font-semibold text-green-900 mb-2'>
+            Calculated Areas
+          </h4>
+          <div className='grid grid-cols-2 gap-4 text-sm'>
+            <div>
+              <span className='text-green-700 font-medium'>
+                Total Floor Area:
+              </span>
+              <span className='ml-2 text-green-900'>
+                {totalSqFt.toFixed(1)} sq/ft
+              </span>
             </div>
-            {showPlumbingTradeMessage && (
-              <InfoMessage
-                message="When 'Trade' is selected, this task's labor isn't included here. Manage it on the 'Trade' screen."
-                onClose={() => setShowPlumbingTradeMessage(false)}
-              />
-            )}
-            <div className='pl-4 space-y-3'>
-              <ConfigurableTask
-                label='Vanity'
-                isEnabled={finishingsScope.installVanity.selected}
-                onToggle={() =>
-                  handleScopeChange(
-                    'installVanity',
-                    'selected',
-                    !finishingsScope.installVanity.selected
-                  )
-                }
-              >
-                <QuantityInput
-                  label='Number of Sinks'
-                  value={finishingsScope.installVanity.sinks}
-                  onChange={(v) =>
-                    handleScopeChange('installVanity', 'sinks', v.toString())
-                  }
-                />
-              </ConfigurableTask>
-              <ConfigurableTask
-                label='Sink Faucet(s)'
-                isEnabled={finishingsScope.installSinkFaucet.selected}
-                onToggle={() =>
-                  handleScopeChange(
-                    'installSinkFaucet',
-                    'selected',
-                    !finishingsScope.installSinkFaucet.selected
-                  )
-                }
-              >
-                <QuantityInput
-                  label='Number of Faucets'
-                  value={finishingsScope.installSinkFaucet.quantity}
-                  onChange={(v) =>
-                    handleScopeChange(
-                      'installSinkFaucet',
-                      'quantity',
-                      v.toString()
-                    )
-                  }
-                />
-              </ConfigurableTask>
-              <OptionToggle
-                label='Shower Drain/Overflow'
-                isEnabled={finishingsScope.installShowerDrain.selected}
-                onToggle={() =>
-                  handleScopeChange(
-                    'installShowerDrain',
-                    'selected',
-                    !finishingsScope.installShowerDrain.selected
-                  )
-                }
-              />
-              <OptionToggle
-                label='Tub Drain/Overflow'
-                isEnabled={finishingsScope.installTubDrain.selected}
-                onToggle={() =>
-                  handleScopeChange(
-                    'installTubDrain',
-                    'selected',
-                    !finishingsScope.installTubDrain.selected
-                  )
-                }
-              />
-              <OptionToggle
-                label='Toilet'
-                isEnabled={finishingsScope.installToilet.selected}
-                onToggle={() =>
-                  handleScopeChange(
-                    'installToilet',
-                    'selected',
-                    !finishingsScope.installToilet.selected
-                  )
-                }
-              />
+            <div>
+              <span className='text-green-700 font-medium'>Wall Area:</span>
+              <span className='ml-2 text-green-900'>
+                {wallArea.toFixed(1)} sq/ft
+              </span>
             </div>
-          </div>
-          <div className='pt-3 border-t border-slate-200'>
-            <div className='flex justify-between items-center mb-2'>
-              <p className='text-sm font-semibold text-slate-600'>Electrical</p>
-              <PerformedByToggle
-                performedBy={finishingsScope.electricalPerformedBy}
-                onToggle={(v) =>
-                  handleCategoryPerformedByChange('electricalPerformedBy', v)
-                }
-              />
+            <div>
+              <span className='text-green-700 font-medium'>Ceiling Area:</span>
+              <span className='ml-2 text-green-900'>
+                {ceilingArea.toFixed(1)} sq/ft
+              </span>
             </div>
-            {showElectricalTradeMessage && (
-              <InfoMessage
-                message="When 'Trade' is selected, this task's labor isn't included here. Manage it on the 'Trade' screen."
-                onClose={() => setShowElectricalTradeMessage(false)}
-              />
-            )}
-            <div className='pl-4 space-y-3'>
-              <ConfigurableTask
-                label='Light Fixtures'
-                isEnabled={finishingsScope.installLights.selected}
-                onToggle={() =>
-                  handleScopeChange(
-                    'installLights',
-                    'selected',
-                    !finishingsScope.installLights.selected
-                  )
-                }
-              >
-                <QuantityInput
-                  label='Number of Fixtures'
-                  value={finishingsScope.installLights.quantity}
-                  onChange={(v) =>
-                    handleScopeChange('installLights', 'quantity', v.toString())
-                  }
-                />
-              </ConfigurableTask>
-              <OptionToggle
-                label='Exhaust Fan'
-                isEnabled={finishingsScope.installFan.selected}
-                onToggle={() =>
-                  handleScopeChange(
-                    'installFan',
-                    'selected',
-                    !finishingsScope.installFan.selected
-                  )
-                }
-              />
-            </div>
-          </div>
-          <div className='pt-3 border-t border-slate-200'>
-            <p className='text-sm font-semibold text-slate-600 mb-2'>
-              Carpentry & Mounting
-            </p>
-            <div className='pl-4 space-y-3'>
-              <OptionToggle
-                label='Baseboard'
-                isEnabled={finishingsScope.installBaseboard.selected}
-                onToggle={() =>
-                  handleScopeChange(
-                    'installBaseboard',
-                    'selected',
-                    !finishingsScope.installBaseboard.selected
-                  )
-                }
-              />
-              <OptionToggle
-                label='Door'
-                isEnabled={finishingsScope.installDoor.selected}
-                onToggle={() =>
-                  handleScopeChange(
-                    'installDoor',
-                    'selected',
-                    !finishingsScope.installDoor.selected
-                  )
-                }
-              />
-              <OptionToggle
-                label='Shower Door'
-                isEnabled={finishingsScope.installShowerDoor.selected}
-                onToggle={() =>
-                  handleScopeChange(
-                    'installShowerDoor',
-                    'selected',
-                    !finishingsScope.installShowerDoor.selected
-                  )
-                }
-              />
-              <OptionToggle
-                label='Mirror'
-                isEnabled={finishingsScope.installMirror.selected}
-                onToggle={() =>
-                  handleScopeChange(
-                    'installMirror',
-                    'selected',
-                    !finishingsScope.installMirror.selected
-                  )
-                }
-              />
-              <OptionToggle
-                label='Bathroom Accessories'
-                isEnabled={finishingsScope.installAccessories.selected}
-                onToggle={() =>
-                  handleScopeChange(
-                    'installAccessories',
-                    'selected',
-                    !finishingsScope.installAccessories.selected
-                  )
-                }
-              />
+            <div>
+              <span className='text-green-700 font-medium'>Perimeter:</span>
+              <span className='ml-2 text-green-900'>
+                {perimeter.toFixed(1)} ft
+              </span>
             </div>
           </div>
         </div>
-      </CollapsibleCard>
+      </CollapsibleSection>
 
-      <CollapsibleCard
-        title='Accent Wall'
-        isOpen={openSections.accentWalls}
-        onToggle={() =>
-          setOpenSections((prev) => ({
-            ...prev,
-            accentWalls: !prev.accentWalls,
-          }))
-        }
-      >
+      {/* Painting Card */}
+      <CollapsibleSection title='Painting' colorScheme='design'>
+        <ToggleSwitch
+          label='Drywall Repairs'
+          enabled={localDesign.fixWalls}
+          onToggle={(enabled) => setDesign({ fixWalls: enabled })}
+        />
+        <ToggleSwitch
+          label='Priming'
+          enabled={localDesign.priming}
+          onToggle={(enabled) => setDesign({ priming: enabled })}
+        />
+        <ToggleSwitch
+          label='Paint Walls'
+          enabled={localDesign.paintWalls}
+          onToggle={(enabled) => setDesign({ paintWalls: enabled })}
+        />
+        <ToggleSwitch
+          label='Paint Ceiling'
+          enabled={localDesign.paintCeiling}
+          onToggle={(enabled) => setDesign({ paintCeiling: enabled })}
+        />
+        <ToggleSwitch
+          label='Paint Trim'
+          enabled={localDesign.paintTrim}
+          onToggle={(enabled) => setDesign({ paintTrim: enabled })}
+        />
+        <ToggleSwitch
+          label='Paint Door'
+          enabled={localDesign.paintDoor}
+          onToggle={(enabled) => setDesign({ paintDoor: enabled })}
+        />
+
+        {/* Design Notes */}
+        <div className='pt-4 border-t border-gray-200'>
+          <WorkflowNotesSection
+            contractorNotes={localDesign.designContractorNotes || ''}
+            clientNotes={localDesign.designClientNotes || ''}
+            onContractorNotesChange={(notes) => {
+              setDesign({ designContractorNotes: notes });
+            }}
+            onClientNotesChange={(notes) => {
+              setDesign({ designClientNotes: notes });
+            }}
+            title='Design Notes'
+            placeholder='Add design-specific notes here...'
+            contractorTags={[
+              'Paint Colors',
+              'Finish Type',
+              'Accent Walls',
+              'Trim Details',
+              'Door Finish',
+            ]}
+            clientTags={[
+              'Color Preferences',
+              'Finish Quality',
+              'Accent Wall Ideas',
+              'Trim Style',
+              'Door Style',
+            ]}
+            useTabs={true}
+            alwaysExpanded={true}
+          />
+        </div>
+      </CollapsibleSection>
+
+      {/* Installation Card */}
+      <CollapsibleSection title='Installation' colorScheme='construction'>
+        {/* Plumbing Section */}
+        <div>
+          <div className='flex justify-between items-center mb-4'>
+            <Label className='text-sm font-semibold text-slate-600'>
+              Plumbing
+            </Label>
+            <div className='flex space-x-2'>
+              <Button
+                onClick={() => setDesign({ plumbingPerformedBy: 'me' })}
+                variant={
+                  localDesign.plumbingPerformedBy === 'me'
+                    ? 'default'
+                    : 'outline'
+                }
+                size='sm'
+                className={
+                  localDesign.plumbingPerformedBy === 'me'
+                    ? 'bg-blue-600 text-white'
+                    : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                }
+              >
+                Me
+              </Button>
+              <Button
+                onClick={() => setDesign({ plumbingPerformedBy: 'trade' })}
+                variant={
+                  localDesign.plumbingPerformedBy === 'trade'
+                    ? 'default'
+                    : 'outline'
+                }
+                size='sm'
+                className={
+                  localDesign.plumbingPerformedBy === 'trade'
+                    ? 'bg-blue-600 text-white'
+                    : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                }
+              >
+                Trade
+              </Button>
+            </div>
+          </div>
+          {localDesign.plumbingPerformedBy === 'trade' && (
+            <div className='mb-4 p-3 bg-amber-100 rounded-lg'>
+              <p className='text-xs text-amber-800'>
+                <strong>Note:</strong> When &apos;Trade&apos; is selected,
+                plumbing labor isn&apos;t included here. Manage it on the
+                &apos;Trade&apos; screen.
+              </p>
+            </div>
+          )}
+          <div className='space-y-4 pl-4'>
+            <div className='space-y-2'>
+              <ToggleSwitch
+                label='Install Vanity'
+                enabled={localDesign.installVanity}
+                onToggle={(enabled) => setDesign({ installVanity: enabled })}
+              />
+              {localDesign.installVanity && (
+                <div className='pl-6 pt-2'>
+                  <Label className='text-sm text-slate-600 mb-2 block'>
+                    Number of Sinks
+                  </Label>
+                  <Input
+                    type='number'
+                    value={localDesign.vanitySinks.toString()}
+                    onChange={(e) =>
+                      setDesign({
+                        vanitySinks: parseInt(e.target.value) || 1,
+                      })
+                    }
+                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
+                  />
+                </div>
+              )}
+            </div>
+            <ToggleSwitch
+              label='Install Toilet'
+              enabled={localDesign.installToilet}
+              onToggle={(enabled) => setDesign({ installToilet: enabled })}
+            />
+          </div>
+        </div>
+
+        {/* Electrical Section */}
+        <div className='pt-4 border-t border-slate-200'>
+          <div className='flex justify-between items-center mb-4'>
+            <Label className='text-sm font-semibold text-slate-600'>
+              Electrical
+            </Label>
+            <div className='flex space-x-2'>
+              <Button
+                onClick={() => setDesign({ electricalPerformedBy: 'me' })}
+                variant={
+                  localDesign.electricalPerformedBy === 'me'
+                    ? 'default'
+                    : 'outline'
+                }
+                size='sm'
+                className={
+                  localDesign.electricalPerformedBy === 'me'
+                    ? 'bg-blue-600 text-white'
+                    : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                }
+              >
+                Me
+              </Button>
+              <Button
+                onClick={() => setDesign({ electricalPerformedBy: 'trade' })}
+                variant={
+                  localDesign.electricalPerformedBy === 'trade'
+                    ? 'default'
+                    : 'outline'
+                }
+                size='sm'
+                className={
+                  localDesign.electricalPerformedBy === 'trade'
+                    ? 'bg-blue-600 text-white'
+                    : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                }
+              >
+                Trade
+              </Button>
+            </div>
+          </div>
+          {localDesign.electricalPerformedBy === 'trade' && (
+            <div className='mb-4 p-3 bg-amber-100 rounded-lg'>
+              <p className='text-xs text-amber-800'>
+                <strong>Note:</strong> When &apos;Trade&apos; is selected,
+                electrical labor isn&apos;t included here. Manage it on the
+                &apos;Trade&apos; screen.
+              </p>
+            </div>
+          )}
+          <div className='space-y-4 pl-4'>
+            <div className='space-y-2'>
+              <ToggleSwitch
+                label='Install Lighting'
+                enabled={localDesign.installLighting}
+                onToggle={(enabled) => setDesign({ installLighting: enabled })}
+              />
+              {localDesign.installLighting && (
+                <div className='pl-6 pt-2'>
+                  <Label className='text-sm text-slate-600 mb-2 block'>
+                    Number of Fixtures
+                  </Label>
+                  <Input
+                    type='number'
+                    value={localDesign.lightingQuantity.toString()}
+                    onChange={(e) =>
+                      setDesign({
+                        lightingQuantity: parseInt(e.target.value) || 1,
+                      })
+                    }
+                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Carpentry Section */}
+        <div className='pt-4 border-t border-slate-200'>
+          <Label className='text-sm font-semibold text-slate-600 mb-4 block'>
+            Carpentry & Mounting
+          </Label>
+          <div className='space-y-4 pl-4'>
+            <ToggleSwitch
+              label='Install Baseboards'
+              enabled={localDesign.installBaseboard}
+              onToggle={(enabled) => setDesign({ installBaseboard: enabled })}
+            />
+            <ToggleSwitch
+              label='Install Mirror'
+              enabled={localDesign.installMirror}
+              onToggle={(enabled) => setDesign({ installMirror: enabled })}
+            />
+          </div>
+        </div>
+
+        {/* Construction Notes */}
+        <div className='pt-4 border-t border-gray-200'>
+          <WorkflowNotesSection
+            contractorNotes={localDesign.constructionContractorNotes || ''}
+            clientNotes={localDesign.constructionClientNotes || ''}
+            onContractorNotesChange={(notes) => {
+              setDesign({ constructionContractorNotes: notes });
+            }}
+            onClientNotesChange={(notes) => {
+              setDesign({ constructionClientNotes: notes });
+            }}
+            title='Construction Notes'
+            placeholder='Add construction-specific notes here...'
+            contractorTags={[
+              'Installation Schedule',
+              'Material Delivery',
+              'Access Requirements',
+              'Noise/Dust Concerns',
+              'Cleanup Expectations',
+            ]}
+            clientTags={[
+              'Fixture Selection',
+              'Installation Preferences',
+              'Timing Requirements',
+              'Quality Standards',
+              'Warranty Information',
+            ]}
+            useTabs={true}
+            alwaysExpanded={true}
+          />
+        </div>
+      </CollapsibleSection>
+
+      {/* Accent Walls Card */}
+      <CollapsibleSection title='Accent Walls' colorScheme='design'>
         <div className='space-y-3'>
-          {accentWalls.map((wall, index) => (
-            <div
-              key={wall.id}
-              className='p-4 bg-slate-50 rounded-lg border border-slate-200'
-            >
-              <div className='flex justify-between items-center mb-3'>
-                <p className='font-semibold text-slate-700'>
-                  Accent Wall {index + 1}
-                </p>
-                <Button
-                  onClick={() => handleDeleteAccentWall(wall.id)}
-                  className='p-1 text-red-500 hover:text-red-700'
-                  variant='ghost'
-                  size='sm'
-                >
-                  <Trash2 className='w-5 h-5' />
-                </Button>
-              </div>
-              <div className='space-y-4'>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div>
-                    <label className='block text-xs font-medium text-slate-600 mb-1'>
-                      Wall Width (in)
-                    </label>
-                    <Input
-                      type='number'
-                      value={wall.dimensions.width}
-                      onChange={(e) =>
-                        handleAccentWallChange(wall.id, 'width', e.target.value)
-                      }
-                      placeholder='e.g., 96'
-                      className='w-full p-2 border border-slate-300 rounded-lg'
-                    />
-                  </div>
-                  <div>
-                    <label className='block text-xs font-medium text-slate-600 mb-1'>
-                      Wall Height (in)
-                    </label>
-                    <Input
-                      type='number'
-                      value={wall.dimensions.height}
-                      onChange={(e) =>
-                        handleAccentWallChange(
-                          wall.id,
-                          'height',
-                          e.target.value
-                        )
-                      }
-                      placeholder='e.g., 96'
-                      className='w-full p-2 border border-slate-300 rounded-lg'
-                    />
-                  </div>
+          {Array.isArray(localDesign.accentWalls) &&
+            localDesign.accentWalls.map((wall, index) => (
+              <div
+                key={wall.id}
+                className='p-4 bg-slate-50 rounded-lg border border-slate-200'
+              >
+                <div className='flex justify-between items-center mb-3'>
+                  <p className='font-semibold text-slate-700'>
+                    Accent Wall {index + 1}
+                  </p>
+                  <Button
+                    onClick={() => handleAccentWallDelete(wall.id)}
+                    variant='ghost'
+                    size='sm'
+                    className='p-1 text-red-500 hover:text-red-700 h-auto flex-shrink-0'
+                  >
+                    <Trash2 size={16} />
+                  </Button>
                 </div>
+                <div className='space-y-4'>
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div>
+                      <Label className='text-xs font-medium text-slate-600 mb-1 block'>
+                        Wall Width (in)
+                      </Label>
+                      <Input
+                        type='number'
+                        value={wall.width}
+                        onChange={(e) =>
+                          handleAccentWallChange(
+                            wall.id,
+                            'width',
+                            e.target.value
+                          )
+                        }
+                        placeholder='e.g., 96'
+                        className='w-full p-2 border border-blue-300 rounded-lg focus:border-blue-500'
+                      />
+                    </div>
+                    <div>
+                      <Label className='text-xs font-medium text-slate-600 mb-1 block'>
+                        Wall Height (in)
+                      </Label>
+                      <Input
+                        type='number'
+                        value={wall.height}
+                        onChange={(e) =>
+                          handleAccentWallChange(
+                            wall.id,
+                            'height',
+                            e.target.value
+                          )
+                        }
+                        placeholder='e.g., 96'
+                        className='w-full p-2 border border-blue-300 rounded-lg focus:border-blue-500'
+                      />
+                    </div>
+                  </div>
 
-                <div className='space-y-2'>
-                  <label className='text-xs font-medium text-slate-600'>
-                    Finish Type
-                  </label>
-                  <div className='flex items-center space-x-2'>
-                    <button
-                      onClick={() =>
-                        handleAccentWallChange(wall.id, 'finishType', 'tile')
-                      }
-                      className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
-                        wall.finishType === 'tile'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                      }`}
-                    >
-                      Tile
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleAccentWallChange(
-                          wall.id,
-                          'finishType',
-                          'wainscot'
-                        )
-                      }
-                      className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
-                        wall.finishType === 'wainscot'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                      }`}
-                    >
-                      Wainscot
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleAccentWallChange(wall.id, 'finishType', 'paint')
-                      }
-                      className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
-                        wall.finishType === 'paint'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                      }`}
-                    >
-                      Paint
-                    </button>
+                  <div className='space-y-2'>
+                    <Label className='text-xs font-medium text-slate-600'>
+                      Finish Type
+                    </Label>
+                    <div className='flex space-x-2'>
+                      {['tile', 'wainscot', 'paint'].map((type) => (
+                        <Button
+                          key={type}
+                          onClick={() =>
+                            handleAccentWallChange(wall.id, 'finishType', type)
+                          }
+                          variant={
+                            wall.finishType === type ? 'default' : 'outline'
+                          }
+                          size='sm'
+                          className={
+                            wall.finishType === type
+                              ? 'bg-blue-600 text-white'
+                              : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                          }
+                        >
+                          {type.charAt(0).toUpperCase() + type.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-          <Button
-            onClick={handleAddAccentWall}
-            className='w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-teal-100 hover:bg-teal-200 text-teal-800 font-semibold rounded-lg transition-colors border border-teal-200'
-          >
-            <Plus className='w-5 h-5' />
-            Add Accent Wall
-          </Button>
+            ))}
+          <div className='mt-4 flex justify-center'>
+            <Button
+              onClick={handleAccentWallAdd}
+              className='w-auto flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors border border-blue-600'
+            >
+              <Plus size={16} />
+              Add Accent Wall
+            </Button>
+          </div>
         </div>
-      </CollapsibleCard>
+      </CollapsibleSection>
     </div>
   );
 }

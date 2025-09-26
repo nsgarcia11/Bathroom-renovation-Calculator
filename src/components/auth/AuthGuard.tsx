@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useContractor } from '@/hooks/use-contractor';
 import { LoginForm } from './LoginForm';
 import { SetupPage } from '@/components/pages/SetupPage';
-import { Loader2 } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -17,11 +17,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const loading = authLoading || contractorLoading;
 
   if (loading) {
-    return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin text-blue-600' />
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!user) {

@@ -2,10 +2,11 @@
 
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
-import { Hammer, ShowerHead } from 'lucide-react';
+import { Hammer, ShowerHead, Layers, Paintbrush } from 'lucide-react';
 import { ShowerBaseIcon } from '@/components/icons/ShowerBaseIcon';
+import { StructuralIcon } from '@/components/icons/StructuralIcon';
+import { TradeIcon } from '@/components/icons/TradeIcon';
 
 export default function NotesOverview() {
   const { getDesignData, getNotes } = useEstimateWorkflowContext();
@@ -93,25 +94,21 @@ export default function NotesOverview() {
   // Get shower base notes data
   const showerBaseNotes = useMemo(() => {
     const designData = getDesignData('showerBase') as {
-      walls: unknown[];
-      design: {
-        designContractorNotes?: string;
-        designClientNotes?: string;
-        constructionContractorNotes?: string;
-        constructionClientNotes?: string;
-        [key: string]: unknown;
-      };
+      designContractorNotes?: string;
+      designClientNotes?: string;
+      constructionContractorNotes?: string;
+      constructionClientNotes?: string;
+      [key: string]: unknown;
     } | null;
 
     // Combine design and construction notes
     const designContractorNotes =
-      designData?.design?.designContractorNotes?.trim() || '';
-    const designClientNotes =
-      designData?.design?.designClientNotes?.trim() || '';
+      designData?.designContractorNotes?.trim() || '';
+    const designClientNotes = designData?.designClientNotes?.trim() || '';
     const constructionContractorNotes =
-      designData?.design?.constructionContractorNotes?.trim() || '';
+      designData?.constructionContractorNotes?.trim() || '';
     const constructionClientNotes =
-      designData?.design?.constructionClientNotes?.trim() || '';
+      designData?.constructionClientNotes?.trim() || '';
 
     // Check if shower base has any notes or design data
     const hasNotes =
@@ -140,6 +137,206 @@ export default function NotesOverview() {
     };
   }, [getDesignData]);
 
+  // Get floors notes data
+  const floorsNotes = useMemo(() => {
+    const designData = getDesignData('floors') as {
+      designContractorNotes?: string;
+      designClientNotes?: string;
+      constructionContractorNotes?: string;
+      constructionClientNotes?: string;
+      [key: string]: unknown;
+    } | null;
+
+    // Combine design and construction notes
+    const designContractorNotes =
+      designData?.designContractorNotes?.trim() || '';
+    const designClientNotes = designData?.designClientNotes?.trim() || '';
+    const constructionContractorNotes =
+      designData?.constructionContractorNotes?.trim() || '';
+    const constructionClientNotes =
+      designData?.constructionClientNotes?.trim() || '';
+
+    // Check if floors has any notes or design data
+    const hasNotes =
+      designContractorNotes ||
+      designClientNotes ||
+      constructionContractorNotes ||
+      constructionClientNotes ||
+      (designData && Object.keys(designData).length > 0);
+
+    if (!hasNotes) return null;
+
+    return {
+      id: 'floors',
+      name: 'Floors',
+      icon: <Layers size={24} />,
+      color: 'text-blue-600',
+      designNotes: {
+        contractorNotes: designContractorNotes,
+        clientNotes: designClientNotes,
+      },
+      constructionNotes: {
+        contractorNotes: constructionContractorNotes,
+        clientNotes: constructionClientNotes,
+      },
+      hasNotes: true,
+    };
+  }, [getDesignData]);
+
+  // Get finishings notes data
+  const finishingsNotes = useMemo(() => {
+    const designData = getDesignData('finishings') as {
+      designContractorNotes?: string;
+      designClientNotes?: string;
+      constructionContractorNotes?: string;
+      constructionClientNotes?: string;
+      [key: string]: unknown;
+    } | null;
+
+    // Combine design and construction notes
+    const designContractorNotes =
+      designData?.designContractorNotes?.trim() || '';
+    const designClientNotes = designData?.designClientNotes?.trim() || '';
+    const constructionContractorNotes =
+      designData?.constructionContractorNotes?.trim() || '';
+    const constructionClientNotes =
+      designData?.constructionClientNotes?.trim() || '';
+
+    // Check if finishings has any notes or design data
+    const hasNotes =
+      designContractorNotes ||
+      designClientNotes ||
+      constructionContractorNotes ||
+      constructionClientNotes ||
+      (designData && Object.keys(designData).length > 0);
+
+    if (!hasNotes) return null;
+
+    return {
+      id: 'finishings',
+      name: 'Finishings',
+      icon: <Paintbrush size={24} />,
+      color: 'text-blue-600',
+      designNotes: {
+        contractorNotes: designContractorNotes,
+        clientNotes: designClientNotes,
+      },
+      constructionNotes: {
+        contractorNotes: constructionContractorNotes,
+        clientNotes: constructionClientNotes,
+      },
+      hasNotes: true,
+    };
+  }, [getDesignData]);
+
+  // Get structural notes data
+  const structuralNotes = useMemo(() => {
+    const designData = getDesignData('structural') as {
+      designContractorNotes?: string;
+      designClientNotes?: string;
+      constructionContractorNotes?: string;
+      constructionClientNotes?: string;
+      choices?: {
+        designContractorNotes?: string;
+        designClientNotes?: string;
+        constructionContractorNotes?: string;
+        constructionClientNotes?: string;
+        [key: string]: unknown;
+      };
+      [key: string]: unknown;
+    } | null;
+
+    // Access notes from the correct path (either directly or from choices)
+    const designContractorNotes =
+      designData?.designContractorNotes?.trim() ||
+      designData?.choices?.designContractorNotes?.trim() ||
+      '';
+    const designClientNotes =
+      designData?.designClientNotes?.trim() ||
+      designData?.choices?.designClientNotes?.trim() ||
+      '';
+    const constructionContractorNotes =
+      designData?.constructionContractorNotes?.trim() ||
+      designData?.choices?.constructionContractorNotes?.trim() ||
+      '';
+    const constructionClientNotes =
+      designData?.constructionClientNotes?.trim() ||
+      designData?.choices?.constructionClientNotes?.trim() ||
+      '';
+
+    // Check if structural has any notes or design data
+    const hasNotes =
+      designContractorNotes ||
+      designClientNotes ||
+      constructionContractorNotes ||
+      constructionClientNotes ||
+      (designData && Object.keys(designData).length > 0);
+
+    if (!hasNotes) return null;
+
+    return {
+      id: 'structural',
+      name: 'Structural',
+      icon: <StructuralIcon size={24} />,
+      color: 'text-blue-600',
+      designNotes: {
+        contractorNotes: designContractorNotes,
+        clientNotes: designClientNotes,
+      },
+      constructionNotes: {
+        contractorNotes: constructionContractorNotes,
+        clientNotes: constructionClientNotes,
+      },
+      hasNotes: true,
+    };
+  }, [getDesignData]);
+
+  // Get trade notes data
+  const tradeNotes = useMemo(() => {
+    const designData = getDesignData('trade') as {
+      designContractorNotes?: string;
+      designClientNotes?: string;
+      constructionContractorNotes?: string;
+      constructionClientNotes?: string;
+      [key: string]: unknown;
+    } | null;
+
+    // Combine design and construction notes
+    const designContractorNotes =
+      designData?.designContractorNotes?.trim() || '';
+    const designClientNotes = designData?.designClientNotes?.trim() || '';
+    const constructionContractorNotes =
+      designData?.constructionContractorNotes?.trim() || '';
+    const constructionClientNotes =
+      designData?.constructionClientNotes?.trim() || '';
+
+    // Check if trade has any notes or design data
+    const hasNotes =
+      designContractorNotes ||
+      designClientNotes ||
+      constructionContractorNotes ||
+      constructionClientNotes ||
+      (designData && Object.keys(designData).length > 0);
+
+    if (!hasNotes) return null;
+
+    return {
+      id: 'trade',
+      name: 'Trade',
+      icon: <TradeIcon size={24} />,
+      color: 'text-blue-600',
+      designNotes: {
+        contractorNotes: designContractorNotes,
+        clientNotes: designClientNotes,
+      },
+      constructionNotes: {
+        contractorNotes: constructionContractorNotes,
+        clientNotes: constructionClientNotes,
+      },
+      hasNotes: true,
+    };
+  }, [getDesignData]);
+
   // Create workflows array
   const workflows = useMemo(() => {
     const workflowList = [];
@@ -152,8 +349,29 @@ export default function NotesOverview() {
     if (showerBaseNotes) {
       workflowList.push(showerBaseNotes);
     }
+    if (floorsNotes) {
+      workflowList.push(floorsNotes);
+    }
+    if (finishingsNotes) {
+      workflowList.push(finishingsNotes);
+    }
+    if (structuralNotes) {
+      workflowList.push(structuralNotes);
+    }
+    if (tradeNotes) {
+      workflowList.push(tradeNotes);
+    }
+
     return workflowList;
-  }, [demolitionNotes, showerWallsNotes, showerBaseNotes]);
+  }, [
+    demolitionNotes,
+    showerWallsNotes,
+    showerBaseNotes,
+    floorsNotes,
+    finishingsNotes,
+    structuralNotes,
+    tradeNotes,
+  ]);
 
   return (
     <div className='space-y-6'>
@@ -183,15 +401,6 @@ export default function NotesOverview() {
                 </div>
                 <div>
                   <h3 className='text-lg font-semibold'>{workflow.name}</h3>
-                  <Badge variant='outline' className='text-xs'>
-                    {workflow.constructionNotes.contractorNotes.trim() ||
-                    workflow.constructionNotes.clientNotes.trim() ||
-                    (workflow.designNotes &&
-                      (workflow.designNotes.contractorNotes.trim() ||
-                        workflow.designNotes.clientNotes.trim()))
-                      ? 'Has Notes'
-                      : 'No Notes'}
-                  </Badge>
                 </div>
               </CardTitle>
             </CardHeader>
@@ -308,88 +517,6 @@ export default function NotesOverview() {
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      {/* Summary */}
-      <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <Card className='border-blue-200'>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-lg text-blue-900'>
-              Design Contractor Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-blue-600'>
-              {
-                workflows.filter(
-                  (w) => w.designNotes && w.designNotes.contractorNotes.trim()
-                ).length
-              }
-            </div>
-            <p className='text-sm text-gray-600 mt-1'>
-              Workflows with design contractor notes
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className='border-green-200'>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-lg text-green-900'>
-              Design Client Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-green-600'>
-              {
-                workflows.filter(
-                  (w) => w.designNotes && w.designNotes.clientNotes.trim()
-                ).length
-              }
-            </div>
-            <p className='text-sm text-gray-600 mt-1'>
-              Workflows with design client notes
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className='border-orange-200'>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-lg text-orange-900'>
-              Construction Contractor Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-orange-600'>
-              {
-                workflows.filter((w) =>
-                  w.constructionNotes.contractorNotes.trim()
-                ).length
-              }
-            </div>
-            <p className='text-sm text-gray-600 mt-1'>
-              Workflows with construction contractor notes
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className='border-purple-200'>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-lg text-purple-900'>
-              Construction Client Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-purple-600'>
-              {
-                workflows.filter((w) => w.constructionNotes.clientNotes.trim())
-                  .length
-              }
-            </div>
-            <p className='text-sm text-gray-600 mt-1'>
-              Workflows with construction client notes
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

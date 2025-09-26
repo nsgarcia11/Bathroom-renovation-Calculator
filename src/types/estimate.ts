@@ -243,7 +243,7 @@ export interface EstimateData {
     floors: FloorWorkflow;
     finishings: FinishingsWorkflow;
     structural: StructuralWorkflow;
-    trades: TradesWorkflow;
+    trade: TradesWorkflow;
   };
 
   // Overall estimate summary

@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ToggleSwitch } from '@/components/estimate/shared/ToggleSwitch';
 import { WorkflowNotesSection } from '@/components/estimate/shared/WorkflowNotesSection';
+import { CollapsibleSection } from '@/components/estimate/shared/CollapsibleSection';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 
 interface ShowerBaseDesignData {
@@ -26,8 +26,7 @@ interface ShowerBaseDesignData {
 }
 
 export function ShowerBaseSection() {
-  const { getDesignData, updateDesign, updateNotes } =
-    useEstimateWorkflowContext();
+  const { getDesignData, updateDesign } = useEstimateWorkflowContext();
 
   // Get design data from context
   const designData = getDesignData('showerBase') as ShowerBaseDesignData | null;
@@ -91,282 +90,261 @@ export function ShowerBaseSection() {
   return (
     <div className='space-y-6'>
       {/* Measurements Card */}
-      <Card className='border-green-200'>
-        <CardHeader className='pb-3'>
-          <CardTitle className='text-lg text-green-900'>Measurements</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className='grid grid-cols-2 gap-4'>
-            <div>
-              <Label className='text-sm font-medium text-gray-700 mb-2 block'>
-                Width (inches)
-              </Label>
-              <Input
-                type='number'
-                value={localDesign.width || ''}
-                onChange={(e) => setDesign({ width: e.target.value })}
-                className='bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-slate-800 text-center focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                placeholder='Enter width'
-              />
-            </div>
-            <div>
-              <Label className='text-sm font-medium text-gray-700 mb-2 block'>
-                Length (inches)
-              </Label>
-              <Input
-                type='number'
-                value={localDesign.length || ''}
-                onChange={(e) => setDesign({ length: e.target.value })}
-                className='bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-slate-800 text-center focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                placeholder='Enter length'
-              />
-            </div>
+      <CollapsibleSection title='Measurements' colorScheme='neutral'>
+        <div className='grid grid-cols-2 gap-4'>
+          <div>
+            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+              Width (inches)
+            </Label>
+            <Input
+              type='number'
+              value={localDesign.width || ''}
+              onChange={(e) => setDesign({ width: e.target.value })}
+              className='bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-slate-800 text-center focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              placeholder='Enter width'
+            />
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+              Length (inches)
+            </Label>
+            <Input
+              type='number'
+              value={localDesign.length || ''}
+              onChange={(e) => setDesign({ length: e.target.value })}
+              className='bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-slate-800 text-center focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              placeholder='Enter length'
+            />
+          </div>
+        </div>
+      </CollapsibleSection>
 
       {/* Design Card */}
-      <Card className='border-blue-200'>
-        <CardHeader className='pb-3'>
-          <CardTitle className='text-lg text-blue-900'>Design</CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-6'>
-          {/* Base Type Selection */}
-          <div>
-            <Label className='text-sm font-medium text-gray-700 mb-3 block'>
-              What type of shower base will be installed?
-            </Label>
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
-              {baseTypeOptions.map((option) => (
-                <Button
-                  key={option.value}
-                  onClick={() => setDesign({ baseType: option.value })}
-                  variant={
-                    localDesign.baseType === option.value
-                      ? 'default'
-                      : 'outline'
-                  }
-                  className={`w-full ${
-                    localDesign.baseType === option.value
-                      ? 'bg-blue-600 text-white'
-                      : 'border-blue-200 text-blue-600 hover:bg-blue-50'
-                  }`}
-                >
-                  {option.label}
-                </Button>
-              ))}
+      <CollapsibleSection title='Design' colorScheme='design'>
+        {/* Base Type Selection */}
+        <div>
+          <Label className='text-sm font-medium text-gray-700 mb-3 block'>
+            What type of shower base will be installed?
+          </Label>
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
+            {baseTypeOptions.map((option) => (
+              <Button
+                key={option.value}
+                onClick={() => setDesign({ baseType: option.value })}
+                variant={
+                  localDesign.baseType === option.value ? 'default' : 'outline'
+                }
+                className={`w-full ${
+                  localDesign.baseType === option.value
+                    ? 'bg-blue-600 text-white'
+                    : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                }`}
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Client Supplies Base */}
+        {localDesign.baseType !== 'Select base type' && (
+          <div className='pt-4 border-t border-gray-200'>
+            <div className='flex items-center justify-between'>
+              <Label className='text-sm font-medium text-gray-700'>
+                Will the client supply the base?
+              </Label>
+              <div className='flex items-center space-x-2'>
+                {['No', 'Yes'].map((option) => (
+                  <Button
+                    key={option}
+                    onClick={() => setDesign({ clientSuppliesBase: option })}
+                    variant={
+                      localDesign.clientSuppliesBase === option
+                        ? 'default'
+                        : 'outline'
+                    }
+                    size='sm'
+                    className={
+                      localDesign.clientSuppliesBase === option
+                        ? 'bg-blue-600 text-white'
+                        : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                    }
+                  >
+                    {option}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Client Supplies Base */}
-          {localDesign.baseType !== 'Select base type' && (
+        {/* Tiled Base Options */}
+        {localDesign.baseType === 'Tiled Base' && (
+          <>
+            {/* Drain Type */}
+            <div className='pt-4 border-t border-gray-200'>
+              <Label className='text-sm font-medium text-gray-700 mb-3 block'>
+                What type of drain will be used?
+              </Label>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                {drainTypeOptions.map((option) => (
+                  <Button
+                    key={option.value}
+                    onClick={() => setDesign({ drainType: option.value })}
+                    variant={
+                      localDesign.drainType === option.value
+                        ? 'default'
+                        : 'outline'
+                    }
+                    className={`w-full ${
+                      localDesign.drainType === option.value
+                        ? 'bg-blue-600 text-white'
+                        : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                    }`}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Curb Options */}
             <div className='pt-4 border-t border-gray-200'>
               <div className='flex items-center justify-between'>
                 <Label className='text-sm font-medium text-gray-700'>
-                  Will the client supply the base?
+                  Will there be a curb?
                 </Label>
                 <div className='flex items-center space-x-2'>
-                  {['No', 'Yes'].map((option) => (
+                  {['curb', 'curbless'].map((option) => (
                     <Button
                       key={option}
-                      onClick={() => setDesign({ clientSuppliesBase: option })}
+                      onClick={() => setDesign({ drainType: option })}
                       variant={
-                        localDesign.clientSuppliesBase === option
-                          ? 'default'
-                          : 'outline'
+                        localDesign.drainType === option ? 'default' : 'outline'
                       }
                       size='sm'
                       className={
-                        localDesign.clientSuppliesBase === option
+                        localDesign.drainType === option
                           ? 'bg-blue-600 text-white'
                           : 'border-blue-200 text-blue-600 hover:bg-blue-50'
                       }
                     >
-                      {option}
+                      {option === 'curb' ? 'With Curb' : 'Curbless Entry'}
                     </Button>
                   ))}
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Tiled Base Options */}
-          {localDesign.baseType === 'Tiled Base' && (
-            <>
-              {/* Drain Type */}
-              <div className='pt-4 border-t border-gray-200'>
-                <Label className='text-sm font-medium text-gray-700 mb-3 block'>
-                  What type of drain will be used?
-                </Label>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-                  {drainTypeOptions.map((option) => (
-                    <Button
-                      key={option.value}
-                      onClick={() => setDesign({ drainType: option.value })}
-                      variant={
-                        localDesign.drainType === option.value
-                          ? 'default'
-                          : 'outline'
-                      }
-                      className={`w-full ${
-                        localDesign.drainType === option.value
-                          ? 'bg-blue-600 text-white'
-                          : 'border-blue-200 text-blue-600 hover:bg-blue-50'
-                      }`}
-                    >
-                      {option.label}
-                    </Button>
-                  ))}
-                </div>
+            {/* Waterproofing System */}
+            <div className='pt-4 border-t border-gray-200'>
+              <Label className='text-sm font-medium text-gray-700 mb-3 block'>
+                Which waterproofing system will be used?
+              </Label>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                {waterproofingOptions.map((option) => (
+                  <Button
+                    key={option.value}
+                    onClick={() =>
+                      setDesign({ waterproofingSystem: option.value })
+                    }
+                    variant={
+                      localDesign.waterproofingSystem === option.value
+                        ? 'default'
+                        : 'outline'
+                    }
+                    className={`w-full ${
+                      localDesign.waterproofingSystem === option.value
+                        ? 'bg-blue-600 text-white'
+                        : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                    }`}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
               </div>
+            </div>
+          </>
+        )}
 
-              {/* Curb Options */}
-              <div className='pt-4 border-t border-gray-200'>
-                <div className='flex items-center justify-between'>
-                  <Label className='text-sm font-medium text-gray-700'>
-                    Will there be a curb?
-                  </Label>
-                  <div className='flex items-center space-x-2'>
-                    {['curb', 'curbless'].map((option) => (
-                      <Button
-                        key={option}
-                        onClick={() => setDesign({ drainType: option })}
-                        variant={
-                          localDesign.drainType === option
-                            ? 'default'
-                            : 'outline'
-                        }
-                        size='sm'
-                        className={
-                          localDesign.drainType === option
-                            ? 'bg-blue-600 text-white'
-                            : 'border-blue-200 text-blue-600 hover:bg-blue-50'
-                        }
-                      >
-                        {option === 'curb' ? 'With Curb' : 'Curbless Entry'}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Waterproofing System */}
-              <div className='pt-4 border-t border-gray-200'>
-                <Label className='text-sm font-medium text-gray-700 mb-3 block'>
-                  Which waterproofing system will be used?
-                </Label>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-                  {waterproofingOptions.map((option) => (
-                    <Button
-                      key={option.value}
-                      onClick={() =>
-                        setDesign({ waterproofingSystem: option.value })
-                      }
-                      variant={
-                        localDesign.waterproofingSystem === option.value
-                          ? 'default'
-                          : 'outline'
-                      }
-                      className={`w-full ${
-                        localDesign.waterproofingSystem === option.value
-                          ? 'bg-blue-600 text-white'
-                          : 'border-blue-200 text-blue-600 hover:bg-blue-50'
-                      }`}
-                    >
-                      {option.label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Design Notes */}
-          <div className='pt-4 border-t border-gray-200'>
-            <WorkflowNotesSection
-              contractorNotes={localDesign.designContractorNotes || ''}
-              clientNotes={localDesign.designClientNotes || ''}
-              onContractorNotesChange={(notes) => {
-                setDesign({ designContractorNotes: notes });
-              }}
-              onClientNotesChange={(notes) => {
-                setDesign({ designClientNotes: notes });
-              }}
-              title='Design Notes'
-              placeholder='Add design-specific notes here...'
-              contractorTags={[
-                'Base Type',
-                'Drain Configuration',
-                'Waterproofing System',
-                'Curb Design',
-                'Access Requirements',
-              ]}
-              clientTags={[
-                'Design Preferences',
-                'Accessibility Needs',
-                'Style Requirements',
-                'Budget Considerations',
-              ]}
-              useTabs={true}
-              alwaysExpanded={true}
-            />
-          </div>
-        </CardContent>
-      </Card>
+        {/* Design Notes */}
+        <div className='pt-4 border-t border-gray-200'>
+          <WorkflowNotesSection
+            contractorNotes={localDesign.designContractorNotes || ''}
+            clientNotes={localDesign.designClientNotes || ''}
+            onContractorNotesChange={(notes) => {
+              setDesign({ designContractorNotes: notes });
+            }}
+            onClientNotesChange={(notes) => {
+              setDesign({ designClientNotes: notes });
+            }}
+            title='Design Notes'
+            placeholder='Add design-specific notes here...'
+            contractorTags={[
+              'Base Type',
+              'Drain Configuration',
+              'Waterproofing System',
+              'Curb Design',
+              'Access Requirements',
+            ]}
+            clientTags={[
+              'Design Preferences',
+              'Accessibility Needs',
+              'Style Requirements',
+              'Budget Considerations',
+            ]}
+            useTabs={true}
+            alwaysExpanded={true}
+          />
+        </div>
+      </CollapsibleSection>
 
       {/* Construction Card */}
-      <Card className='border-orange-200'>
-        <CardHeader className='pb-3'>
-          <CardTitle className='text-lg text-orange-900'>
-            Construction
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-6'>
-          <div className='space-y-4'>
-            <ToggleSwitch
-              label='Subfloor repair required?'
-              enabled={localDesign.subfloorRepair}
-              onToggle={(enabled) => setDesign({ subfloorRepair: enabled })}
-            />
-            <ToggleSwitch
-              label='Joist modification required?'
-              enabled={localDesign.joistModification}
-              onToggle={(enabled) => setDesign({ joistModification: enabled })}
-            />
-          </div>
+      <CollapsibleSection title='Construction' colorScheme='construction'>
+        <div className='space-y-4'>
+          <ToggleSwitch
+            label='Subfloor repair required?'
+            enabled={localDesign.subfloorRepair}
+            onToggle={(enabled) => setDesign({ subfloorRepair: enabled })}
+          />
+          <ToggleSwitch
+            label='Joist modification required?'
+            enabled={localDesign.joistModification}
+            onToggle={(enabled) => setDesign({ joistModification: enabled })}
+          />
+        </div>
 
-          {/* Construction Notes */}
-          <div className='pt-4 border-t border-gray-200'>
-            <WorkflowNotesSection
-              contractorNotes={localDesign.constructionContractorNotes || ''}
-              clientNotes={localDesign.constructionClientNotes || ''}
-              onContractorNotesChange={(notes) => {
-                setDesign({ constructionContractorNotes: notes });
-              }}
-              onClientNotesChange={(notes) => {
-                setDesign({ constructionClientNotes: notes });
-              }}
-              title='Construction Notes'
-              placeholder='Add construction-specific notes here...'
-              contractorTags={[
-                'Installation Method',
-                'Waterproofing Details',
-                'Drain Connection',
-                'Subfloor Preparation',
-                'Quality Control',
-              ]}
-              clientTags={[
-                'Timeline Requirements',
-                'Access Restrictions',
-                'Quality Expectations',
-                'Cleanup Requirements',
-              ]}
-              useTabs={true}
-              alwaysExpanded={true}
-            />
-          </div>
-        </CardContent>
-      </Card>
+        {/* Construction Notes */}
+        <div className='pt-4 border-t border-gray-200'>
+          <WorkflowNotesSection
+            contractorNotes={localDesign.constructionContractorNotes || ''}
+            clientNotes={localDesign.constructionClientNotes || ''}
+            onContractorNotesChange={(notes) => {
+              setDesign({ constructionContractorNotes: notes });
+            }}
+            onClientNotesChange={(notes) => {
+              setDesign({ constructionClientNotes: notes });
+            }}
+            title='Construction Notes'
+            placeholder='Add construction-specific notes here...'
+            contractorTags={[
+              'Installation Method',
+              'Waterproofing Details',
+              'Drain Connection',
+              'Subfloor Preparation',
+              'Quality Control',
+            ]}
+            clientTags={[
+              'Timeline Requirements',
+              'Access Restrictions',
+              'Quality Expectations',
+              'Cleanup Requirements',
+            ]}
+            useTabs={true}
+            alwaysExpanded={true}
+          />
+        </div>
+      </CollapsibleSection>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useProject } from '@/hooks/use-projects';
 import { useContractor } from '@/hooks/use-contractor';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
@@ -25,10 +26,10 @@ import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import DemolitionWorkflowSection from '@/components/estimate/workflows/demolition/DemolitionWorkflowSection';
 import ShowerWallsWorkflowSection from '@/components/estimate/workflows/shower-walls/ShowerWallsWorkflowSection';
 import ShowerBaseWorkflowSection from '@/components/estimate/workflows/shower-base/ShowerBaseWorkflowSection';
-import FloorWorkflowSection from '@/components/estimate/workflows/floors/FloorWorkflowSection';
+import FloorWorkflowSection from '@/components/estimate/workflows/floors/FloorsWorkflowSection';
 import FinishingsWorkflowSection from '@/components/estimate/workflows/finishings/FinishingsWorkflowSection';
 import StructuralWorkflowSection from '@/components/estimate/workflows/structural/StructuralWorkflowSection';
-import TradesWorkflowSection from '@/components/estimate/workflows/trades/TradesWorkflowSection';
+import TradesWorkflowSection from '@/components/estimate/workflows/trade/TradeWorkflowSection';
 import EstimatesOverview from '@/components/estimate/shared/EstimatesOverview';
 import NotesOverview from '@/components/estimate/shared/NotesOverview';
 
@@ -156,9 +157,7 @@ export default function EstimatePage({ projectId }: EstimatePageProps) {
 
   if (isProjectLoading || isWorkflowLoading) {
     return (
-      <div className='flex items-center justify-center min-h-screen'>
-        <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600'></div>
-      </div>
+      <LoadingSpinner />
     );
   }
 
@@ -212,7 +211,7 @@ export default function EstimatePage({ projectId }: EstimatePageProps) {
               } text-white`}
             >
               {isSaving ? (
-                <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white'></div>
+                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-white'></div>
               ) : (
                 <Save size={16} />
               )}

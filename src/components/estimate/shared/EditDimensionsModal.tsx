@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 interface EditDimensionsModalProps {
   isOpen: boolean;
@@ -53,12 +54,11 @@ export function EditDimensionsModal({
           <Label className='block text-center text-sm font-medium text-slate-500 mb-2'>
             Inches
           </Label>
-          <input
+          <Input
             type='number'
             value={String(localDimension.ft * 12 + localDimension.inch)}
             onChange={handleTotalInchesChange}
             className='w-full p-2 border border-blue-300 rounded-md text-center text-2xl font-semibold focus:border-blue-500'
-            autoFocus
             aria-label='Total inches'
           />
         </div>

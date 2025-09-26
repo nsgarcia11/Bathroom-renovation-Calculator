@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PROVINCES, CURRENCIES } from '@/lib/constants';
 import { Plus, Save, Trash2 } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 export function SettingsPage() {
   const router = useRouter();
@@ -146,11 +147,7 @@ export function SettingsPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
@@ -192,7 +189,7 @@ export function SettingsPage() {
                   key={`settings-email-${index}`}
                   className='flex items-center -mx-7 px-7'
                 >
-                  <input
+                  <Input
                     type='email'
                     value={email}
                     onChange={(e) =>
@@ -237,7 +234,7 @@ export function SettingsPage() {
                   key={`settings-phone-${index}`}
                   className='flex items-center -mx-7 px-7'
                 >
-                  <input
+                  <Input
                     type='tel'
                     value={phone}
                     onChange={(e) =>

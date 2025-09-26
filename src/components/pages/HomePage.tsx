@@ -7,6 +7,7 @@ import { useProjects, useDeleteProject } from '@/hooks/use-projects';
 import { Project } from '@/types';
 import { DashboardCard } from '@/components/ui/card';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import {
   Plus,
   Briefcase,
@@ -76,11 +77,7 @@ export function HomePage() {
   };
 
   if (loading) {
-    return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!contractor) {

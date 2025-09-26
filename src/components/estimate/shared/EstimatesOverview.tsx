@@ -4,8 +4,10 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
-import { Hammer, ShowerHead } from 'lucide-react';
+import { Hammer, ShowerHead, Layers, Paintbrush } from 'lucide-react';
 import { ShowerBaseIcon } from '@/components/icons/ShowerBaseIcon';
+import { StructuralIcon } from '@/components/icons/StructuralIcon';
+import { TradeIcon } from '@/components/icons/TradeIcon';
 
 export default function EstimatesOverview() {
   const {
@@ -176,6 +178,266 @@ export default function EstimatesOverview() {
     };
   }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
 
+  // Get floors workflow data
+  const floorsData = useMemo(() => {
+    const designData = getDesignData('floors');
+    const laborItems = getLaborItems('floors');
+    const materialItems = getMaterialItems('floors');
+    const totals = getWorkflowTotals('floors');
+
+    // Check if there's any data
+    const hasData =
+      laborItems.length > 0 ||
+      materialItems.length > 0 ||
+      (designData && Object.keys(designData).length > 0);
+
+    if (!hasData) return null;
+
+    // Calculate scope-based totals
+    const designLabor = laborItems
+      .filter((item) => item.scope === 'design')
+      .reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      );
+
+    const constructionLabor = laborItems
+      .filter((item) => item.scope === 'construction')
+      .reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      );
+
+    const designMaterials = materialItems
+      .filter((item) => item.scope === 'design')
+      .reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      );
+
+    const constructionMaterials = materialItems
+      .filter((item) => item.scope === 'construction')
+      .reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      );
+
+    return {
+      id: 'floors',
+      name: 'Floors',
+      icon: <Layers size={24} />,
+      color: 'text-blue-600',
+      designLabor,
+      constructionLabor,
+      designMaterials,
+      constructionMaterials,
+      totalLabor: totals.laborTotal,
+      totalMaterials: totals.materialsTotal,
+      total: totals.grandTotal,
+    };
+  }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
+
+  // Get finishings workflow data
+  const finishingsData = useMemo(() => {
+    const designData = getDesignData('finishings');
+    const laborItems = getLaborItems('finishings');
+    const materialItems = getMaterialItems('finishings');
+    const totals = getWorkflowTotals('finishings');
+
+    // Check if there's any data
+    const hasData =
+      laborItems.length > 0 ||
+      materialItems.length > 0 ||
+      (designData && Object.keys(designData).length > 0);
+
+    if (!hasData) return null;
+
+    // Calculate scope-based totals
+    const designLabor = laborItems
+      .filter((item) => item.scope === 'design')
+      .reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      );
+
+    const constructionLabor = laborItems
+      .filter((item) => item.scope === 'construction')
+      .reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      );
+
+    const designMaterials = materialItems
+      .filter((item) => item.scope === 'design')
+      .reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      );
+
+    const constructionMaterials = materialItems
+      .filter((item) => item.scope === 'construction')
+      .reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      );
+
+    return {
+      id: 'finishings',
+      name: 'Finishings',
+      icon: <Paintbrush size={24} />,
+      color: 'text-blue-600',
+      designLabor,
+      constructionLabor,
+      designMaterials,
+      constructionMaterials,
+      totalLabor: totals.laborTotal,
+      totalMaterials: totals.materialsTotal,
+      total: totals.grandTotal,
+    };
+  }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
+
+  // Get structural workflow data
+  const structuralData = useMemo(() => {
+    const designData = getDesignData('structural');
+    const laborItems = getLaborItems('structural');
+    const materialItems = getMaterialItems('structural');
+    const totals = getWorkflowTotals('structural');
+
+    // Check if there's any data
+    const hasData =
+      laborItems.length > 0 ||
+      materialItems.length > 0 ||
+      (designData && Object.keys(designData).length > 0);
+
+    if (!hasData) return null;
+
+    // Calculate scope-based totals
+    const designLabor = laborItems
+      .filter((item) => item.scope === 'design')
+      .reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      );
+
+    const constructionLabor = laborItems
+      .filter((item) => item.scope === 'construction')
+      .reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      );
+
+    const designMaterials = materialItems
+      .filter((item) => item.scope === 'design')
+      .reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      );
+
+    const constructionMaterials = materialItems
+      .filter((item) => item.scope === 'construction')
+      .reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      );
+
+    return {
+      id: 'structural',
+      name: 'Structural',
+      icon: <StructuralIcon size={24} />,
+      color: 'text-blue-600',
+      designLabor,
+      constructionLabor,
+      designMaterials,
+      constructionMaterials,
+      totalLabor: totals.laborTotal,
+      totalMaterials: totals.materialsTotal,
+      total: totals.grandTotal,
+    };
+  }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
+
+  // Get trade workflow data
+  const tradeData = useMemo(() => {
+    const designData = getDesignData('trade');
+    const laborItems = getLaborItems('trade');
+    const materialItems = getMaterialItems('trade');
+    const totals = getWorkflowTotals('trade');
+
+    // Check if there's any data
+    const hasData =
+      laborItems.length > 0 ||
+      materialItems.length > 0 ||
+      (designData && Object.keys(designData).length > 0);
+
+    if (!hasData) return null;
+
+    // Calculate scope-based totals
+    const designLabor = laborItems
+      .filter((item) => item.scope === 'design')
+      .reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      );
+
+    const constructionLabor = laborItems
+      .filter((item) => item.scope === 'construction')
+      .reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      );
+
+    const designMaterials = materialItems
+      .filter((item) => item.scope === 'design')
+      .reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      );
+
+    const constructionMaterials = materialItems
+      .filter((item) => item.scope === 'construction')
+      .reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      );
+
+    return {
+      id: 'trade',
+      name: 'Trade',
+      icon: <TradeIcon size={24} />,
+      color: 'text-blue-600',
+      designLabor,
+      constructionLabor,
+      designMaterials,
+      constructionMaterials,
+      totalLabor: totals.laborTotal,
+      totalMaterials: totals.materialsTotal,
+      total: totals.grandTotal,
+    };
+  }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
+
   // Create workflows array
   const workflows = useMemo(() => {
     const workflowList = [];
@@ -188,8 +450,29 @@ export default function EstimatesOverview() {
     if (showerBaseData) {
       workflowList.push(showerBaseData);
     }
+    if (floorsData) {
+      workflowList.push(floorsData);
+    }
+    if (finishingsData) {
+      workflowList.push(finishingsData);
+    }
+    if (structuralData) {
+      workflowList.push(structuralData);
+    }
+    if (tradeData) {
+      workflowList.push(tradeData);
+    }
+
     return workflowList;
-  }, [demolitionData, showerWallsData, showerBaseData]);
+  }, [
+    demolitionData,
+    showerWallsData,
+    showerBaseData,
+    floorsData,
+    finishingsData,
+    structuralData,
+    tradeData,
+  ]);
 
   // Get grand total from context
   const grandTotal = useMemo(() => getAllTotals().grandTotal, [getAllTotals]);

@@ -69,7 +69,7 @@ export function CollapsibleCard({
           />
         </svg>
       </div>
-      {isExpanded && <div className='p-6 pt-0 animate-fade-in'>{children}</div>}
+      {isExpanded && <div className='p-6 pt-0 animate-fade-in py-2'>{children}</div>}
     </div>
   );
 }

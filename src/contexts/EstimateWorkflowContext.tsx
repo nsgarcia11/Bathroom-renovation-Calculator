@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import React, {
@@ -630,7 +631,7 @@ export function EstimateWorkflowProvider({
       'floors',
       'finishings',
       'structural',
-      'trades',
+      'trade',
     ];
 
     let totalLabor = 0;

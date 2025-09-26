@@ -94,7 +94,7 @@ export default function ShowerWallsMaterialsSection() {
     }, 0);
   }, [walls]);
 
-  // Calculate waste factor based on tile pattern
+  /* // Calculate waste factor based on tile pattern
   const wasteFactor = useMemo(() => {
     switch (design.tilePattern) {
       case 'Herringbone':
@@ -111,7 +111,7 @@ export default function ShowerWallsMaterialsSection() {
   const tileNeeded = useMemo(() => {
     if (design.tileSize === 'Select tile size') return 0;
     return totalSqft * wasteFactor;
-  }, [totalSqft, wasteFactor, design.tileSize]);
+  }, [totalSqft, wasteFactor, design.tileSize]); */
 
   // Helper function to generate materials based on shower walls design
   const generateMaterials = useCallback(

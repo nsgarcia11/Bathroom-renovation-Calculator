@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { EstimateData, WorkflowType, WorkflowData } from '@/types/estimate';
 
 const createEmptyEstimateData = (projectId: string): EstimateData => ({
@@ -134,7 +134,7 @@ const createEmptyEstimateData = (projectId: string): EstimateData => ({
         },
       },
     },
-    trades: {
+    trade: {
       design: {
         choices: {
           electrical: [],

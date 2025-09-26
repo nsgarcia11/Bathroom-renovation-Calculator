@@ -168,7 +168,7 @@ export function NewProjectPage() {
                   key={`email-${index}`}
                   className='flex items-center -mx-7 px-7'
                 >
-                  <input
+                  <Input
                     type='email'
                     value={email}
                     onChange={(e) =>
@@ -210,7 +210,7 @@ export function NewProjectPage() {
                   key={`phone-${index}`}
                   className='flex items-center -mx-7 px-7'
                 >
-                  <input
+                  <Input
                     type='tel'
                     value={phone}
                     onChange={(e) =>
