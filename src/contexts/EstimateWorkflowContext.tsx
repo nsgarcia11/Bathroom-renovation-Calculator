@@ -275,6 +275,13 @@ export function EstimateWorkflowProvider({
 
   const setLaborItems = useCallback(
     (workflowType: WorkflowType, items: LaborItem[]) => {
+      console.log('🔧 EstimateWorkflowContext: setLaborItems called:', {
+        workflowType,
+        items,
+        currentWorkflow: getWorkflowData(workflowType),
+        estimateDataWorkflows: estimateData.workflows,
+      });
+
       const currentWorkflow = getWorkflowData(workflowType);
       if (currentWorkflow) {
         const updatedWorkflow = {
@@ -284,10 +291,49 @@ export function EstimateWorkflowProvider({
             hourlyItems: items,
           },
         };
+        console.log(
+          '💾 EstimateWorkflowContext: Updating workflow data with labor items:',
+          updatedWorkflow
+        );
+        actions.updateWorkflowData(workflowType, updatedWorkflow);
+      } else {
+        console.log(
+          '❌ EstimateWorkflowContext: No current workflow found for',
+          workflowType,
+          'Available workflows:',
+          Object.keys(estimateData.workflows || {})
+        );
+
+        // Initialize the workflow if it doesn't exist
+        const initialWorkflow = {
+          labor: { hourlyItems: [], flatFeeItems: [] },
+          materials: { items: [] },
+          notes: { contractorNotes: '', clientNotes: '' },
+          estimate: {
+            laborTotal: 0,
+            materialsTotal: 0,
+            grandTotal: 0,
+            lastUpdated: new Date().toISOString(),
+          },
+        };
+
+        console.log(
+          '🔧 EstimateWorkflowContext: Initializing workflow with:',
+          initialWorkflow
+        );
+
+        const updatedWorkflow = {
+          ...initialWorkflow,
+          labor: {
+            ...initialWorkflow.labor,
+            hourlyItems: items,
+          },
+        };
+
         actions.updateWorkflowData(workflowType, updatedWorkflow);
       }
     },
-    [actions, getWorkflowData]
+    [actions, getWorkflowData, estimateData.workflows]
   );
 
   // Flat fee updates
@@ -438,6 +484,13 @@ export function EstimateWorkflowProvider({
 
   const setMaterialItems = useCallback(
     (workflowType: WorkflowType, items: MaterialItem[]) => {
+      console.log('🔧 EstimateWorkflowContext: setMaterialItems called:', {
+        workflowType,
+        items,
+        currentWorkflow: getWorkflowData(workflowType),
+        estimateDataWorkflows: estimateData.workflows,
+      });
+
       const currentWorkflow = getWorkflowData(workflowType);
       if (currentWorkflow) {
         const updatedWorkflow = {
@@ -447,10 +500,49 @@ export function EstimateWorkflowProvider({
             items: items,
           },
         };
+        console.log(
+          '💾 EstimateWorkflowContext: Updating workflow data with material items:',
+          updatedWorkflow
+        );
+        actions.updateWorkflowData(workflowType, updatedWorkflow);
+      } else {
+        console.log(
+          '❌ EstimateWorkflowContext: No current workflow found for',
+          workflowType,
+          'Available workflows:',
+          Object.keys(estimateData.workflows || {})
+        );
+
+        // Initialize the workflow if it doesn't exist
+        const initialWorkflow = {
+          labor: { hourlyItems: [], flatFeeItems: [] },
+          materials: { items: [] },
+          notes: { contractorNotes: '', clientNotes: '' },
+          estimate: {
+            laborTotal: 0,
+            materialsTotal: 0,
+            grandTotal: 0,
+            lastUpdated: new Date().toISOString(),
+          },
+        };
+
+        console.log(
+          '🔧 EstimateWorkflowContext: Initializing workflow with:',
+          initialWorkflow
+        );
+
+        const updatedWorkflow = {
+          ...initialWorkflow,
+          materials: {
+            ...initialWorkflow.materials,
+            items: items,
+          },
+        };
+
         actions.updateWorkflowData(workflowType, updatedWorkflow);
       }
     },
-    [actions, getWorkflowData]
+    [actions, getWorkflowData, estimateData.workflows]
   );
 
   // Notes updates
