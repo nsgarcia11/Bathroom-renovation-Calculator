@@ -98,6 +98,10 @@ export default function ShowerWallsLaborSection() {
 
   // Calculate total square footage
   const totalSqft = useMemo(() => {
+    if (!walls || !Array.isArray(walls) || walls.length === 0) {
+      return 0;
+    }
+    
     return walls.reduce((total, wall) => {
       const heightInFeet = wall.height.ft + wall.height.inch / 12;
       const widthInFeet = wall.width.ft + wall.width.inch / 12;
@@ -129,6 +133,16 @@ export default function ShowerWallsLaborSection() {
     (designData: ShowerWallsDesignData): LaborItem[] => {
       const laborItems: LaborItem[] = [];
       const { walls, design } = designData;
+      
+      // Add safety checks to prevent undefined errors
+      if (!walls || !Array.isArray(walls) || walls.length === 0) {
+        return laborItems;
+      }
+      
+      if (!design) {
+        return laborItems;
+      }
+      
       const totalSqft = walls.reduce((total, wall) => {
         const heightInFeet = wall.height.ft + wall.height.inch / 12;
         const widthInFeet = wall.width.ft + wall.width.inch / 12;
@@ -288,6 +302,11 @@ export default function ShowerWallsLaborSection() {
 
     // Only generate if we have design data and no existing auto items
     if (designData && existingAutoItems.length === 0) {
+      // Add safety check for designData structure
+      if (!designData.walls || !designData.design) {
+        return;
+      }
+      
       const newAutoItems = generateLaborItems(designData);
 
       if (newAutoItems.length > 0) {
