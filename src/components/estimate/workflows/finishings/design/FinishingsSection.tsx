@@ -334,31 +334,37 @@ export function FinishingsSection() {
           label='Drywall Repairs'
           enabled={localDesign.fixWalls}
           onToggle={(enabled) => setDesign({ fixWalls: enabled })}
+          className='pb-3'
         />
         <ToggleSwitch
           label='Priming'
           enabled={localDesign.priming}
           onToggle={(enabled) => setDesign({ priming: enabled })}
+          className='pb-3'
         />
         <ToggleSwitch
           label='Paint Walls'
           enabled={localDesign.paintWalls}
           onToggle={(enabled) => setDesign({ paintWalls: enabled })}
+          className='pb-3'
         />
         <ToggleSwitch
           label='Paint Ceiling'
           enabled={localDesign.paintCeiling}
           onToggle={(enabled) => setDesign({ paintCeiling: enabled })}
+          className='pb-3'
         />
         <ToggleSwitch
           label='Paint Trim'
           enabled={localDesign.paintTrim}
           onToggle={(enabled) => setDesign({ paintTrim: enabled })}
+          className='pb-3'
         />
         <ToggleSwitch
           label='Paint Door'
           enabled={localDesign.paintDoor}
           onToggle={(enabled) => setDesign({ paintDoor: enabled })}
+          className='pb-3'
         />
 
         {/* Design Notes */}
@@ -475,6 +481,7 @@ export function FinishingsSection() {
               label='Install Toilet'
               enabled={localDesign.installToilet}
               onToggle={(enabled) => setDesign({ installToilet: enabled })}
+              className='pb-3'
             />
           </div>
         </div>
@@ -537,7 +544,7 @@ export function FinishingsSection() {
                 onToggle={(enabled) => setDesign({ installLighting: enabled })}
               />
               {localDesign.installLighting && (
-                <div className='pl-6 pt-2'>
+                <div className='pl-6 pt-2 pb-3'>
                   <Label className='text-sm text-slate-600 mb-2 block'>
                     Number of Fixtures
                   </Label>
@@ -572,6 +579,7 @@ export function FinishingsSection() {
               label='Install Mirror'
               enabled={localDesign.installMirror}
               onToggle={(enabled) => setDesign({ installMirror: enabled })}
+              className='pb-3'
             />
           </div>
         </div>

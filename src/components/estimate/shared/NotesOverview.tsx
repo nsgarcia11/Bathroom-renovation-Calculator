@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import { Hammer, ShowerHead, Layers, Paintbrush } from 'lucide-react';
 import { ShowerBaseIcon } from '@/components/icons/ShowerBaseIcon';
@@ -385,138 +384,80 @@ export default function NotesOverview() {
         </p>
       </div>
 
-      {/* Workflows Grid */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-        {workflows.map((workflow) => (
-          <Card
-            key={workflow.id}
-            className='border-blue-200 hover:shadow-lg transition-shadow'
-          >
-            <CardHeader className='pb-3'>
-              <CardTitle className='flex items-center space-x-3'>
-                <div
-                  className={`w-10 h-10 ${workflow.color} rounded-lg flex items-center justify-center`}
-                >
-                  {workflow.icon}
-                </div>
-                <div>
-                  <h3 className='text-lg font-semibold'>{workflow.name}</h3>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              {/* Design Notes Section (only for Shower Walls) */}
-              {workflow.designNotes &&
-                (workflow.designNotes.contractorNotes.trim() ||
-                  workflow.designNotes.clientNotes.trim()) && (
-                  <div className='space-y-4'>
-                    <h4 className='font-semibold text-gray-900 border-b border-gray-200 pb-2'>
-                      Design Notes
-                    </h4>
+      {/* Construction Notes Section */}
+      <div className='space-y-4'>
+        <div className='bg-blue-600 text-white px-4 py-2 rounded-lg'>
+          <h3 className='text-lg font-semibold'>Construction Notes</h3>
+        </div>
+        <div className='space-y-3'>
+          {workflows.map((workflow) => {
+            const constructionClientNotes =
+              workflow.constructionNotes?.clientNotes?.trim() || '';
 
-                    {/* Design Contractor Notes */}
-                    <div className='space-y-2'>
-                      <h5 className='font-medium text-gray-700 flex items-center justify-between'>
-                        <span>Contractor Notes</span>
-                        <span className='text-blue-600 text-sm'>
-                          {workflow.designNotes.contractorNotes.trim()
-                            ? 'Available'
-                            : 'None'}
-                        </span>
-                      </h5>
-                      <div className='text-sm text-gray-600 bg-gray-50 p-3 rounded-lg min-h-[60px]'>
-                        {workflow.designNotes.contractorNotes.trim() ? (
-                          <p className='whitespace-pre-wrap'>
-                            {workflow.designNotes.contractorNotes}
-                          </p>
-                        ) : (
-                          <p className='text-gray-400 italic'>
-                            No design contractor notes added
-                          </p>
-                        )}
-                      </div>
-                    </div>
+            if (!constructionClientNotes) return null;
 
-                    {/* Design Client Notes */}
-                    <div className='space-y-2'>
-                      <h5 className='font-medium text-gray-700 flex items-center justify-between'>
-                        <span>Client Notes</span>
-                        <span className='text-green-600 text-sm'>
-                          {workflow.designNotes.clientNotes.trim()
-                            ? 'Available'
-                            : 'None'}
-                        </span>
-                      </h5>
-                      <div className='text-sm text-gray-600 bg-gray-50 p-3 rounded-lg min-h-[60px]'>
-                        {workflow.designNotes.clientNotes.trim() ? (
-                          <p className='whitespace-pre-wrap'>
-                            {workflow.designNotes.clientNotes}
-                          </p>
-                        ) : (
-                          <p className='text-gray-400 italic'>
-                            No design client notes added
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-              {/* Construction Notes Section */}
-              <div className='space-y-4'>
-                <h4 className='font-semibold text-gray-900 border-b border-gray-200 pb-2'>
-                  Construction Notes
+            return (
+              <div
+                key={`construction-${workflow.id}`}
+                className='bg-white rounded-lg border border-gray-200 p-4 shadow-sm'
+              >
+                <h4 className='font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200'>
+                  {workflow.name}
                 </h4>
-
-                {/* Construction Contractor Notes */}
-                <div className='space-y-2'>
-                  <h5 className='font-medium text-gray-700 flex items-center justify-between'>
-                    <span>Contractor Notes</span>
-                    <span className='text-blue-600 text-sm'>
-                      {workflow.constructionNotes.contractorNotes.trim()
-                        ? 'Available'
-                        : 'None'}
-                    </span>
-                  </h5>
-                  <div className='text-sm text-gray-600 bg-gray-50 p-3 rounded-lg min-h-[60px]'>
-                    {workflow.constructionNotes.contractorNotes.trim() ? (
-                      <p className='whitespace-pre-wrap'>
-                        {workflow.constructionNotes.contractorNotes}
+                <div className='space-y-1'>
+                  {constructionClientNotes
+                    .split('\n')
+                    .filter((line) => line.trim())
+                    .map((line, index) => (
+                      <p key={index} className='text-sm text-gray-700'>
+                        {line.trim().startsWith('-')
+                          ? line.trim()
+                          : `- ${line.trim()}`}
                       </p>
-                    ) : (
-                      <p className='text-gray-400 italic'>
-                        No construction contractor notes added
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Construction Client Notes */}
-                <div className='space-y-2'>
-                  <h5 className='font-medium text-gray-700 flex items-center justify-between'>
-                    <span>Client Notes</span>
-                    <span className='text-green-600 text-sm'>
-                      {workflow.constructionNotes.clientNotes.trim()
-                        ? 'Available'
-                        : 'None'}
-                    </span>
-                  </h5>
-                  <div className='text-sm text-gray-600 bg-gray-50 p-3 rounded-lg min-h-[60px]'>
-                    {workflow.constructionNotes.clientNotes.trim() ? (
-                      <p className='whitespace-pre-wrap'>
-                        {workflow.constructionNotes.clientNotes}
-                      </p>
-                    ) : (
-                      <p className='text-gray-400 italic'>
-                        No construction client notes added
-                      </p>
-                    )}
-                  </div>
+                    ))}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Design Notes Section */}
+      <div className='space-y-4'>
+        <div className='bg-blue-600 text-white px-4 py-2 rounded-lg'>
+          <h3 className='text-lg font-semibold'>Design Notes</h3>
+        </div>
+        <div className='space-y-3'>
+          {workflows.map((workflow) => {
+            const designClientNotes =
+              workflow.designNotes?.clientNotes?.trim() || '';
+
+            if (!designClientNotes) return null;
+
+            return (
+              <div
+                key={`design-${workflow.id}`}
+                className='bg-white rounded-lg border border-gray-200 p-4 shadow-sm'
+              >
+                <h4 className='font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200'>
+                  {workflow.name}
+                </h4>
+                <div className='space-y-1'>
+                  {designClientNotes
+                    .split('\n')
+                    .filter((line) => line.trim())
+                    .map((line, index) => (
+                      <p key={index} className='text-sm text-gray-700'>
+                        {line.trim().startsWith('-')
+                          ? line.trim()
+                          : `- ${line.trim()}`}
+                      </p>
+                    ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

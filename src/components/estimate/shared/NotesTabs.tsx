@@ -85,7 +85,7 @@ export function NotesTabs({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                 isActive
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -130,9 +130,9 @@ export function NotesTabs({
                     placeholder={`Add ${activeTabData.label.toLowerCase()}...`}
                     className='w-full h-32 px-3 py-2 border border-blue-300 rounded-md text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none'
                   />
-                  <div className='text-xs text-slate-500'>
+                  {/* <div className='text-xs text-slate-500'>
                     {activeTabData.notes.length} characters
-                  </div>
+                  </div> */}
 
                   {/* Tags Section */}
                   {activeTabData.tags && activeTabData.tags.length > 0 && (
@@ -170,23 +170,6 @@ export function NotesTabs({
                   )}
                 </div>
               )}
-            </div>
-
-            {/* Notes Summary */}
-            <div className='flex items-center justify-between text-xs text-slate-500'>
-              <div className='flex items-center space-x-4'>
-                <span>
-                  Contractor: {contractorNotes.length} chars
-                  {hasContractorNotes && ' ✓'}
-                </span>
-                <span>
-                  Client: {clientNotes.length} chars
-                  {hasClientNotes && ' ✓'}
-                </span>
-              </div>
-              <span>
-                Total: {contractorNotes.length + clientNotes.length} characters
-              </span>
             </div>
           </div>
         )}
