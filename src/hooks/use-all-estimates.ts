@@ -1,6 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { EstimateData } from '@/types/estimate';
+import {
+  DemolitionWorkflow,
+  EstimateData,
+  FinishingsWorkflow,
+  FloorWorkflow,
+  ShowerBaseWorkflow,
+  ShowerWallsWorkflow,
+  StructuralWorkflow,
+  TradesWorkflow,
+} from '@/types/estimate';
 
 export function useAllEstimates() {
   return useQuery({
@@ -94,8 +103,27 @@ export function useAllEstimates() {
                 projectId: estimate.project_id,
                 projectNotes: (rawData.projectNotes as string) || '',
                 lastUpdated: rawData.lastUpdated || estimate.updated_at,
-                workflows: transformedWorkflows as any,
-                estimate: (rawData.estimate as any) || {
+                workflows: transformedWorkflows as Record<string, unknown> as {
+                  demolition: DemolitionWorkflow;
+                  showerWalls: ShowerWallsWorkflow;
+                  showerBase: ShowerBaseWorkflow;
+                  floors: FloorWorkflow;
+                  finishings: FinishingsWorkflow;
+                  structural: StructuralWorkflow;
+                  trade: TradesWorkflow;
+                },
+                estimate: (rawData.estimate as {
+                  totalLabor: number;
+                  totalMaterials: number;
+                  grandTotal: number;
+                  breakdown: Array<{
+                    workflow: string;
+                    name: string;
+                    laborCost: number;
+                    materialsCost: number;
+                    total: number;
+                  }>;
+                }) || {
                   totalLabor: 0,
                   totalMaterials: 0,
                   grandTotal: 0,
@@ -108,7 +136,15 @@ export function useAllEstimates() {
                 projectId: estimate.project_id,
                 projectNotes: (rawData.projectNotes as string) || '',
                 lastUpdated: rawData.lastUpdated || estimate.updated_at,
-                workflows: {} as any,
+                workflows: {} as {
+                  demolition: DemolitionWorkflow;
+                  showerWalls: ShowerWallsWorkflow;
+                  showerBase: ShowerBaseWorkflow;
+                  floors: FloorWorkflow;
+                  finishings: FinishingsWorkflow;
+                  structural: StructuralWorkflow;
+                  trade: TradesWorkflow;
+                },
                 estimate: {
                   totalLabor: 0,
                   totalMaterials: 0,
@@ -130,13 +166,88 @@ export function useAllEstimates() {
   });
 }
 
+// Helper function to calculate grand total from workflow data
+function calculateGrandTotal(workflows: Record<string, unknown>): number {
+  if (!workflows) return 0;
+
+  let totalLabor = 0;
+  let totalMaterials = 0;
+
+  Object.values(workflows).forEach((workflow: unknown) => {
+    const workflowData = workflow as Record<string, unknown>;
+    if (workflowData?.workflow) {
+      const workflowInfo = workflowData.workflow as Record<string, unknown>;
+
+      // Calculate labor total
+      const hourlyItems =
+        ((workflowInfo.labor as Record<string, unknown>)?.hourlyItems as Array<
+          Record<string, unknown>
+        >) || [];
+      const flatFeeItems =
+        ((workflowInfo.labor as Record<string, unknown>)?.flatFeeItems as Array<
+          Record<string, unknown>
+        >) || [];
+
+      const laborTotal =
+        hourlyItems.reduce(
+          (sum: number, item: Record<string, unknown>) =>
+            sum +
+            (parseFloat(item.hours as string) || 0) *
+              (parseFloat(item.rate as string) || 0),
+          0
+        ) +
+        flatFeeItems.reduce(
+          (sum: number, item: Record<string, unknown>) =>
+            sum + (parseFloat(item.unitPrice as string) || 0),
+          0
+        );
+
+      // Calculate materials total
+      const materialItems =
+        ((workflowInfo.materials as Record<string, unknown>)?.items as Array<
+          Record<string, unknown>
+        >) || [];
+      const materialsTotal = materialItems.reduce(
+        (sum: number, item: Record<string, unknown>) =>
+          sum +
+          (parseFloat(item.quantity as string) || 0) *
+            (parseFloat(item.price as string) || 0),
+        0
+      );
+
+      totalLabor += laborTotal;
+      totalMaterials += materialsTotal;
+    }
+  });
+
+  return totalLabor + totalMaterials;
+}
+
 export function useTotalProjectValue() {
   const { data: estimates, isLoading } = useAllEstimates();
 
   const totalValue =
     estimates?.reduce((sum, estimate) => {
-      return sum + (estimate.estimate?.grandTotal || 0);
+      // Try to get grandTotal from estimate.estimate first, then calculate from workflows
+      const storedGrandTotal = estimate.estimate?.grandTotal || 0;
+      const calculatedGrandTotal = calculateGrandTotal(estimate.workflows);
+
+      // Debug logging
+      console.log('Estimate for project:', estimate.projectId);
+      console.log('Stored grandTotal:', storedGrandTotal);
+      console.log('Calculated grandTotal:', calculatedGrandTotal);
+      console.log('Workflows data:', estimate.workflows);
+
+      // Use the calculated value if stored value is 0 or if it's more accurate
+      const finalValue =
+        storedGrandTotal > 0 ? storedGrandTotal : calculatedGrandTotal;
+      console.log('Final value used:', finalValue);
+
+      return sum + finalValue;
     }, 0) || 0;
+
+  console.log('Total value calculated:', totalValue);
+  console.log('Number of estimates:', estimates?.length || 0);
 
   return {
     totalValue,

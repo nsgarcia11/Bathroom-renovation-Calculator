@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useContractor } from '@/hooks/use-contractor';
 import { useProjects, useDeleteProject } from '@/hooks/use-projects';
