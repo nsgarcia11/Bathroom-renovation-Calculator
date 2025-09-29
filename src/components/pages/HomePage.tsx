@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useContractor } from '@/hooks/use-contractor';
 import { useProjects, useDeleteProject } from '@/hooks/use-projects';
+import { useTotalProjectValue } from '@/hooks/use-all-estimates';
 import { Project } from '@/types';
 import { DashboardCard } from '@/components/ui/card';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
@@ -25,19 +26,14 @@ export function HomePage() {
     refetch: refetchContractor,
   } = useContractor();
   const { data: projects, isLoading: projectsLoading } = useProjects();
+  const { totalValue, isLoading: totalValueLoading } = useTotalProjectValue();
   const deleteProject = useDeleteProject();
 
   // Confirmation modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
-  const loading = contractorLoading || projectsLoading;
-
-  // Calculate total project value (placeholder - you may need to implement this based on your project structure)
-  const totalProjectValue = useMemo(() => {
-    // This is a placeholder calculation - adjust based on your actual project data structure
-    return (projects || []).length * 5000; // Example: $5000 per project
-  }, [projects]);
+  const loading = contractorLoading || projectsLoading || totalValueLoading;
 
   // Refetch contractor data when component mounts to ensure fresh data
   useEffect(() => {
@@ -103,7 +99,7 @@ export function HomePage() {
           <DashboardCard
             icon={<BarChart2 className='w-5 h-5 text-green-500' />}
             title='Total Value'
-            value={`$${totalProjectValue.toLocaleString('en-US', {
+            value={`$${totalValue.toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}`}
