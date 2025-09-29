@@ -1,22 +1,325 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useMemo, useRef } from 'react';
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
-import { Hammer, ShowerHead, Layers, Paintbrush } from 'lucide-react';
+import { useContractor } from '@/hooks/use-contractor';
+import { useProject } from '@/hooks/use-projects';
+import { Hammer, ShowerHead, Layers, Paintbrush, Download } from 'lucide-react';
 import { ShowerBaseIcon } from '@/components/icons/ShowerBaseIcon';
 import { StructuralIcon } from '@/components/icons/StructuralIcon';
 import { TradeIcon } from '@/components/icons/TradeIcon';
+import domtoimage from 'dom-to-image';
+import jsPDF from 'jspdf';
 
-export default function EstimatesOverview() {
+interface EstimatesOverviewProps {
+  projectId: string;
+}
+
+interface DesignDataWithNotes {
+  designClientNotes?: string;
+  constructionClientNotes?: string;
+  [key: string]: unknown;
+}
+
+export default function EstimatesOverview({
+  projectId,
+}: EstimatesOverviewProps) {
+  const estimateRef = useRef<HTMLDivElement>(null);
+
   const {
     getWorkflowTotals,
     getDesignData,
     getLaborItems,
     getMaterialItems,
     getAllTotals,
+    getNotes,
   } = useEstimateWorkflowContext();
+
+  // Get contractor and project data
+  const { data: contractor } = useContractor();
+  const { data: project } = useProject(projectId);
+
+  // PDF Export function
+  const handleExportToPDF = async () => {
+    if (!estimateRef.current) return;
+
+    let style: HTMLStyleElement | null = null;
+
+    try {
+      // Temporarily add CSS overrides to fix color parsing issues
+      style = document.createElement('style');
+      style.textContent = `
+        .pdf-export * {
+          color: #000000 !important;
+          background-color: #ffffff !important;
+          border-color: #e5e7eb !important;
+          background: #ffffff !important;
+          color-scheme: light !important;
+        }
+        .pdf-export *::before,
+        .pdf-export *::after {
+          color: #000000 !important;
+          background-color: #ffffff !important;
+          border-color: #e5e7eb !important;
+          background: #ffffff !important;
+        }
+        .pdf-export .bg-blue-600 {
+          background-color: #2563eb !important;
+        }
+        .pdf-export .text-blue-600 {
+          color: #2563eb !important;
+        }
+        .pdf-export .text-blue-800 {
+          color: #1e40af !important;
+        }
+        .pdf-export .text-blue-700 {
+          color: #1d4ed8 !important;
+        }
+        .pdf-export .bg-blue-50 {
+          background-color: #eff6ff !important;
+        }
+        .pdf-export .border-blue-600 {
+          border-color: #2563eb !important;
+        }
+        .pdf-export .border-blue-300 {
+          border-color: #93c5fd !important;
+        }
+        .pdf-export .bg-gray-50 {
+          background-color: #f9fafb !important;
+        }
+        .pdf-export .bg-gray-100 {
+          background-color: #f3f4f6 !important;
+        }
+        .pdf-export .text-gray-900 {
+          color: #111827 !important;
+        }
+        .pdf-export .text-gray-700 {
+          color: #374151 !important;
+        }
+        .pdf-export .text-gray-600 {
+          color: #4b5563 !important;
+        }
+        .pdf-export .border-gray-200 {
+          border-color: #e5e7eb !important;
+        }
+        .pdf-export .border-gray-300 {
+          border-color: #d1d5db !important;
+        }
+        .pdf-export .border-gray-400 {
+          border-color: #9ca3af !important;
+        }
+        .pdf-export .text-white {
+          color: #ffffff !important;
+        }
+        .pdf-export .bg-white {
+          background-color: #ffffff !important;
+        }
+        .pdf-export .shadow-sm {
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        }
+        .pdf-export .rounded-lg {
+          border-radius: 0.5rem !important;
+        }
+        .pdf-export .rounded-t-lg {
+          border-top-left-radius: 0.5rem !important;
+          border-top-right-radius: 0.5rem !important;
+        }
+        .pdf-export .rounded-b-lg {
+          border-bottom-left-radius: 0.5rem !important;
+          border-bottom-right-radius: 0.5rem !important;
+        }
+        .pdf-export .px-4 {
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
+        }
+        .pdf-export .py-3 {
+          padding-top: 0.75rem !important;
+          padding-bottom: 0.75rem !important;
+        }
+        .pdf-export .py-8 {
+          padding-top: 2rem !important;
+          padding-bottom: 2rem !important;
+        }
+        .pdf-export .px-8 {
+          padding-left: 2rem !important;
+          padding-right: 2rem !important;
+        }
+        .pdf-export .pb-8 {
+          padding-bottom: 2rem !important;
+        }
+        .pdf-export .mb-4 {
+          margin-bottom: 1rem !important;
+        }
+        .pdf-export .mb-2 {
+          margin-bottom: 0.5rem !important;
+        }
+        .pdf-export .mb-1 {
+          margin-bottom: 0.25rem !important;
+        }
+        .pdf-export .space-y-2 > * + * {
+          margin-top: 0.5rem !important;
+        }
+        .pdf-export .space-y-6 > * + * {
+          margin-top: 1.5rem !important;
+        }
+        .pdf-export .flex {
+          display: flex !important;
+        }
+        .pdf-export .justify-between {
+          justify-content: space-between !important;
+        }
+        .pdf-export .justify-center {
+          justify-content: center !important;
+        }
+        .pdf-export .items-center {
+          align-items: center !important;
+        }
+        .pdf-export .items-start {
+          align-items: flex-start !important;
+        }
+        .pdf-export .text-center {
+          text-align: center !important;
+        }
+        .pdf-export .text-right {
+          text-align: right !important;
+        }
+        .pdf-export .w-1/2 {
+          width: 50% !important;
+        }
+        .pdf-export .flex-1 {
+          flex: 1 1 0% !important;
+        }
+        .pdf-export .font-bold {
+          font-weight: 700 !important;
+        }
+        .pdf-export .font-semibold {
+          font-weight: 600 !important;
+        }
+        .pdf-export .text-lg {
+          font-size: 1.125rem !important;
+          line-height: 1.75rem !important;
+        }
+        .pdf-export .text-sm {
+          font-size: 0.875rem !important;
+          line-height: 1.25rem !important;
+        }
+        .pdf-export .text-2xl {
+          font-size: 1.5rem !important;
+          line-height: 2rem !important;
+        }
+        .pdf-export .text-4xl {
+          font-size: 2.25rem !important;
+          line-height: 2.5rem !important;
+        }
+        .pdf-export .border {
+          border-width: 1px !important;
+        }
+        .pdf-export .border-2 {
+          border-width: 2px !important;
+        }
+        .pdf-export .border-4 {
+          border-width: 4px !important;
+        }
+        .pdf-export .border-t {
+          border-top-width: 1px !important;
+        }
+        .pdf-export .border-b {
+          border-bottom-width: 1px !important;
+        }
+        .pdf-export .border-b-4 {
+          border-bottom-width: 4px !important;
+        }
+        .pdf-export .border-l-2 {
+          border-left-width: 2px !important;
+        }
+        .pdf-export .pl-3 {
+          padding-left: 0.75rem !important;
+        }
+        .pdf-export .gap-3 {
+          gap: 0.75rem !important;
+        }
+        .pdf-export .min-h-screen {
+          min-height: 100vh !important;
+        }
+        .pdf-export .no-pdf {
+          display: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+
+      // Add PDF export class to the component
+      estimateRef.current.classList.add('pdf-export');
+
+      // Wait for styles to be applied
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Create image from the component using dom-to-image
+      const imgData = await domtoimage.toPng(estimateRef.current, {
+        quality: 1.0,
+        bgcolor: '#ffffff',
+        width: estimateRef.current.scrollWidth,
+        height: estimateRef.current.scrollHeight,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+        },
+      });
+
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      // Calculate dimensions to fit the content
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight =
+        (estimateRef.current.scrollHeight * imgWidth) /
+        estimateRef.current.scrollWidth;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add additional pages if needed
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Generate filename
+      const projectName = project?.project_name || 'estimate';
+      const date = new Date().toISOString().split('T')[0];
+      const filename = `${projectName}-estimate-${date}.pdf`;
+
+      // Download PDF
+      pdf.save(filename);
+
+      // Cleanup: Remove temporary styles and class
+      document.head.removeChild(style);
+      estimateRef.current.classList.remove('pdf-export');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error generating PDF. Please try again.');
+
+      // Cleanup on error
+      try {
+        if (style && document.head.contains(style)) {
+          document.head.removeChild(style);
+        }
+        if (estimateRef.current) {
+          estimateRef.current.classList.remove('pdf-export');
+        }
+      } catch (cleanupError) {
+        console.error('Cleanup error:', cleanupError);
+      }
+    }
+  };
 
   // Get demolition workflow data
   const demolitionData = useMemo(() => {
@@ -476,226 +779,274 @@ export default function EstimatesOverview() {
 
   // Get grand total from context
   const grandTotal = useMemo(() => getAllTotals().grandTotal, [getAllTotals]);
+
+  // Helper function to get client contact info
+  const getClientInfo = () => {
+    if (!project) return { name: '', phone: '', address: '', email: '' };
+
+    const emails = project.client_email
+      ? project.client_email
+          .split(',')
+          .map((e) => e.trim())
+          .filter((e) => e)
+      : [];
+    const phones = project.client_phone
+      ? project.client_phone
+          .split(',')
+          .map((p) => p.trim())
+          .filter((p) => p)
+      : [];
+
+    return {
+      name: project.client_name || '',
+      phone: phones[0] || '',
+      address: project.project_address || '',
+      email: emails[0] || '',
+    };
+  };
+
+  // Helper function to get contractor contact info
+  const getContractorInfo = () => {
+    if (!contractor)
+      return { name: '', phone: '', address: '', email: '', website: '' };
+
+    const emails = contractor.email
+      ? contractor.email
+          .split(',')
+          .map((e) => e.trim())
+          .filter((e) => e)
+      : [];
+    const phones = contractor.phone
+      ? contractor.phone
+          .split(',')
+          .map((p) => p.trim())
+          .filter((p) => p)
+      : [];
+
+    return {
+      name: contractor.name || 'MY SMART ESTIMATE',
+      phone: phones[0] || '',
+      address: contractor.address || '',
+      email: emails[0] || '',
+      website: 'yourwebsite.com',
+    };
+  };
+
+  const clientInfo = getClientInfo();
+  const contractorInfo = getContractorInfo();
+
   return (
-    <div className='space-y-6'>
-      {/* Header */}
-      <div className='text-center'>
-        <h2 className='text-3xl font-bold text-gray-900 mb-2'>
-          Project Estimate Overview
-        </h2>
-        <p className='text-gray-600'>
-          Complete breakdown of labor and materials costs by workflow
-        </p>
+    <div ref={estimateRef} className='bg-white min-h-screen'>
+      {/* Invoice Header */}
+      <div className='bg-white p-8 border-b-4 border-blue-600'>
+        <div className='flex justify-between items-start'>
+          {/* Customer Contact */}
+          <div className='w-1/2'>
+            <div className='border-b-4 border-blue-600 pb-2 mb-4'>
+              <h3 className='text-lg font-semibold text-gray-900'>
+                CUSTOMER CONTACT
+              </h3>
+            </div>
+            <div className='bg-gray-50 p-4 rounded-b-lg'>
+              <p className='font-bold text-lg text-gray-900'>
+                {clientInfo.name}
+              </p>
+              <p className='text-gray-700'>{clientInfo.phone}</p>
+              <p className='text-gray-700'>{clientInfo.address}</p>
+              <p className='text-gray-700'>{clientInfo.email}</p>
+            </div>
+          </div>
+
+          {/* Company Information */}
+          <div className='w-1/2 text-right'>
+            <div className='flex items-center justify-end mb-4'>
+              <div className='mr-3'>
+                <Image
+                  src='/logo.svg'
+                  alt='My Smart Estimate Logo'
+                  width={48}
+                  height={48}
+                  className='w-[200px] h-12'
+                />
+              </div>
+            </div>
+            <div className='text-gray-700'>
+              <p>{contractorInfo.name}</p>
+              <p>{contractorInfo.phone}</p>
+              <p>{contractorInfo.address}</p>
+              <p>{contractorInfo.email}</p>
+              <p>{contractorInfo.website}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Workflows Grid */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-        {workflows.map((workflow) => (
-          <Card
-            key={workflow.id}
-            className='border-blue-200 hover:shadow-lg transition-shadow'
-          >
-            <CardHeader className='pb-3'>
-              <CardTitle className='flex items-center space-x-3'>
-                <div
-                  className={`w-10 h-10 ${workflow.color} rounded-lg flex items-center justify-center`}
-                >
-                  {workflow.icon}
-                </div>
-                <div>
-                  <h3 className='text-lg font-semibold'>{workflow.name}</h3>
-                  <Badge variant='outline' className='text-xs'>
-                    Total: ${workflow.total.toFixed(2)}
-                  </Badge>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              {/* Labor Breakdown */}
-              <div className='space-y-2'>
-                <h4 className='font-medium text-gray-900 flex items-center justify-between'>
-                  <span>Labor</span>
-                  <span className='text-blue-600'>
-                    ${workflow.totalLabor.toFixed(2)}
-                  </span>
-                </h4>
-                <div className='space-y-1 text-sm text-gray-600'>
-                  <div className='flex justify-between'>
-                    <span>Design</span>
-                    <span>${workflow.designLabor.toFixed(2)}</span>
-                  </div>
-                  <div className='flex justify-between'>
-                    <span>Construction</span>
-                    <span>${workflow.constructionLabor.toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
+      {/* Main Title */}
+      <div className='text-center py-8'>
+        <h1 className='text-4xl font-bold text-blue-600'>ESTIMATE</h1>
+      </div>
 
-              {/* Materials Breakdown */}
-              <div className='space-y-2'>
-                <h4 className='font-medium text-gray-900 flex items-center justify-between'>
-                  <span>Materials</span>
-                  <span className='text-green-600'>
-                    ${workflow.totalMaterials.toFixed(2)}
-                  </span>
-                </h4>
-                <div className='space-y-1 text-sm text-gray-600'>
-                  <div className='flex justify-between'>
-                    <span>Design</span>
-                    <span>${workflow.designMaterials.toFixed(2)}</span>
-                  </div>
-                  <div className='flex justify-between'>
-                    <span>Construction</span>
-                    <span>${workflow.constructionMaterials.toFixed(2)}</span>
-                  </div>
+      {/* Service Sections */}
+      <div className='px-8 space-y-6'>
+        {workflows.map((workflow) => (
+          <div
+            key={workflow.id}
+            className='bg-white border border-gray-200 rounded-lg'
+          >
+            {/* Section Header */}
+            <div className='border-b-4 border-blue-600 pb-2 px-4 pt-3'>
+              <h3 className='text-lg font-semibold text-gray-900'>
+                {workflow.name.toUpperCase()}
+              </h3>
+            </div>
+
+            {/* Section Content */}
+            <div className='p-4 space-y-2'>
+              <div className='flex justify-between items-center'>
+                <div className='flex-1'>
+                  <p className='text-gray-700'>
+                    Labor (e.g., {workflow.name.toLowerCase()}, installation)
+                  </p>
+                </div>
+                <div className='text-right'>
+                  <p className='font-semibold text-gray-900'>
+                    ${workflow.totalLabor.toFixed(2)}
+                  </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <div className='flex justify-between items-center'>
+                <div className='flex-1'>
+                  <p className='text-gray-700'>
+                    Materials (e.g., supplies, equipment)
+                  </p>
+                </div>
+                <div className='text-right'>
+                  <p className='font-semibold text-gray-900'>
+                    ${workflow.totalMaterials.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Section Total */}
+            <div className='bg-gray-50 px-4 py-3'>
+              <div className='flex justify-between items-center'>
+                <span className='font-semibold text-gray-900'>Total</span>
+                <span className='text-2xl font-bold text-blue-600'>
+                  ${workflow.total.toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            {/* Client Notes */}
+            {(() => {
+              // Get design data to access client notes
+              const designData = getDesignData(
+                workflow.id as
+                  | 'demolition'
+                  | 'showerWalls'
+                  | 'showerBase'
+                  | 'floors'
+                  | 'finishings'
+                  | 'structural'
+                  | 'trade'
+              ) as DesignDataWithNotes | null; // Type assertion to access dynamic properties
+
+              // Collect all client notes from design data
+              const allClientNotes: string[] = [];
+
+              if (designData) {
+                // Check for design client notes
+                if (designData.designClientNotes?.trim()) {
+                  allClientNotes.push(
+                    `Design: ${designData.designClientNotes.trim()}`
+                  );
+                }
+
+                // Check for construction client notes
+                if (designData.constructionClientNotes?.trim()) {
+                  allClientNotes.push(
+                    `Construction: ${designData.constructionClientNotes.trim()}`
+                  );
+                }
+
+                // For demolition, also check the workflow notes
+                if (workflow.id === 'demolition') {
+                  const workflowNotes = getNotes(workflow.id as 'demolition');
+                  if (workflowNotes?.clientNotes?.trim()) {
+                    allClientNotes.push(workflowNotes.clientNotes.trim());
+                  }
+                }
+              }
+
+              if (allClientNotes.length === 0) return null;
+
+              return (
+                <div className='px-4 py-3 bg-blue-50 border-t border-blue-200 rounded-b-lg'>
+                  <h4 className='text-sm font-semibold text-blue-800 mb-2'>
+                    Client Notes:
+                  </h4>
+                  <div className='text-sm text-blue-700 space-y-2'>
+                    {allClientNotes.map((noteSection, index) => (
+                      <div
+                        key={index}
+                        className='border-l-2 border-blue-300 pl-3'
+                      >
+                        <p className='font-medium text-blue-800 mb-1'>
+                          {noteSection.split(':')[0]}:
+                        </p>
+                        <div className='text-blue-700'>
+                          {noteSection
+                            .split(':')
+                            .slice(1)
+                            .join(':')
+                            .trim()
+                            .split('\n')
+                            .filter((line) => line.trim())
+                            .map((line, lineIndex) => (
+                              <p key={lineIndex} className='mb-1'>
+                                {line.trim().startsWith('-')
+                                  ? line.trim()
+                                  : `- ${line.trim()}`}
+                              </p>
+                            ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
         ))}
       </div>
 
-      {/* Summary Cards */}
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-        <Card className='border-blue-200'>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-lg text-blue-900'>Total Labor</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-3xl font-bold text-blue-600'>
-              ${workflows.reduce((sum, w) => sum + w.totalLabor, 0).toFixed(2)}
-            </div>
-            <p className='text-sm text-gray-600 mt-1'>Across all workflows</p>
-          </CardContent>
-        </Card>
-
-        <Card className='border-green-200'>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-lg text-green-900'>
-              Total Materials
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-3xl font-bold text-green-600'>
-              $
-              {workflows
-                .reduce((sum, w) => sum + w.totalMaterials, 0)
-                .toFixed(2)}
-            </div>
-            <p className='text-sm text-gray-600 mt-1'>Across all workflows</p>
-          </CardContent>
-        </Card>
-
-        <Card className='border-purple-200'>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-lg text-purple-900'>
-              Grand Total
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-3xl font-bold text-purple-600'>
+      {/* Grand Total Section */}
+      <div className='px-8 py-8'>
+        <div className='bg-gray-100 border-2 border-gray-300 rounded-lg p-6'>
+          <div className='flex justify-between items-center'>
+            <span className='text-2xl font-bold text-gray-900'>
+              GRAND TOTAL
+            </span>
+            <span className='text-4xl font-bold text-blue-600'>
               ${grandTotal.toFixed(2)}
-            </div>
-            <p className='text-sm text-gray-600 mt-1'>
-              Complete project estimate
-            </p>
-          </CardContent>
-        </Card>
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Detailed Breakdown Table */}
-      <Card className='border-gray-200'>
-        <CardHeader>
-          <CardTitle className='text-xl'>Detailed Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className='overflow-x-auto'>
-            <table className='w-full text-sm'>
-              <thead>
-                <tr className='border-b border-gray-200'>
-                  <th className='text-left py-3 px-4 font-medium text-gray-900'>
-                    Workflow
-                  </th>
-                  <th className='text-right py-3 px-4 font-medium text-gray-900'>
-                    Design Labor
-                  </th>
-                  <th className='text-right py-3 px-4 font-medium text-gray-900'>
-                    Construction Labor
-                  </th>
-                  <th className='text-right py-3 px-4 font-medium text-gray-900'>
-                    Design Materials
-                  </th>
-                  <th className='text-right py-3 px-4 font-medium text-gray-900'>
-                    Construction Materials
-                  </th>
-                  <th className='text-right py-3 px-4 font-medium text-gray-900'>
-                    Total
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {workflows.map((workflow) => (
-                  <tr
-                    key={workflow.id}
-                    className='border-b border-gray-100 hover:bg-gray-50'
-                  >
-                    <td className='py-3 px-4 font-medium text-gray-900'>
-                      {workflow.name}
-                    </td>
-                    <td className='py-3 px-4 text-right text-gray-600'>
-                      ${workflow.designLabor.toFixed(2)}
-                    </td>
-                    <td className='py-3 px-4 text-right text-gray-600'>
-                      ${workflow.constructionLabor.toFixed(2)}
-                    </td>
-                    <td className='py-3 px-4 text-right text-gray-600'>
-                      ${workflow.designMaterials.toFixed(2)}
-                    </td>
-                    <td className='py-3 px-4 text-right text-gray-600'>
-                      ${workflow.constructionMaterials.toFixed(2)}
-                    </td>
-                    <td className='py-3 px-4 text-right font-semibold text-gray-900'>
-                      ${workflow.total.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-                <tr className='border-t-2 border-gray-300 bg-gray-50'>
-                  <td className='py-3 px-4 font-bold text-gray-900'>
-                    Grand Total
-                  </td>
-                  <td className='py-3 px-4 text-right font-bold text-gray-900'>
-                    $
-                    {workflows
-                      .reduce((sum, w) => sum + w.designLabor, 0)
-                      .toFixed(2)}
-                  </td>
-                  <td className='py-3 px-4 text-right font-bold text-gray-900'>
-                    $
-                    {workflows
-                      .reduce((sum, w) => sum + w.constructionLabor, 0)
-                      .toFixed(2)}
-                  </td>
-                  <td className='py-3 px-4 text-right font-bold text-gray-900'>
-                    $
-                    {workflows
-                      .reduce((sum, w) => sum + w.designMaterials, 0)
-                      .toFixed(2)}
-                  </td>
-                  <td className='py-3 px-4 text-right font-bold text-gray-900'>
-                    $
-                    {workflows
-                      .reduce((sum, w) => sum + w.constructionMaterials, 0)
-                      .toFixed(2)}
-                  </td>
-                  <td className='py-3 px-4 text-right font-bold text-purple-600 text-lg'>
-                    ${grandTotal.toFixed(2)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Export to PDF Button */}
+      <div className='px-8 pb-8'>
+        <div className='flex justify-center'>
+          <Button
+            onClick={handleExportToPDF}
+            className='bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold rounded-lg flex items-center gap-3 no-pdf'
+          >
+            <Download size={24} />
+            Export to PDF
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

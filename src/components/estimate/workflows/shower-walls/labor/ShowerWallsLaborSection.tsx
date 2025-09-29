@@ -90,7 +90,8 @@ export default function ShowerWallsLaborSection() {
   // Local state for immediate UI updates
   const [localLaborItems, setLocalLaborItems] = useState<LaborItem[]>([]);
   const [localFlatFeeItems, setLocalFlatFeeItems] = useState<FlatFeeItem[]>([]);
-  const [isShowerWallsOpen, setIsShowerWallsOpen] = useState(true);
+  const [isDesignOpen, setIsDesignOpen] = useState(true);
+  const [isConstructionOpen, setIsConstructionOpen] = useState(true);
 
   // Refs to track user actions and prevent auto-generation interference
   const isUserActionRef = useRef(false);
@@ -101,7 +102,7 @@ export default function ShowerWallsLaborSection() {
     if (!walls || !Array.isArray(walls) || walls.length === 0) {
       return 0;
     }
-    
+
     return walls.reduce((total, wall) => {
       const heightInFeet = wall.height.ft + wall.height.inch / 12;
       const widthInFeet = wall.width.ft + wall.width.inch / 12;
@@ -133,16 +134,16 @@ export default function ShowerWallsLaborSection() {
     (designData: ShowerWallsDesignData): LaborItem[] => {
       const laborItems: LaborItem[] = [];
       const { walls, design } = designData;
-      
+
       // Add safety checks to prevent undefined errors
       if (!walls || !Array.isArray(walls) || walls.length === 0) {
         return laborItems;
       }
-      
+
       if (!design) {
         return laborItems;
       }
-      
+
       const totalSqft = walls.reduce((total, wall) => {
         const heightInFeet = wall.height.ft + wall.height.inch / 12;
         const widthInFeet = wall.width.ft + wall.width.inch / 12;
@@ -306,7 +307,7 @@ export default function ShowerWallsLaborSection() {
       if (!designData.walls || !designData.design) {
         return;
       }
-      
+
       const newAutoItems = generateLaborItems(designData);
 
       if (newAutoItems.length > 0) {
@@ -327,13 +328,38 @@ export default function ShowerWallsLaborSection() {
   ]);
 
   // Handlers for labor items
-  const handleAddLaborItem = useCallback(() => {
+
+  const handleAddDesignLaborItem = useCallback(() => {
     const newItem: LaborItem = {
-      id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      name: 'Custom Labor Item',
+      id: `custom-design-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
+      name: 'Custom Design Labor',
       hours: '1',
       rate: contractorHourlyRate.toString(),
       source: 'custom',
+      scope: 'showerWalls_design',
+    };
+
+    isUserActionRef.current = true;
+    setLocalLaborItems((prev) => [...prev, newItem]);
+
+    setTimeout(() => {
+      setLaborItems('showerWalls', [...localLaborItems, newItem]);
+      isUserActionRef.current = false;
+    }, 100);
+  }, [localLaborItems, setLaborItems, contractorHourlyRate]);
+
+  const handleAddConstructionLaborItem = useCallback(() => {
+    const newItem: LaborItem = {
+      id: `custom-construction-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
+      name: 'Custom Construction Labor',
+      hours: '1',
+      rate: contractorHourlyRate.toString(),
+      source: 'custom',
+      scope: 'showerWalls_construction',
     };
 
     isUserActionRef.current = true;
@@ -576,15 +602,39 @@ export default function ShowerWallsLaborSection() {
     [handleFlatFeeItemChange, handleDeleteFlatFeeItem]
   );
 
-  const laborTotal = laborItems.reduce(
+  // Separate labor items by scope
+  const designLaborItems = useMemo(() => {
+    return laborItems.filter((item) => item.scope === 'showerWalls_design');
+  }, [laborItems]);
+
+  const constructionLaborItems = useMemo(() => {
+    return laborItems.filter(
+      (item) => item.scope === 'showerWalls_construction'
+    );
+  }, [laborItems]);
+
+  // Calculate totals for design labor
+  const designTotalHours = designLaborItems.reduce(
+    (sum, item) => sum + (parseFloat(item.hours) || 0),
+    0
+  );
+  const designLaborTotal = designLaborItems.reduce(
     (sum, item) =>
       sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
     0
   );
-  const totalHours = laborItems.reduce(
+
+  // Calculate totals for construction labor
+  const constructionTotalHours = constructionLaborItems.reduce(
     (sum, item) => sum + (parseFloat(item.hours) || 0),
     0
   );
+  const constructionLaborTotal = constructionLaborItems.reduce(
+    (sum, item) =>
+      sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+    0
+  );
+
   const flatFeeTotal = flatFeeItems.reduce(
     (sum, item) => sum + (parseFloat(item.unitPrice) || 0),
     0
@@ -597,116 +647,133 @@ export default function ShowerWallsLaborSection() {
       </div>
 
       <div className='space-y-4'>
-        {/* Hourly Labor Section */}
-        {laborItems.length > 0 && (
-          <Card>
-            <CardContent className='p-3 space-y-3'>
-              <div
-                className='flex justify-between items-center cursor-pointer'
-                onClick={() => setIsShowerWallsOpen(!isShowerWallsOpen)}
-              >
-                <div className='flex items-center gap-2 justify-between w-full'>
-                  <div className='flex items-center gap-2'>
-                    {isShowerWallsOpen ? (
-                      <ChevronDown className='h-4 w-4 text-slate-600' />
-                    ) : (
-                      <ChevronRight className='h-4 w-4 text-slate-600' />
-                    )}
-                    <h3 className='text-lg font-semibold text-slate-700'>
-                      Hourly Labor
-                    </h3>
-                  </div>
-                  <span className='text-sm text-slate-500'>
-                    {totalHours.toFixed(1)} hrs
-                  </span>
-                  <p className='font-bold text-blue-600 text-sm'>
-                    ${laborTotal.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-              {isShowerWallsOpen && (
-                <>
-                  {laborItems.map(renderLaborItem)}
-                  <div className='flex justify-center'>
-                    <Button
-                      onClick={handleAddLaborItem}
-                      variant='default'
-                      className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
-                    >
-                      <Plus size={16} />
-                      Add Item
-                    </Button>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Flat Fee Section */}
-        {flatFeeItems.length > 0 && (
-          <Card>
-            <CardContent className='p-3 space-y-3'>
-              <div
-                className='flex justify-between items-center cursor-pointer'
-                onClick={() => setIsShowerWallsOpen(!isShowerWallsOpen)}
-              >
+        {/* Design Labor Section */}
+        <Card>
+          <CardContent className='p-3 space-y-3'>
+            <div
+              className='flex justify-between items-center cursor-pointer'
+              onClick={() => setIsDesignOpen(!isDesignOpen)}
+            >
+              <div className='flex items-center gap-2 justify-between w-full'>
                 <div className='flex items-center gap-2'>
-                  {isShowerWallsOpen ? (
+                  {isDesignOpen ? (
                     <ChevronDown className='h-4 w-4 text-slate-600' />
                   ) : (
                     <ChevronRight className='h-4 w-4 text-slate-600' />
                   )}
                   <h3 className='text-lg font-semibold text-slate-700'>
-                    Flat Fee Items
+                    Design Labor
                   </h3>
                 </div>
+                <span className='text-sm text-slate-500'>
+                  {designTotalHours.toFixed(1)} hrs
+                </span>
+                <p className='font-bold text-blue-600 text-sm'>
+                  ${designLaborTotal.toFixed(2)}
+                </p>
+              </div>
+            </div>
+            {isDesignOpen && (
+              <>
+                {designLaborItems.length > 0 ? (
+                  <div className='space-y-2'>
+                    {designLaborItems.map(renderLaborItem)}
+                  </div>
+                ) : (
+                  <p className='text-sm text-slate-500 text-center py-4'>
+                    No design labor items added yet.
+                  </p>
+                )}
+                <div className='flex justify-center'>
+                  <Button
+                    onClick={handleAddDesignLaborItem}
+                    variant='default'
+                    className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
+                  >
+                    <Plus size={16} />
+                    Add Item
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Construction Labor Section */}
+        <Card>
+          <CardContent className='p-3 space-y-3'>
+            <div
+              className='flex justify-between items-center cursor-pointer'
+              onClick={() => setIsConstructionOpen(!isConstructionOpen)}
+            >
+              <div className='flex items-center gap-2 justify-between w-full'>
+                <div className='flex items-center gap-2'>
+                  {isConstructionOpen ? (
+                    <ChevronDown className='h-4 w-4 text-slate-600' />
+                  ) : (
+                    <ChevronRight className='h-4 w-4 text-slate-600' />
+                  )}
+                  <h3 className='text-lg font-semibold text-slate-700'>
+                    Construction Labor
+                  </h3>
+                </div>
+                <span className='text-sm text-slate-500'>
+                  {constructionTotalHours.toFixed(1)} hrs
+                </span>
+                <p className='font-bold text-blue-600 text-sm'>
+                  ${constructionLaborTotal.toFixed(2)}
+                </p>
+              </div>
+            </div>
+            {isConstructionOpen && (
+              <>
+                {constructionLaborItems.length > 0 ? (
+                  <div className='space-y-2'>
+                    {constructionLaborItems.map(renderLaborItem)}
+                  </div>
+                ) : (
+                  <p className='text-sm text-slate-500 text-center py-4'>
+                    No construction labor items added yet.
+                  </p>
+                )}
+                <div className='flex justify-center'>
+                  <Button
+                    onClick={handleAddConstructionLaborItem}
+                    variant='default'
+                    className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
+                  >
+                    <Plus size={16} />
+                    Add Item
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Flat Fee Section */}
+        {flatFeeItems.length > 0 && (
+          <Card>
+            <CardContent className='p-3 space-y-3'>
+              <div className='flex justify-between items-center'>
+                <h3 className='text-lg font-semibold text-slate-700'>
+                  Flat Fee Items
+                </h3>
                 <p className='font-bold text-blue-600 text-sm'>
                   ${flatFeeTotal.toFixed(2)}
                 </p>
               </div>
-              {isShowerWallsOpen && (
-                <>
-                  {flatFeeItems.map(renderFlatFeeItem)}
-                  <div className='flex justify-center'>
-                    <Button
-                      onClick={handleAddFlatFeeItem}
-                      variant='default'
-                      className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
-                    >
-                      <Plus size={16} />
-                      Add Item
-                    </Button>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Show add buttons when no items exist */}
-        {laborItems.length === 0 && flatFeeItems.length === 0 && (
-          <Card>
-            <CardContent className='p-3 space-y-3'>
-              <p className='text-sm text-slate-500 text-center py-4'>
-                No labor items added yet.
-              </p>
-              <div className='flex justify-center gap-2'>
-                <Button
-                  onClick={handleAddLaborItem}
-                  variant='default'
-                  className='w-auto flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
-                >
-                  <Plus size={16} />
-                  Add Hourly Item
-                </Button>
+              <div className='space-y-2'>
+                {flatFeeItems.map(renderFlatFeeItem)}
+              </div>
+              <div className='flex justify-center'>
                 <Button
                   onClick={handleAddFlatFeeItem}
                   variant='default'
-                  className='w-auto flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
+                  className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
                 >
                   <Plus size={16} />
-                  Add Flat Fee
+                  Add Item
                 </Button>
               </div>
             </CardContent>

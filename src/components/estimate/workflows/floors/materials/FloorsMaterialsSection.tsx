@@ -10,7 +10,7 @@ import React, {
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import { FLOORS_MATERIALS_ITEMS } from '@/lib/constants';
 import { MaterialItem as ContextMaterialItem } from '@/types/estimate';
@@ -69,6 +69,9 @@ export default function FloorsMaterialsSection() {
 
   const contextMaterials = getMaterialItems('floors');
   const [localMaterials, setLocalMaterials] = useState<MaterialItem[]>([]);
+  const [isDesignOpen, setIsDesignOpen] = useState(true);
+  const [isHeatedFloorOpen, setIsHeatedFloorOpen] = useState(true);
+  const [isConstructionOpen, setIsConstructionOpen] = useState(true);
   const isUserActionRef = useRef(false);
   const processedChoicesRef = useRef<string>('');
 
@@ -78,12 +81,17 @@ export default function FloorsMaterialsSection() {
     const mainLength = parseFloat(design.length) || 0;
     if (mainWidth > 0 && mainLength > 0)
       totalArea += (mainWidth * mainLength) / 144;
-    design.extraMeasurements.forEach((m) => {
-      const sideWidth = parseFloat(m.width) || 0;
-      const sideLength = parseFloat(m.length) || 0;
-      if (sideWidth > 0 && sideLength > 0)
-        totalArea += (sideWidth * sideLength) / 144;
-    });
+
+    // Add safety check for extraMeasurements
+    if (design.extraMeasurements && Array.isArray(design.extraMeasurements)) {
+      design.extraMeasurements.forEach((m) => {
+        const sideWidth = parseFloat(m.width) || 0;
+        const sideLength = parseFloat(m.length) || 0;
+        if (sideWidth > 0 && sideLength > 0)
+          totalArea += (sideWidth * sideLength) / 144;
+      });
+    }
+
     return totalArea;
   }, [design.width, design.length, design.extraMeasurements]);
 
@@ -138,7 +146,10 @@ export default function FloorsMaterialsSection() {
       let thinsetForDitra = 0;
 
       // Ditra membrane materials
-      if (design.selectedPrepTasks.includes('ditra')) {
+      if (
+        design.selectedPrepTasks &&
+        design.selectedPrepTasks.includes('ditra')
+      ) {
         const ditraRolls = Math.ceil(totalSqFt / 54);
         materials.push({
           ...materialsMap.ditra,
@@ -149,7 +160,10 @@ export default function FloorsMaterialsSection() {
         thinsetForDitra = Math.ceil(totalSqFt / 175);
       }
 
-      if (design.selectedPrepTasks.includes('ditra_xl')) {
+      if (
+        design.selectedPrepTasks &&
+        design.selectedPrepTasks.includes('ditra_xl')
+      ) {
         const ditraXLRolls = Math.ceil(totalSqFt / 175);
         materials.push({
           ...materialsMap.ditraXL,
@@ -207,7 +221,10 @@ export default function FloorsMaterialsSection() {
       }
 
       // Self-leveling compound
-      if (design.selectedPrepTasks.includes('self_leveling')) {
+      if (
+        design.selectedPrepTasks &&
+        design.selectedPrepTasks.includes('self_leveling')
+      ) {
         const levelerBags = Math.ceil(totalSqFt / 50);
         materials.push({
           ...materialsMap.selfLevelingCompound,
@@ -218,7 +235,10 @@ export default function FloorsMaterialsSection() {
       }
 
       // Plywood subfloor
-      if (design.selectedPrepTasks.includes('add_plywood')) {
+      if (
+        design.selectedPrepTasks &&
+        design.selectedPrepTasks.includes('add_plywood')
+      ) {
         const plywoodSheets = Math.ceil(totalSqFt / 32);
         const plywoodPriceMap = {
           '1/2': '70.00',
@@ -252,13 +272,11 @@ export default function FloorsMaterialsSection() {
 
   useEffect(() => {
     if (isUserActionRef.current || isReloading) return;
-    const choicesKey = `${design.width}-${
-      design.length
-    }-${design.selectedPrepTasks.join(',')}-${design.isHeatedFloor}-${
-      design.heatedFloorType
-    }-${design.plywoodThickness}-${design.clientSuppliesTiles}-${
-      design.selectedTileSizeOption
-    }`;
+    const choicesKey = `${design.width}-${design.length}-${
+      design.selectedPrepTasks ? design.selectedPrepTasks.join(',') : ''
+    }-${design.isHeatedFloor}-${design.heatedFloorType}-${
+      design.plywoodThickness
+    }-${design.clientSuppliesTiles}-${design.selectedTileSizeOption}`;
     if (processedChoicesRef.current === choicesKey) return;
     if (contextMaterials && contextMaterials.length > 0) return;
     const currentMaterials = localMaterials || [];
@@ -278,12 +296,56 @@ export default function FloorsMaterialsSection() {
     isReloading,
   ]);
 
-  const handleAddMaterial = useCallback(() => {
+  const handleAddDesignMaterial = useCallback(() => {
     const newItem: MaterialItem = {
-      id: `material-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `material-design-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
       name: '',
       quantity: '1',
-      unit: 'each',
+      unit: '',
+      price: '0',
+      scope: 'design',
+      source: 'custom',
+      isAutoGenerated: false,
+    };
+    isUserActionRef.current = true;
+    setLocalMaterials((prev) => [...prev, newItem]);
+    setTimeout(() => {
+      setMaterialItems('floors', [...localMaterials, newItem]);
+      isUserActionRef.current = false;
+    }, 100);
+  }, [localMaterials, setMaterialItems]);
+
+  const handleAddHeatedFloorMaterial = useCallback(() => {
+    const newItem: MaterialItem = {
+      id: `material-heated-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
+      name: '',
+      quantity: '1',
+      unit: '',
+      price: '0',
+      scope: 'heated_floor',
+      source: 'custom',
+      isAutoGenerated: false,
+    };
+    isUserActionRef.current = true;
+    setLocalMaterials((prev) => [...prev, newItem]);
+    setTimeout(() => {
+      setMaterialItems('floors', [...localMaterials, newItem]);
+      isUserActionRef.current = false;
+    }, 100);
+  }, [localMaterials, setMaterialItems]);
+
+  const handleAddConstructionMaterial = useCallback(() => {
+    const newItem: MaterialItem = {
+      id: `material-construction-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
+      name: '',
+      quantity: '1',
+      unit: '',
       price: '0',
       scope: 'construction',
       source: 'custom',
@@ -332,6 +394,54 @@ export default function FloorsMaterialsSection() {
   );
 
   const materials = localMaterials;
+
+  // Separate materials by scope
+  const designMaterials = useMemo(() => {
+    return materials.filter((item) => item.scope === 'design');
+  }, [materials]);
+
+  const heatedFloorMaterials = useMemo(() => {
+    return materials.filter(
+      (item) =>
+        item.scope === 'heated_floor' ||
+        item.name.toLowerCase().includes('heated') ||
+        item.name.toLowerCase().includes('thermostat') ||
+        item.name.toLowerCase().includes('schluter-ditra-heat') ||
+        item.name.toLowerCase().includes('nuheat') ||
+        item.name.toLowerCase().includes('heated floor')
+    );
+  }, [materials]);
+
+  const constructionMaterials = useMemo(() => {
+    return materials.filter(
+      (item) =>
+        item.scope === 'construction' &&
+        !item.name.toLowerCase().includes('heated') &&
+        !item.name.toLowerCase().includes('thermostat') &&
+        !item.name.toLowerCase().includes('schluter-ditra-heat') &&
+        !item.name.toLowerCase().includes('nuheat') &&
+        !item.name.toLowerCase().includes('heated floor')
+    );
+  }, [materials]);
+
+  // Calculate totals for each category
+  const designTotal = designMaterials.reduce(
+    (sum, item) =>
+      sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+    0
+  );
+
+  const heatedFloorTotal = heatedFloorMaterials.reduce(
+    (sum, item) =>
+      sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+    0
+  );
+
+  const constructionTotal = constructionMaterials.reduce(
+    (sum, item) =>
+      sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+    0
+  );
 
   const renderMaterialItem = useCallback(
     (material: MaterialItem) => {
@@ -417,11 +527,7 @@ export default function FloorsMaterialsSection() {
     [handleMaterialChange, handleDeleteMaterial]
   );
 
-  const total = materials.reduce(
-    (sum, item) =>
-      sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
-    0
-  );
+  const total = designTotal + heatedFloorTotal + constructionTotal;
 
   return (
     <div className='space-y-5'>
@@ -433,27 +539,155 @@ export default function FloorsMaterialsSection() {
           <p className='font-bold text-blue-600 text-lg'>${total.toFixed(2)}</p>
         </div>
       </div>
-      <Card>
-        <CardContent className='p-3 space-y-3'>
-          {materials.length > 0 ? (
-            materials.map((m) => renderMaterialItem(m))
-          ) : (
-            <p className='text-sm text-slate-500 text-center py-4'>
-              No materials added yet.
-            </p>
-          )}
-          <div className='flex justify-center'>
-            <Button
-              onClick={handleAddMaterial}
-              variant='default'
-              className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
+
+      <div className='space-y-4'>
+        {/* Design Materials Section */}
+        <Card>
+          <CardContent className='p-3 space-y-3'>
+            <div
+              className='flex justify-between items-center cursor-pointer'
+              onClick={() => setIsDesignOpen(!isDesignOpen)}
             >
-              <Plus size={16} />
-              Add Item
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <div className='flex items-center gap-2 justify-between w-full'>
+                <div className='flex items-center gap-2'>
+                  {isDesignOpen ? (
+                    <ChevronDown className='h-4 w-4 text-slate-600' />
+                  ) : (
+                    <ChevronRight className='h-4 w-4 text-slate-600' />
+                  )}
+                  <h3 className='text-lg font-semibold text-slate-700'>
+                    Design Materials
+                  </h3>
+                </div>
+                <p className='font-bold text-blue-600 text-sm'>
+                  ${designTotal.toFixed(2)}
+                </p>
+              </div>
+            </div>
+            {isDesignOpen && (
+              <>
+                {designMaterials.length > 0 ? (
+                  <div className='space-y-2'>
+                    {designMaterials.map(renderMaterialItem)}
+                  </div>
+                ) : (
+                  <p className='text-sm text-slate-500 text-center py-4'>
+                    No design materials added yet.
+                  </p>
+                )}
+                <div className='flex justify-center'>
+                  <Button
+                    onClick={handleAddDesignMaterial}
+                    variant='default'
+                    className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
+                  >
+                    <Plus size={16} />
+                    Add Item
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Heated Floor Materials Section */}
+        <Card>
+          <CardContent className='p-3 space-y-3'>
+            <div
+              className='flex justify-between items-center cursor-pointer'
+              onClick={() => setIsHeatedFloorOpen(!isHeatedFloorOpen)}
+            >
+              <div className='flex items-center gap-2 justify-between w-full'>
+                <div className='flex items-center gap-2'>
+                  {isHeatedFloorOpen ? (
+                    <ChevronDown className='h-4 w-4 text-slate-600' />
+                  ) : (
+                    <ChevronRight className='h-4 w-4 text-slate-600' />
+                  )}
+                  <h3 className='text-lg font-semibold text-slate-700'>
+                    Heated Floor Materials
+                  </h3>
+                </div>
+                <p className='font-bold text-blue-600 text-sm'>
+                  ${heatedFloorTotal.toFixed(2)}
+                </p>
+              </div>
+            </div>
+            {isHeatedFloorOpen && (
+              <>
+                {heatedFloorMaterials.length > 0 ? (
+                  <div className='space-y-2'>
+                    {heatedFloorMaterials.map(renderMaterialItem)}
+                  </div>
+                ) : (
+                  <p className='text-sm text-slate-500 text-center py-4'>
+                    No heated floor materials added yet.
+                  </p>
+                )}
+                <div className='flex justify-center'>
+                  <Button
+                    onClick={handleAddHeatedFloorMaterial}
+                    variant='default'
+                    className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
+                  >
+                    <Plus size={16} />
+                    Add Item
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Construction Materials Section */}
+        <Card>
+          <CardContent className='p-3 space-y-3'>
+            <div
+              className='flex justify-between items-center cursor-pointer'
+              onClick={() => setIsConstructionOpen(!isConstructionOpen)}
+            >
+              <div className='flex items-center gap-2 justify-between w-full'>
+                <div className='flex items-center gap-2'>
+                  {isConstructionOpen ? (
+                    <ChevronDown className='h-4 w-4 text-slate-600' />
+                  ) : (
+                    <ChevronRight className='h-4 w-4 text-slate-600' />
+                  )}
+                  <h3 className='text-lg font-semibold text-slate-700'>
+                    Construction Materials
+                  </h3>
+                </div>
+                <p className='font-bold text-blue-600 text-sm'>
+                  ${constructionTotal.toFixed(2)}
+                </p>
+              </div>
+            </div>
+            {isConstructionOpen && (
+              <>
+                {constructionMaterials.length > 0 ? (
+                  <div className='space-y-2'>
+                    {constructionMaterials.map(renderMaterialItem)}
+                  </div>
+                ) : (
+                  <p className='text-sm text-slate-500 text-center py-4'>
+                    No construction materials added yet.
+                  </p>
+                )}
+                <div className='flex justify-center'>
+                  <Button
+                    onClick={handleAddConstructionMaterial}
+                    variant='default'
+                    className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
+                  >
+                    <Plus size={16} />
+                    Add Item
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

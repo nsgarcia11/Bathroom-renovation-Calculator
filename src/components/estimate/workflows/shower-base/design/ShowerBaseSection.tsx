@@ -122,7 +122,7 @@ export function ShowerBaseSection() {
               value={localDesign.width || ''}
               onChange={(e) => setDesign({ width: e.target.value })}
               className='bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-slate-800 text-center focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-              placeholder='Enter width'
+              placeholder='e.g., 32'
             />
           </div>
           <div>
@@ -134,7 +134,7 @@ export function ShowerBaseSection() {
               value={localDesign.length || ''}
               onChange={(e) => setDesign({ length: e.target.value })}
               className='bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-slate-800 text-center focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-              placeholder='Enter length'
+              placeholder='e.g., 60'
             />
           </div>
         </div>

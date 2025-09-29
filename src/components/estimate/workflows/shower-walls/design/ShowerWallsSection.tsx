@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -53,8 +53,8 @@ export function ShowerWallsSection() {
     design: ShowerWallsDesign;
   } | null;
 
-  const walls = designData?.walls || [];
-  const design = designData?.design || {
+  const walls = useMemo(() => designData?.walls || [], [designData]);
+  const design = useMemo(() => designData?.design || {
     tileSize: 'Select tile size',
     customTileWidth: '',
     customTileLength: '',
@@ -74,14 +74,14 @@ export function ShowerWallsSection() {
     clientSuppliesBase: 'No',
     repairWalls: false,
     reinsulateWalls: false,
-  };
+  }, [designData]);
 
   // Context update functions
-  const setWalls = (newWalls: Wall[] | ((prev: Wall[]) => Wall[])) => {
+  const setWalls = useCallback((newWalls: Wall[] | ((prev: Wall[]) => Wall[])) => {
     const wallsArray =
       typeof newWalls === 'function' ? newWalls(walls) : newWalls;
     updateDesign('showerWalls', { walls: wallsArray });
-  };
+  }, [walls, updateDesign]);
 
   const setDesign = (
     newDesign:
@@ -106,6 +106,33 @@ export function ShowerWallsSection() {
       walls,
       design,
     });
+
+  // Initialize default walls if none exist
+  useEffect(() => {
+    if (walls.length === 0) {
+      const defaultWalls: Wall[] = [
+        {
+          id: 'wall-1',
+          name: 'Wall 1',
+          height: { ft: 8, inch: 0 },
+          width: { ft: 3, inch: 0 },
+        },
+        {
+          id: 'wall-2',
+          name: 'Wall 2',
+          height: { ft: 8, inch: 0 },
+          width: { ft: 3, inch: 0 },
+        },
+        {
+          id: 'wall-3',
+          name: 'Wall 3',
+          height: { ft: 8, inch: 0 },
+          width: { ft: 3, inch: 0 },
+        },
+      ];
+      setWalls(defaultWalls);
+    }
+  }, [walls.length, setWalls]);
 
   useEffect(() => {
     if (calculatedWasteNote) {
@@ -261,8 +288,8 @@ export function ShowerWallsSection() {
                   Tile Size
                 </Label>
                 <Select
-                  id="tileSize"
-                  label=""
+                  id='tileSize'
+                  label=''
                   value={design.tileSize}
                   onChange={(e) =>
                     setDesign((prev) => ({ ...prev, tileSize: e.target.value }))
@@ -321,8 +348,8 @@ export function ShowerWallsSection() {
                   Tile Pattern
                 </Label>
                 <Select
-                  id="tilePattern"
-                  label=""
+                  id='tilePattern'
+                  label=''
                   value={design.tilePattern}
                   onChange={(e) =>
                     setDesign((prev) => ({
@@ -377,8 +404,8 @@ export function ShowerWallsSection() {
                   Niche
                 </Label>
                 <Select
-                  id="niche"
-                  label=""
+                  id='niche'
+                  label=''
                   value={design.niche}
                   onChange={(e) =>
                     setDesign((prev) => ({ ...prev, niche: e.target.value }))
@@ -396,8 +423,8 @@ export function ShowerWallsSection() {
                   Shower Door
                 </Label>
                 <Select
-                  id="showerDoor"
-                  label=""
+                  id='showerDoor'
+                  label=''
                   value={design.showerDoor}
                   onChange={(e) =>
                     setDesign((prev) => ({
@@ -475,8 +502,8 @@ export function ShowerWallsSection() {
                 Waterproofing
               </Label>
               <Select
-                id="waterproofingSystem"
-                label=""
+                id='waterproofingSystem'
+                label=''
                 value={design.waterproofingSystem}
                 onChange={(e) =>
                   setDesign((prev) => ({

@@ -156,9 +156,7 @@ export default function EstimatePage({ projectId }: EstimatePageProps) {
   };
 
   if (isProjectLoading || isWorkflowLoading) {
-    return (
-      <LoadingSpinner />
-    );
+    return <LoadingSpinner />;
   }
 
   if (!project) {
@@ -213,9 +211,9 @@ export default function EstimatePage({ projectId }: EstimatePageProps) {
               {isSaving ? (
                 <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-white'></div>
               ) : (
-                <Save size={16} />
+                <Save size={16} className='sm:hidden inline' />
               )}
-              <span className='ml-2 hidden sm:inline'>
+              <span className='sm:ml-0 ml-2 hidden sm:inline'>
                 {isSaving ? 'Saving...' : 'Save'}
               </span>
             </Button>
@@ -264,7 +262,7 @@ export default function EstimatePage({ projectId }: EstimatePageProps) {
       {/* Main Content */}
       <div className='p-4 sm:p-6 lg:p-8 space-y-4 max-w-7xl mx-auto'>
         {activeSection === 'estimate' ? (
-          <EstimatesOverview />
+          <EstimatesOverview projectId={projectId} />
         ) : activeSection === 'notes' ? (
           <NotesOverview />
         ) : (

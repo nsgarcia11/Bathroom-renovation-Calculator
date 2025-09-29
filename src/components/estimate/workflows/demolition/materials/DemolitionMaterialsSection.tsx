@@ -186,7 +186,7 @@ export default function DemolitionMaterialsSection() {
       name: 'Custom Material',
       quantity: '1',
       price: '',
-      unit: 'each',
+      unit: '',
     };
 
     // Update local state immediately

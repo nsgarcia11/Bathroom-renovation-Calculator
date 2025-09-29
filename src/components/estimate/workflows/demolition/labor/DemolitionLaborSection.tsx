@@ -70,6 +70,7 @@ export default function DemolitionLaborSection({
     demolitionChoices: DemolitionChoices;
     isDemolitionFlatFee: 'yes' | 'no';
     debrisDisposal: 'yes' | 'no';
+    flatFeeAmount: string;
   }>('demolition');
 
   const demolitionChoices: DemolitionChoices = useMemo(
@@ -87,6 +88,7 @@ export default function DemolitionLaborSection({
     [design]
   );
   const isDemolitionFlatFee = design?.isDemolitionFlatFee || 'no';
+  const flatFeeAmount = design?.flatFeeAmount || '0';
   // const debrisDisposal = design?.debrisDisposal || 'no'; // Not used in labor section
 
   const contextLaborItems = getLaborItems('demolition');
@@ -106,46 +108,45 @@ export default function DemolitionLaborSection({
 
   // Helper function to generate labor items based on demolition choices
   const generateLaborItems = useCallback(
-    (choices: DemolitionChoices, isFlatFee: boolean): LaborItem[] => {
+    (choices: DemolitionChoices): LaborItem[] => {
       const laborItems: LaborItem[] = [];
 
-      if (isFlatFee) {
-        // For flat fee mode, add a single flat fee item
-        laborItems.push({
-          id: 'flat-fee-demolition',
-          name: 'Demolition & Debris Removal',
-          hours: '1',
-          rate: '0', // Rate is 0 for flat fee items
-        });
-      } else {
-        // For hourly mode, add individual labor items based on choices
-        const laborItemsConfig = DEMOLITION_LABOR_ITEMS(contractorHourlyRate);
-        Object.entries(choices).forEach(([key, value]) => {
-          if (
-            value === 'yes' &&
+      // For hourly mode, add individual labor items based on choices
+      const laborItemsConfig = DEMOLITION_LABOR_ITEMS(contractorHourlyRate);
+      Object.entries(choices).forEach(([key, value]) => {
+        if (
+          value === 'yes' &&
+          laborItemsConfig[key as keyof typeof laborItemsConfig]
+        ) {
+          laborItems.push(
             laborItemsConfig[key as keyof typeof laborItemsConfig]
-          ) {
-            laborItems.push(
-              laborItemsConfig[key as keyof typeof laborItemsConfig]
-            );
-          }
-        });
-      }
+          );
+        }
+      });
 
       return laborItems;
     },
     [contractorHourlyRate]
   );
 
+  // Helper function to generate flat fee items based on demolition choices
+  const generateFlatFeeItems = useCallback((amount: string): FlatFeeItem[] => {
+    const flatFeeItems: FlatFeeItem[] = [];
+
+    // For flat fee mode, add a single flat fee item with the actual amount
+    flatFeeItems.push({
+      id: 'flat-fee-demolition',
+      name: 'Demolition & Debris Removal',
+      unitPrice: amount || '0',
+    });
+
+    return flatFeeItems;
+  }, []);
+
   // Update auto-generated items when demolition choices change (separate from user actions)
   useEffect(() => {
     // Don't run if user is currently making changes or if we're reloading data
     if (isUserActionRef.current || isReloading) return;
-
-    // If we have data from context (Supabase), never override it with defaults
-    if (contextLaborItems && contextLaborItems.length > 0) {
-      return;
-    }
 
     // Create a key for the current choices to prevent reprocessing
     const choicesKey = JSON.stringify({
@@ -156,39 +157,68 @@ export default function DemolitionLaborSection({
       return;
     }
 
-    const currentLabor = laborItems || [];
-    const existingAutoItems = currentLabor.filter(
-      (item) =>
-        !item.id.startsWith('custom-') && !item.id.startsWith('flat-fee-')
-    );
-
-    // If there are already auto-generated items, don't regenerate them
-    // This preserves user modifications
-    if (existingAutoItems.length > 0) {
-      processedChoicesRef.current = choicesKey;
-      return;
-    }
-
-    // Only generate new items if we have no items at all (initial load)
-    if (currentLabor.length === 0) {
-      const newAutoItems = generateLaborItems(
-        demolitionChoices,
-        isDemolitionFlatFee === 'yes'
+    if (isDemolitionFlatFee === 'yes') {
+      // Flat fee mode - generate or update flat fee items
+      const currentFlatFee = flatFeeItems || [];
+      const existingAutoItems = currentFlatFee.filter(
+        (item) => !item.id.startsWith('custom-')
       );
 
-      if (newAutoItems.length > 0) {
-        setLaborItems('demolition', newAutoItems);
-        processedChoicesRef.current = choicesKey;
+      // Always update the flat fee amount if it exists
+      if (existingAutoItems.length > 0) {
+        const flatFeeItem = existingAutoItems.find(
+          (item) => item.id === 'flat-fee-demolition'
+        );
+        if (flatFeeItem && flatFeeItem.unitPrice !== flatFeeAmount) {
+          // Update the existing flat fee item with new amount
+          const updatedItems = currentFlatFee.map((item) =>
+            item.id === 'flat-fee-demolition'
+              ? { ...item, unitPrice: flatFeeAmount }
+              : item
+          );
+          setFlatFeeItems('demolition', updatedItems);
+          processedChoicesRef.current = choicesKey;
+        }
+      } else if (currentFlatFee.length === 0) {
+        // Generate new flat fee items if none exist
+        const newFlatFeeItems = generateFlatFeeItems(flatFeeAmount);
+        if (newFlatFeeItems.length > 0) {
+          setFlatFeeItems('demolition', newFlatFeeItems);
+          processedChoicesRef.current = choicesKey;
+        }
+      }
+    } else {
+      // Hourly mode - generate labor items
+      if (contextLaborItems && contextLaborItems.length > 0) {
+        return; // Don't override existing data
+      }
+
+      const currentLabor = laborItems || [];
+      const existingAutoItems = currentLabor.filter(
+        (item) => !item.id.startsWith('custom-')
+      );
+
+      if (existingAutoItems.length === 0 && currentLabor.length === 0) {
+        const newAutoItems = generateLaborItems(demolitionChoices);
+        if (newAutoItems.length > 0) {
+          setLaborItems('demolition', newAutoItems);
+          processedChoicesRef.current = choicesKey;
+        }
       }
     }
   }, [
     demolitionChoices,
     isDemolitionFlatFee,
+    flatFeeAmount,
     generateLaborItems,
+    generateFlatFeeItems,
     laborItems,
+    flatFeeItems,
     contextLaborItems,
+    contextFlatFeeItems,
     isReloading,
     setLaborItems,
+    setFlatFeeItems,
   ]);
 
   // Handlers for labor items
@@ -602,28 +632,6 @@ export default function DemolitionLaborSection({
             </Card>
           </>
         )}
-
-        {/* Total Labor Cost Section */}
-        <Card>
-          <CardContent className='p-4'>
-            <div className='flex justify-between items-center'>
-              <h3 className='text-lg font-bold text-slate-800 ml-4 mr-2'>
-                Total Labor Cost
-              </h3>
-              <div className='flex items-center justify-between w-full'>
-                <div className='flex-1'></div>
-                {isDemolitionFlatFee === 'no' && (
-                  <span className='text-sm text-slate-600 px-2 py-1'>
-                    {totalHours.toFixed(1)} hrs
-                  </span>
-                )}
-                <p className='text-2xl font-bold text-blue-600 flex-1 text-right'>
-                  ${total.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

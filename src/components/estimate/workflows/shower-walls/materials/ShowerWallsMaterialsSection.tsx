@@ -10,7 +10,7 @@ import React, {
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import { SHOWER_WALLS_MATERIALS_ITEMS, DEFAULT_PRICES } from '@/lib/constants';
 
@@ -80,6 +80,8 @@ export default function ShowerWallsMaterialsSection() {
 
   // Local state for immediate UI updates
   const [localMaterials, setLocalMaterials] = useState<MaterialItem[]>([]);
+  const [isDesignOpen, setIsDesignOpen] = useState(true);
+  const [isConstructionOpen, setIsConstructionOpen] = useState(true);
 
   // Refs to track user actions and prevent auto-generation interference
   const isUserActionRef = useRef(false);
@@ -90,7 +92,7 @@ export default function ShowerWallsMaterialsSection() {
     if (!walls || !Array.isArray(walls) || walls.length === 0) {
       return 0;
     }
-    
+
     return walls.reduce((total, wall) => {
       const heightInFeet = wall.height.ft + wall.height.inch / 12;
       const widthInFeet = wall.width.ft + wall.width.inch / 12;
@@ -122,16 +124,16 @@ export default function ShowerWallsMaterialsSection() {
     (designData: ShowerWallsDesignData): MaterialItem[] => {
       const materials: MaterialItem[] = [];
       const { walls, design } = designData;
-      
+
       // Add safety checks to prevent undefined errors
       if (!walls || !Array.isArray(walls) || walls.length === 0) {
         return materials;
       }
-      
+
       if (!design) {
         return materials;
       }
-      
+
       const totalSqft = walls.reduce((total, wall) => {
         const heightInFeet = wall.height.ft + wall.height.inch / 12;
         const widthInFeet = wall.width.ft + wall.width.inch / 12;
@@ -337,7 +339,7 @@ export default function ShowerWallsMaterialsSection() {
       if (!designData.walls || !designData.design) {
         return;
       }
-      
+
       const newAutoItems = generateMaterials(designData);
 
       if (newAutoItems.length > 0) {
@@ -358,14 +360,40 @@ export default function ShowerWallsMaterialsSection() {
   ]);
 
   // Handlers for materials
-  const handleAddMaterial = useCallback(() => {
+
+  const handleAddDesignMaterial = useCallback(() => {
     const newItem: MaterialItem = {
-      id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      name: 'Custom Material',
+      id: `custom-design-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
+      name: 'Custom Design Material',
       quantity: '1',
       unit: 'piece',
       price: '0.00',
       source: 'custom',
+      scope: 'showerWalls_design',
+    };
+
+    isUserActionRef.current = true;
+    setLocalMaterials((prev) => [...prev, newItem]);
+
+    setTimeout(() => {
+      setMaterialItems('showerWalls', [...localMaterials, newItem]);
+      isUserActionRef.current = false;
+    }, 100);
+  }, [localMaterials, setMaterialItems]);
+
+  const handleAddConstructionMaterial = useCallback(() => {
+    const newItem: MaterialItem = {
+      id: `custom-construction-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
+      name: 'Custom Construction Material',
+      quantity: '1',
+      unit: 'piece',
+      price: '0.00',
+      source: 'custom',
+      scope: 'showerWalls_construction',
     };
 
     isUserActionRef.current = true;
@@ -499,6 +527,32 @@ export default function ShowerWallsMaterialsSection() {
     [handleMaterialChange, handleDeleteMaterial]
   );
 
+  // Separate materials by scope
+  const designMaterials = useMemo(() => {
+    return materials.filter((item) => item.scope === 'showerWalls_design');
+  }, [materials]);
+
+  const constructionMaterials = useMemo(() => {
+    return materials.filter(
+      (item) => item.scope === 'showerWalls_construction'
+    );
+  }, [materials]);
+
+  // Calculate totals for design materials
+  const designTotal = designMaterials.reduce(
+    (sum, item) =>
+      sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+    0
+  );
+
+  // Calculate totals for construction materials
+  const constructionTotal = constructionMaterials.reduce(
+    (sum, item) =>
+      sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+    0
+  );
+
+  // Calculate overall total (for backward compatibility)
   const total = materials.reduce(
     (sum, item) =>
       sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
@@ -516,27 +570,105 @@ export default function ShowerWallsMaterialsSection() {
         </div>
       </div>
 
-      <Card>
-        <CardContent className='p-3 space-y-3'>
-          {materials.length > 0 ? (
-            materials.map((m) => renderMaterialItem(m))
-          ) : (
-            <p className='text-sm text-slate-500 text-center py-4'>
-              No materials added yet.
-            </p>
-          )}
-          <div className='flex justify-center'>
-            <Button
-              onClick={handleAddMaterial}
-              variant='default'
-              className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
+      <div className='space-y-4'>
+        {/* Design Materials Section */}
+        <Card>
+          <CardContent className='p-3 space-y-3'>
+            <div
+              className='flex justify-between items-center cursor-pointer'
+              onClick={() => setIsDesignOpen(!isDesignOpen)}
             >
-              <Plus size={16} />
-              Add Item
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <div className='flex items-center gap-2 justify-between w-full'>
+                <div className='flex items-center gap-2'>
+                  {isDesignOpen ? (
+                    <ChevronDown className='h-4 w-4 text-slate-600' />
+                  ) : (
+                    <ChevronRight className='h-4 w-4 text-slate-600' />
+                  )}
+                  <h3 className='text-lg font-semibold text-slate-700'>
+                    Design Materials
+                  </h3>
+                </div>
+                <p className='font-bold text-blue-600 text-sm'>
+                  ${designTotal.toFixed(2)}
+                </p>
+              </div>
+            </div>
+            {isDesignOpen && (
+              <>
+                {designMaterials.length > 0 ? (
+                  <div className='space-y-2'>
+                    {designMaterials.map(renderMaterialItem)}
+                  </div>
+                ) : (
+                  <p className='text-sm text-slate-500 text-center py-4'>
+                    No design materials added yet.
+                  </p>
+                )}
+                <div className='flex justify-center'>
+                  <Button
+                    onClick={handleAddDesignMaterial}
+                    variant='default'
+                    className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
+                  >
+                    <Plus size={16} />
+                    Add Item
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Construction Materials Section */}
+        <Card>
+          <CardContent className='p-3 space-y-3'>
+            <div
+              className='flex justify-between items-center cursor-pointer'
+              onClick={() => setIsConstructionOpen(!isConstructionOpen)}
+            >
+              <div className='flex items-center gap-2 justify-between w-full'>
+                <div className='flex items-center gap-2'>
+                  {isConstructionOpen ? (
+                    <ChevronDown className='h-4 w-4 text-slate-600' />
+                  ) : (
+                    <ChevronRight className='h-4 w-4 text-slate-600' />
+                  )}
+                  <h3 className='text-lg font-semibold text-slate-700'>
+                    Construction Materials
+                  </h3>
+                </div>
+                <p className='font-bold text-blue-600 text-sm'>
+                  ${constructionTotal.toFixed(2)}
+                </p>
+              </div>
+            </div>
+            {isConstructionOpen && (
+              <>
+                {constructionMaterials.length > 0 ? (
+                  <div className='space-y-2'>
+                    {constructionMaterials.map(renderMaterialItem)}
+                  </div>
+                ) : (
+                  <p className='text-sm text-slate-500 text-center py-4'>
+                    No construction materials added yet.
+                  </p>
+                )}
+                <div className='flex justify-center'>
+                  <Button
+                    onClick={handleAddConstructionMaterial}
+                    variant='default'
+                    className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
+                  >
+                    <Plus size={16} />
+                    Add Item
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

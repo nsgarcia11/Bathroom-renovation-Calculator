@@ -82,9 +82,10 @@ export function TradeSection() {
 
   const handleTradeToggle = useCallback(
     (tradeId: string, enabled: boolean) => {
+      const currentTrades = localDesign.selectedTrades || [];
       const newSelectedTrades = enabled
-        ? [...localDesign.selectedTrades, tradeId]
-        : localDesign.selectedTrades.filter((id) => id !== tradeId);
+        ? [...currentTrades, tradeId]
+        : currentTrades.filter((id) => id !== tradeId);
 
       setDesign({ selectedTrades: newSelectedTrades });
     },
@@ -171,7 +172,7 @@ export function TradeSection() {
         colorScheme='neutral'
         summary={
           <span className='text-blue-900 font-bold text-lg'>
-            {localDesign.selectedTrades.length} trades selected
+            {localDesign.selectedTrades?.length || 0} trades selected
           </span>
         }
       >
@@ -180,14 +181,14 @@ export function TradeSection() {
             <div
               key={tradeId}
               className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                localDesign.selectedTrades.includes(tradeId)
+                localDesign.selectedTrades?.includes(tradeId)
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
               onClick={() =>
                 handleTradeToggle(
                   tradeId,
-                  !localDesign.selectedTrades.includes(tradeId)
+                  !localDesign.selectedTrades?.includes(tradeId)
                 )
               }
             >
@@ -209,7 +210,7 @@ export function TradeSection() {
       {/* Trade Rates Card */}
       <CollapsibleSection title='Trade Rates' colorScheme='design'>
         <div className='space-y-4'>
-          {localDesign.selectedTrades.map((tradeId) => {
+          {localDesign.selectedTrades?.map((tradeId) => {
             const category =
               TRADE_CATEGORIES[tradeId as keyof typeof TRADE_CATEGORIES];
             return (
@@ -247,7 +248,7 @@ export function TradeSection() {
       {/* Task Selection Card */}
       <CollapsibleSection title='Task Selection' colorScheme='construction'>
         <div className='space-y-6'>
-          {localDesign.selectedTrades.map((tradeId) => {
+          {localDesign.selectedTrades?.map((tradeId) => {
             const category =
               TRADE_CATEGORIES[tradeId as keyof typeof TRADE_CATEGORIES];
             const tasks =
