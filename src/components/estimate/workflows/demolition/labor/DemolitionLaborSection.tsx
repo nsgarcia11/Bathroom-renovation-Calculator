@@ -539,63 +539,67 @@ export default function DemolitionLaborSection({
         ) : (
           /* Hourly Mode */
           <>
-            {/* Demolition & Prep Section */}
-            {demolitionTasks.length > 0 && (
-              <Card>
-                <CardContent className='p-3 space-y-3'>
-                  <div
-                    className='flex items-center cursor-pointer'
-                    onClick={() => setIsDemolitionOpen(!isDemolitionOpen)}
-                  >
-                    <div className='flex items-center gap-2 justify-between w-full'>
-                      <div className='flex items-center gap-2'>
-                        {isDemolitionOpen ? (
-                          <ChevronDown className='h-4 w-4 text-slate-600' />
-                        ) : (
-                          <ChevronRight className='h-4 w-4 text-slate-600' />
-                        )}
-                        <h3 className='text-lg font-semibold text-slate-700 md:text-nowrap'>
-                          Demolition & Prep
-                        </h3>
-                      </div>
-                      <span className='text-sm text-slate-500'>
-                        {totalHours.toFixed(1)} hrs
-                      </span>
-                      <p className='font-bold text-blue-600 text-sm'>
-                        ${total.toFixed(2)}
-                      </p>
+            {/* Demolition & Prep Section - Always show */}
+            <Card>
+              <CardContent className='p-3 space-y-3'>
+                <div
+                  className='flex items-center cursor-pointer'
+                  onClick={() => setIsDemolitionOpen(!isDemolitionOpen)}
+                >
+                  <div className='flex items-center gap-2 justify-between w-full'>
+                    <div className='flex items-center gap-2'>
+                      {isDemolitionOpen ? (
+                        <ChevronDown className='h-4 w-4 text-slate-600' />
+                      ) : (
+                        <ChevronRight className='h-4 w-4 text-slate-600' />
+                      )}
+                      <h3 className='text-lg font-semibold text-slate-700 md:text-nowrap'>
+                        Demolition & Prep
+                      </h3>
                     </div>
+                    <span className='text-sm text-slate-500'>
+                      {totalHours.toFixed(1)} hrs
+                    </span>
+                    <p className='font-bold text-blue-600 text-sm'>
+                      ${total.toFixed(2)}
+                    </p>
                   </div>
-                  {isDemolitionOpen && (
-                    <>
+                </div>
+                {isDemolitionOpen && (
+                  <>
+                    {demolitionTasks.length > 0 ? (
                       <div className='space-y-2'>
                         {demolitionTasks.map(renderLaborItem)}
                       </div>
+                    ) : (
+                      <p className='text-sm text-slate-500 text-center py-4'>
+                        No demolition tasks added.
+                      </p>
+                    )}
 
-                      {/* Custom Tasks Section */}
-                      {customTasks.length > 0 && (
-                        <div className='mt-4 pt-4 border-t border-slate-200'>
-                          <div className='space-y-2'>
-                            {customTasks.map(renderLaborItem)}
-                          </div>
+                    {/* Custom Tasks Section */}
+                    {customTasks.length > 0 && (
+                      <div className='mt-4 pt-4 border-t border-slate-200'>
+                        <div className='space-y-2'>
+                          {customTasks.map(renderLaborItem)}
                         </div>
-                      )}
-
-                      <div className='flex justify-center'>
-                        <Button
-                          onClick={handleAddLaborItem}
-                          variant='default'
-                          className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4  text-white font-semibold border-blue-200'
-                        >
-                          <Plus size={16} />
-                          Add Item
-                        </Button>
                       </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                    )}
+
+                    <div className='flex justify-center'>
+                      <Button
+                        onClick={handleAddLaborItem}
+                        variant='default'
+                        className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4  text-white font-semibold border-blue-200'
+                      >
+                        <Plus size={16} />
+                        Add Item
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           </>
         )}
 
