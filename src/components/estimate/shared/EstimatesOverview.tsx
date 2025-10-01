@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
@@ -40,6 +40,10 @@ export default function EstimatesOverview({
   // Get contractor and project data
   const { data: contractor } = useContractor();
   const { data: project } = useProject(projectId);
+
+  // State for pricing adjustments
+  const [markup, setMarkup] = useState<string>('0');
+  const [discount, setDiscount] = useState<string>('0');
 
   // PDF Export function
   const handleExportToPDF = async () => {
@@ -777,8 +781,51 @@ export default function EstimatesOverview({
     tradeData,
   ]);
 
-  // Get grand total from context
-  const grandTotal = useMemo(() => getAllTotals().grandTotal, [getAllTotals]);
+  // Get base total from context
+  const baseTotal = useMemo(() => getAllTotals().grandTotal, [getAllTotals]);
+
+  // Calculate final total with markup, discount, and taxes
+  const finalTotal = useMemo(() => {
+    const subtotal = baseTotal;
+    const markupValue = parseFloat(markup) || 0;
+    const taxRate = contractor?.tax_rate || 0;
+
+    // Apply markup (percentage)
+    const withMarkup = subtotal * (1 + markupValue / 100);
+
+    // Apply discount (percentage only)
+    const discountPercent = parseFloat(discount) || 0;
+    const withDiscount = withMarkup * (1 - discountPercent / 100);
+
+    // Apply taxes (taxRate is already a decimal, so no need to divide by 100)
+    const withTaxes = withDiscount * (1 + taxRate);
+
+    return Math.max(0, withTaxes); // Ensure non-negative total
+  }, [baseTotal, markup, discount, contractor?.tax_rate]);
+
+  // Calculate individual components for display
+  const pricingBreakdown = useMemo(() => {
+    const subtotal = baseTotal;
+    const markupValue = parseFloat(markup) || 0;
+    const taxRate = contractor?.tax_rate || 0;
+
+    const withMarkup = subtotal * (1 + markupValue / 100);
+
+    // Apply discount (percentage only)
+    const discountPercent = parseFloat(discount) || 0;
+    const withDiscount = withMarkup * (1 - discountPercent / 100);
+
+    const taxAmount = withDiscount * taxRate;
+    const finalTotal = withDiscount + taxAmount;
+
+    return {
+      subtotal,
+      markupAmount: withMarkup - subtotal,
+      discountAmount: withMarkup - withDiscount,
+      taxAmount,
+      finalTotal: Math.max(0, finalTotal),
+    };
+  }, [baseTotal, markup, discount, contractor?.tax_rate]);
 
   // Helper function to get client contact info
   const getClientInfo = () => {
@@ -847,7 +894,7 @@ export default function EstimatesOverview({
                 CUSTOMER CONTACT
               </h3>
             </div>
-            <div className='bg-gray-50 p-4 rounded-b-lg'>
+            <div className='bg-white p-4 rounded-b-lg'>
               <p className='font-bold text-lg text-gray-900'>
                 {clientInfo.name}
               </p>
@@ -902,6 +949,297 @@ export default function EstimatesOverview({
 
             {/* Section Content */}
             <div className='p-4 space-y-2'>
+              {/* Design Options for Shower Walls */}
+              {workflow.id === 'showerWalls' &&
+                (() => {
+                  const designData = getDesignData('showerWalls') as {
+                    walls?: Array<{
+                      name: string;
+                      height: { ft: number; inch: number };
+                      width: { ft: number; inch: number };
+                    }>;
+                    design?: {
+                      tileSize?: string;
+                      customTileWidth?: string;
+                      customTileLength?: string;
+                      tilePattern?: string;
+                      customTilePatternName?: string;
+                      niche?: string;
+                      showerDoor?: string;
+                      waterproofingSystem?: string;
+                      customWaterproofingName?: string;
+                      grabBar?: string;
+                      clientSuppliesBase?: string;
+                      repairWalls?: boolean;
+                      reinsulateWalls?: boolean;
+                    };
+                  } | null;
+
+                  if (!designData?.design) return null;
+
+                  const design = designData.design;
+                  const walls = designData.walls || [];
+
+                  return (
+                    <div className='mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200'>
+                      <h4 className='font-semibold text-blue-900 mb-2'>
+                        Design Specifications
+                      </h4>
+                      <div className='grid grid-cols-2 gap-2 text-sm'>
+                        {/* Wall Measurements */}
+                        {walls.length > 0 && (
+                          <div>
+                            <span className='font-medium text-gray-700'>
+                              Walls:
+                            </span>
+                            <div className='text-gray-600'>
+                              {walls.map((wall, index) => (
+                                <div key={index} className='text-xs'>
+                                  {wall.name}: {wall.height.ft}&apos;
+                                  {wall.height.inch}&quot; × {wall.width.ft}
+                                  &apos;
+                                  {wall.width.inch}&quot;
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Tile Specifications */}
+                        <div>
+                          <span className='font-medium text-gray-700'>
+                            Tile Size:
+                          </span>
+                          <div className='text-gray-600'>
+                            {design.tileSize === 'Custom'
+                              ? `${design.customTileWidth}" × ${design.customTileLength}"`
+                              : design.tileSize}
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className='font-medium text-gray-700'>
+                            Tile Pattern:
+                          </span>
+                          <div className='text-gray-600'>
+                            {design.tilePattern === 'Custom'
+                              ? design.customTilePatternName || 'Custom'
+                              : design.tilePattern}
+                          </div>
+                        </div>
+
+                        {/* Features */}
+                        {design.niche && design.niche !== 'None' && (
+                          <div>
+                            <span className='font-medium text-gray-700'>
+                              Niche:
+                            </span>
+                            <div className='text-gray-600'>{design.niche}</div>
+                          </div>
+                        )}
+
+                        {design.showerDoor && design.showerDoor !== 'None' && (
+                          <div>
+                            <span className='font-medium text-gray-700'>
+                              Shower Door:
+                            </span>
+                            <div className='text-gray-600'>
+                              {design.showerDoor}
+                            </div>
+                          </div>
+                        )}
+
+                        {design.grabBar && design.grabBar !== '0' && (
+                          <div>
+                            <span className='font-medium text-gray-700'>
+                              Grab Bars:
+                            </span>
+                            <div className='text-gray-600'>
+                              {design.grabBar}
+                            </div>
+                          </div>
+                        )}
+
+                        {design.waterproofingSystem &&
+                          design.waterproofingSystem !==
+                            'None / Select System...' && (
+                            <div>
+                              <span className='font-medium text-gray-700'>
+                                Waterproofing:
+                              </span>
+                              <div className='text-gray-600'>
+                                {design.waterproofingSystem === 'Other'
+                                  ? design.customWaterproofingName || 'Other'
+                                  : design.waterproofingSystem}
+                              </div>
+                            </div>
+                          )}
+
+                        {/* Client Supplies */}
+                        {design.clientSuppliesBase &&
+                          design.clientSuppliesBase !== 'No' && (
+                            <div>
+                              <span className='font-medium text-gray-700'>
+                                Client Supplies:
+                              </span>
+                              <div className='text-gray-600'>Tiles</div>
+                            </div>
+                          )}
+
+                        {/* Construction Options */}
+                        {(design.repairWalls || design.reinsulateWalls) && (
+                          <div>
+                            <span className='font-medium text-gray-700'>
+                              Construction:
+                            </span>
+                            <div className='text-gray-600'>
+                              {design.repairWalls && 'Wall Repair'}
+                              {design.repairWalls &&
+                                design.reinsulateWalls &&
+                                ', '}
+                              {design.reinsulateWalls && 'Re-insulation'}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+              {/* Design Options for Shower Base */}
+              {workflow.id === 'showerBase' &&
+                (() => {
+                  const designData = getDesignData('showerBase') as {
+                    design?: {
+                      width?: string;
+                      length?: string;
+                      baseType?: string;
+                      drainType?: string;
+                      waterproofingSystem?: string;
+                      entryType?: string;
+                      drainLocation?: string;
+                      subfloorRepair?: boolean;
+                      joistModification?: boolean;
+                      clientSuppliesBase?: string;
+                    };
+                  } | null;
+
+                  if (!designData?.design) return null;
+
+                  const design = designData.design;
+
+                  return (
+                    <div className='mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200'>
+                      <h4 className='font-semibold text-blue-900 mb-2'>
+                        Design Specifications
+                      </h4>
+                      <div className='grid grid-cols-2 gap-2 text-sm'>
+                        {/* Base Type and Dimensions */}
+                        <div>
+                          <span className='font-medium text-gray-700'>
+                            Base Type:
+                          </span>
+                          <div className='text-gray-600'>{design.baseType}</div>
+                        </div>
+
+                        <div>
+                          <span className='font-medium text-gray-700'>
+                            Dimensions:
+                          </span>
+                          <div className='text-gray-600'>
+                            {design.width}&quot; × {design.length}&quot;
+                          </div>
+                        </div>
+
+                        {/* Tiled Base Options */}
+                        {design.baseType === 'Tiled Base' && (
+                          <>
+                            <div>
+                              <span className='font-medium text-gray-700'>
+                                Entry:
+                              </span>
+                              <div className='text-gray-600 capitalize'>
+                                {design.entryType}
+                              </div>
+                            </div>
+
+                            <div>
+                              <span className='font-medium text-gray-700'>
+                                Drain Type:
+                              </span>
+                              <div className='text-gray-600 capitalize'>
+                                {design.drainType === 'regular'
+                                  ? 'Regular Drain'
+                                  : 'Linear Drain'}
+                              </div>
+                            </div>
+
+                            <div>
+                              <span className='font-medium text-gray-700'>
+                                Drain Location:
+                              </span>
+                              <div className='text-gray-600 capitalize'>
+                                {design.drainLocation}
+                              </div>
+                            </div>
+
+                            {design.waterproofingSystem &&
+                              design.waterproofingSystem !== 'none' && (
+                                <div>
+                                  <span className='font-medium text-gray-700'>
+                                    Waterproofing:
+                                  </span>
+                                  <div className='text-gray-600'>
+                                    {design.waterproofingSystem === 'kerdi' &&
+                                      'Schluter-Kerdi System'}
+                                    {design.waterproofingSystem === 'liquid' &&
+                                      'Liquid Membrane'}
+                                    {design.waterproofingSystem ===
+                                      'kerdi-board' && 'Kerdi-Board'}
+                                    {![
+                                      'kerdi',
+                                      'liquid',
+                                      'kerdi-board',
+                                    ].includes(design.waterproofingSystem) &&
+                                      design.waterproofingSystem}
+                                  </div>
+                                </div>
+                              )}
+                          </>
+                        )}
+
+                        {/* Client Supplies */}
+                        {design.clientSuppliesBase &&
+                          design.clientSuppliesBase !== 'No' && (
+                            <div>
+                              <span className='font-medium text-gray-700'>
+                                Client Supplies:
+                              </span>
+                              <div className='text-gray-600'>Base</div>
+                            </div>
+                          )}
+
+                        {/* Construction Options */}
+                        {(design.subfloorRepair ||
+                          design.joistModification) && (
+                          <div>
+                            <span className='font-medium text-gray-700'>
+                              Construction:
+                            </span>
+                            <div className='text-gray-600'>
+                              {design.subfloorRepair && 'Subfloor Repair'}
+                              {design.subfloorRepair &&
+                                design.joistModification &&
+                                ', '}
+                              {design.joistModification && 'Joist Modification'}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
               <div className='flex justify-between items-center'>
                 <div className='flex-1'>
                   <p className='text-gray-700'>
@@ -1021,16 +1359,112 @@ export default function EstimatesOverview({
         ))}
       </div>
 
-      {/* Grand Total Section */}
+      {/* Pricing Summary Section */}
       <div className='px-8 py-8'>
         <div className='bg-gray-100 border-2 border-gray-300 rounded-lg p-6'>
-          <div className='flex justify-between items-center'>
-            <span className='text-2xl font-bold text-gray-900'>
-              GRAND TOTAL
+          {/* Subtotal */}
+          <div className='flex justify-between items-center mb-4'>
+            <span className='text-xl font-semibold text-gray-900'>
+              Subtotal
             </span>
-            <span className='text-4xl font-bold text-blue-600'>
-              ${grandTotal.toFixed(2)}
+            <span className='text-xl font-semibold text-gray-900'>
+              $
+              {pricingBreakdown.subtotal.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </span>
+          </div>
+
+          {/* Markup */}
+          <div className='flex justify-between items-center mb-4'>
+            <span className='text-lg font-medium text-gray-700'>Markup</span>
+            <div className='flex items-center gap-2'>
+              <input
+                type='number'
+                placeholder='0'
+                value={markup}
+                onChange={(e) => setMarkup(e.target.value)}
+                className='w-20 text-right bg-transparent border-b border-gray-400 focus:border-blue-500 focus:outline-none'
+              />
+              <span className='text-lg font-medium text-gray-700'>%</span>
+            </div>
+          </div>
+
+          {/* Markup Amount */}
+          {parseFloat(markup) > 0 && (
+            <div className='flex justify-between items-center mb-4 ml-4'>
+              <span className='text-sm text-gray-600'>Markup Amount</span>
+              <span className='text-sm text-gray-600'>
+                +$
+                {pricingBreakdown.markupAmount.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+          )}
+
+          {/* Discount */}
+          <div className='flex justify-between items-center mb-4'>
+            <span className='text-lg font-medium text-gray-700'>Discount</span>
+            <div className='flex items-center gap-2'>
+              <input
+                type='number'
+                placeholder='0'
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+                className='w-20 text-right bg-transparent border-b border-gray-400 focus:border-blue-500 focus:outline-none'
+              />
+              <span className='text-lg font-medium text-gray-700'>%</span>
+            </div>
+          </div>
+
+          {/* Discount Amount */}
+          {parseFloat(discount) > 0 && (
+            <div className='flex justify-between items-center mb-4 ml-4'>
+              <span className='text-sm text-gray-600'>Discount Amount</span>
+              <span className='text-sm text-red-600'>
+                -$
+                {pricingBreakdown.discountAmount.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+          )}
+
+          {/* Tax Rate */}
+          <div className='flex justify-between items-center mb-4'>
+            <div className='flex items-center gap-2'>
+              <span className='text-lg font-medium text-gray-700'>Taxes</span>
+              <span className='text-sm text-gray-500'>
+                ({(contractor?.tax_rate || 0) * 100}%)
+              </span>
+            </div>
+            <span className='text-lg font-medium text-gray-700'>
+              $
+              {pricingBreakdown.taxAmount.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </span>
+          </div>
+
+          {/* Grand Total */}
+          <div className='border-t-2 border-gray-400 pt-4'>
+            <div className='flex justify-between items-center'>
+              <span className='text-2xl font-bold text-gray-900'>
+                GRAND TOTAL
+              </span>
+              <span className='text-4xl font-bold text-blue-600'>
+                $
+                {finalTotal.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </div>
           </div>
         </div>
       </div>

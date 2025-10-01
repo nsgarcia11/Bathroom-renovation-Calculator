@@ -344,7 +344,7 @@ export function FloorsSection() {
               localDesign.extraMeasurements.map((m) => (
                 <div
                   key={m.id}
-                  className='p-3 bg-slate-50 rounded-lg border border-slate-300 animate-fade-in'
+                  className='p-3  rounded-lg border border-slate-300 animate-fade-in'
                 >
                   <div className='flex justify-between items-center mb-2'>
                     <Input
@@ -507,7 +507,7 @@ export function FloorsSection() {
         )}
 
         {/* Tile Pattern Selection */}
-        <div>
+        <div className='pt-4'>
           <Label className='text-sm font-medium text-gray-700 mb-3 block'>
             Tile Pattern
           </Label>

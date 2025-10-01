@@ -411,42 +411,6 @@ export default function NotesOverview() {
 
         {isClientNotesOpen && (
           <div className='p-4 space-y-4'>
-            {/* Construction Notes Section */}
-            <div className='space-y-3'>
-              <h4 className='text-md font-semibold text-gray-800 border-b border-gray-300 pb-2'>
-                Construction Notes
-              </h4>
-              {workflows.map((workflow) => {
-                const constructionClientNotes =
-                  workflow.constructionNotes?.clientNotes?.trim() || '';
-
-                if (!constructionClientNotes) return null;
-
-                return (
-                  <div
-                    key={`construction-${workflow.id}`}
-                    className='bg-gray-50 rounded-lg border border-gray-200 p-3'
-                  >
-                    <h5 className='font-medium text-gray-900 mb-2 text-sm'>
-                      {workflow.name}
-                    </h5>
-                    <div className='space-y-1'>
-                      {constructionClientNotes
-                        .split('\n')
-                        .filter((line) => line.trim())
-                        .map((line, index) => (
-                          <p key={index} className='text-sm text-gray-700'>
-                            {line.trim().startsWith('-')
-                              ? line.trim()
-                              : `- ${line.trim()}`}
-                          </p>
-                        ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
             {/* Design Notes Section */}
             <div className='space-y-3'>
               <h4 className='text-md font-semibold text-gray-800 border-b border-gray-300 pb-2'>
@@ -482,6 +446,42 @@ export default function NotesOverview() {
                 );
               })}
             </div>
+
+            {/* Construction Notes Section */}
+            <div className='space-y-3'>
+              <h4 className='text-md font-semibold text-gray-800 border-b border-gray-300 pb-2'>
+                Construction Notes
+              </h4>
+              {workflows.map((workflow) => {
+                const constructionClientNotes =
+                  workflow.constructionNotes?.clientNotes?.trim() || '';
+
+                if (!constructionClientNotes) return null;
+
+                return (
+                  <div
+                    key={`construction-${workflow.id}`}
+                    className='bg-gray-50 rounded-lg border border-gray-200 p-3'
+                  >
+                    <h5 className='font-medium text-gray-900 mb-2 text-sm'>
+                      {workflow.name}
+                    </h5>
+                    <div className='space-y-1'>
+                      {constructionClientNotes
+                        .split('\n')
+                        .filter((line) => line.trim())
+                        .map((line, index) => (
+                          <p key={index} className='text-sm text-gray-700'>
+                            {line.trim().startsWith('-')
+                              ? line.trim()
+                              : `- ${line.trim()}`}
+                          </p>
+                        ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -502,42 +502,6 @@ export default function NotesOverview() {
 
         {isContractorNotesOpen && (
           <div className='p-4 space-y-4'>
-            {/* Construction Notes Section */}
-            <div className='space-y-3'>
-              <h4 className='text-md font-semibold text-gray-800 border-b border-gray-300 pb-2'>
-                Construction Notes
-              </h4>
-              {workflows.map((workflow) => {
-                const constructionContractorNotes =
-                  workflow.constructionNotes?.contractorNotes?.trim() || '';
-
-                if (!constructionContractorNotes) return null;
-
-                return (
-                  <div
-                    key={`construction-contractor-${workflow.id}`}
-                    className='bg-gray-50 rounded-lg border border-gray-200 p-3'
-                  >
-                    <h5 className='font-medium text-gray-900 mb-2 text-sm'>
-                      {workflow.name}
-                    </h5>
-                    <div className='space-y-1'>
-                      {constructionContractorNotes
-                        .split('\n')
-                        .filter((line) => line.trim())
-                        .map((line, index) => (
-                          <p key={index} className='text-sm text-gray-700'>
-                            {line.trim().startsWith('-')
-                              ? line.trim()
-                              : `- ${line.trim()}`}
-                          </p>
-                        ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
             {/* Design Notes Section */}
             <div className='space-y-3'>
               <h4 className='text-md font-semibold text-gray-800 border-b border-gray-300 pb-2'>
@@ -559,6 +523,42 @@ export default function NotesOverview() {
                     </h5>
                     <div className='space-y-1'>
                       {designContractorNotes
+                        .split('\n')
+                        .filter((line) => line.trim())
+                        .map((line, index) => (
+                          <p key={index} className='text-sm text-gray-700'>
+                            {line.trim().startsWith('-')
+                              ? line.trim()
+                              : `- ${line.trim()}`}
+                          </p>
+                        ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Construction Notes Section */}
+            <div className='space-y-3'>
+              <h4 className='text-md font-semibold text-gray-800 border-b border-gray-300 pb-2'>
+                Construction Notes
+              </h4>
+              {workflows.map((workflow) => {
+                const constructionContractorNotes =
+                  workflow.constructionNotes?.contractorNotes?.trim() || '';
+
+                if (!constructionContractorNotes) return null;
+
+                return (
+                  <div
+                    key={`construction-contractor-${workflow.id}`}
+                    className='bg-gray-50 rounded-lg border border-gray-200 p-3'
+                  >
+                    <h5 className='font-medium text-gray-900 mb-2 text-sm'>
+                      {workflow.name}
+                    </h5>
+                    <div className='space-y-1'>
+                      {constructionContractorNotes
                         .split('\n')
                         .filter((line) => line.trim())
                         .map((line, index) => (

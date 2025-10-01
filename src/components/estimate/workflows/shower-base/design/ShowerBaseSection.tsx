@@ -309,28 +309,6 @@ export function ShowerBaseSection() {
                 ))}
               </div>
             </div>
-
-            {/* Waterproofing System */}
-            <div className='pt-4 border-t border-gray-200'>
-              <Label className='text-sm font-medium text-gray-700 mb-3 block'>
-                Which waterproofing system will be used?
-              </Label>
-              <Select
-                id='waterproofingSystem'
-                label=''
-                value={localDesign.waterproofingSystem}
-                onChange={(e) =>
-                  setDesign({ waterproofingSystem: e.target.value })
-                }
-                className='w-full appearance-none bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-              >
-                {waterproofingOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
           </>
         )}
 
@@ -369,6 +347,30 @@ export function ShowerBaseSection() {
       {/* Construction Card */}
       <CollapsibleSection title='Construction' colorScheme='construction'>
         <div className='space-y-4 pb-3'>
+          {/* Waterproofing System - only for Tiled Base */}
+          {localDesign.baseType === 'Tiled Base' && (
+            <div>
+              <Label className='text-sm font-medium text-gray-700 mb-3 block'>
+                Which waterproofing system will be used?
+              </Label>
+              <Select
+                id='waterproofingSystem'
+                label=''
+                value={localDesign.waterproofingSystem}
+                onChange={(e) =>
+                  setDesign({ waterproofingSystem: e.target.value })
+                }
+                className='w-full appearance-none bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              >
+                {waterproofingOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
+
           <ToggleSwitch
             label='Subfloor repair required?'
             enabled={localDesign.subfloorRepair}
