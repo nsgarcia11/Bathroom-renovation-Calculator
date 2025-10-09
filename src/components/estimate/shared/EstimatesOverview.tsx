@@ -886,27 +886,10 @@ export default function EstimatesOverview({
     <div ref={estimateRef} className='bg-white min-h-screen'>
       {/* Invoice Header */}
       <div className='bg-white p-8 border-b-4 border-blue-600'>
-        <div className='flex justify-between items-start'>
-          {/* Customer Contact */}
-          <div className='w-1/2'>
-            <div className='border-b-4 border-blue-600 pb-2 mb-4'>
-              <h3 className='text-lg font-semibold text-gray-900'>
-                CUSTOMER CONTACT
-              </h3>
-            </div>
-            <div className='bg-white p-4 rounded-b-lg'>
-              <p className='font-bold text-lg text-gray-900'>
-                {clientInfo.name}
-              </p>
-              <p className='text-gray-700'>{clientInfo.phone}</p>
-              <p className='text-gray-700'>{clientInfo.address}</p>
-              <p className='text-gray-700'>{clientInfo.email}</p>
-            </div>
-          </div>
-
-          {/* Company Information */}
-          <div className='w-1/2 text-right'>
-            <div className='flex items-center justify-end mb-4'>
+        <div className='flex flex-col md:flex-row justify-between items-start gap-6'>
+          {/* Company Information - First on mobile */}
+          <div className='w-full md:w-1/2 text-left md:text-right order-1 md:order-2'>
+            <div className='flex items-center justify-start md:justify-end mb-4'>
               <div className='mr-3'>
                 <Image
                   src='/logo.svg'
@@ -923,6 +906,23 @@ export default function EstimatesOverview({
               <p>{contractorInfo.address}</p>
               <p>{contractorInfo.email}</p>
               <p>{contractorInfo.website}</p>
+            </div>
+          </div>
+
+          {/* Customer Contact - Second on mobile */}
+          <div className='w-full md:w-1/2 order-2 md:order-1'>
+            <div className='border-b-4 border-blue-600 pb-2 mb-4'>
+              <h3 className='text-lg font-semibold text-gray-900'>
+                CUSTOMER CONTACT
+              </h3>
+            </div>
+            <div className='bg-white p-4 rounded-b-lg'>
+              <p className='font-bold text-lg text-gray-900'>
+                {clientInfo.name}
+              </p>
+              <p className='text-gray-700'>{clientInfo.phone}</p>
+              <p className='text-gray-700'>{clientInfo.address}</p>
+              <p className='text-gray-700'>{clientInfo.email}</p>
             </div>
           </div>
         </div>
@@ -1453,7 +1453,7 @@ export default function EstimatesOverview({
 
           {/* Grand Total */}
           <div className='border-t-2 border-gray-400 pt-4'>
-            <div className='flex justify-between items-center'>
+            <div className='flex flex-col md:flex-row md:justify-between md:items-center gap-2'>
               <span className='text-2xl font-bold text-gray-900'>
                 GRAND TOTAL
               </span>

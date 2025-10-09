@@ -280,7 +280,7 @@ export default function DemolitionMaterialsSection() {
               <Trash2 size={16} />
             </Button>
           </div>
-          <div className='grid grid-cols-3 gap-3'>
+          <div className='grid grid-cols-2 gap-3'>
             <div>
               <label className='text-xs text-slate-500'>Quantity</label>
               <Input
@@ -313,7 +313,7 @@ export default function DemolitionMaterialsSection() {
                 className={`text-center border-blue-300 focus:border-blue-500`}
               />
             </div>
-            <div>
+            <div className='col-span-2'>
               <label className='text-xs text-slate-500'>Total</label>
               <div className='w-full p-2 text-center font-semibold text-slate-800 bg-slate-50 rounded-md'>
                 $

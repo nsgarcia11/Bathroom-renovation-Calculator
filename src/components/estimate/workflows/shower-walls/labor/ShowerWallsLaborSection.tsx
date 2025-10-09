@@ -513,7 +513,7 @@ export default function ShowerWallsLaborSection() {
               <Trash2 size={16} />
             </Button>
           </div>
-          <div className='grid grid-cols-3 gap-3'>
+          <div className='grid grid-cols-2 gap-3'>
             <div className='w-full'>
               <label className='text-xs text-slate-500'>Hours</label>
               <Input
@@ -538,7 +538,7 @@ export default function ShowerWallsLaborSection() {
                 className='text-center w-full border-blue-300 focus:border-blue-500'
               />
             </div>
-            <div className='w-full'>
+            <div className='col-span-2 w-full'>
               <label className='text-xs text-slate-500'>Total</label>
               <div className='w-full p-2 text-center font-semibold text-slate-800 bg-slate-50 rounded-md'>
                 $

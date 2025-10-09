@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
-import { STRUCTURAL_LABOR_ITEMS } from '@/lib/constants';
+import { useContractorContext } from '@/contexts/ContractorContext';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface LaborItem {
@@ -37,29 +37,28 @@ interface FlatFeeItem {
 }
 
 interface StructuralDesignData {
-  width: string;
-  length: string;
-  height: string;
+  // Wall Modifications
   frameNewWall: boolean;
-  removeWall: boolean;
-  frameDoorway: boolean;
-  frameWindow: boolean;
-  wallLength: string;
-  doorwayWidth: string;
-  windowWidth: string;
-  windowHeight: string;
-  installBeam: boolean;
-  installHeader: boolean;
-  reinforceJoists: boolean;
-  beamLength: string;
-  headerLength: string;
-  installPlywood: boolean;
-  repairSubfloor: boolean;
+  relocateWall: boolean;
+  relocateWallLength: string;
+  relocateWallHeight: string;
+  removeNonLoadBearingWall: boolean;
+  installBlocking: boolean;
+  frameShowerNiche: boolean;
+  addInsulation: boolean;
+
+  // Floors
+  repairSisterFloorJoists: boolean;
+  levelFloor: boolean;
+  installNewPlywoodSubfloor: boolean;
   plywoodThickness: '1/2' | '5/8' | '3/4';
-  subfloorArea: string;
-  installInsulation: boolean;
-  installVaporBarrier: boolean;
-  insulationArea: string;
+  replaceRottenSubfloor: boolean;
+
+  // Window & Door Openings
+  addNewWindow: boolean;
+  enlargeExistingWindow: boolean;
+  changeDoorwayOpening: boolean;
+  closeOffWindow: boolean;
 }
 
 export default function StructuralLaborSection() {
@@ -72,33 +71,34 @@ export default function StructuralLaborSection() {
     isReloading,
   } = useEstimateWorkflowContext();
 
+  const { hourlyRate: contractorHourlyRate } = useContractorContext();
+
   const designData = getDesignData('structural') as StructuralDesignData | null;
   const design = useMemo(
     () =>
       designData || {
-        width: '60',
-        length: '96',
-        height: '96',
+        // Wall Modifications
         frameNewWall: false,
-        removeWall: false,
-        frameDoorway: false,
-        frameWindow: false,
-        wallLength: '',
-        doorwayWidth: '',
-        windowWidth: '',
-        windowHeight: '',
-        installBeam: false,
-        installHeader: false,
-        reinforceJoists: false,
-        beamLength: '',
-        headerLength: '',
-        installPlywood: false,
-        repairSubfloor: false,
-        plywoodThickness: '5/8' as const,
-        subfloorArea: '',
-        installInsulation: false,
-        installVaporBarrier: false,
-        insulationArea: '',
+        relocateWall: false,
+        relocateWallLength: '10',
+        relocateWallHeight: '8',
+        removeNonLoadBearingWall: false,
+        installBlocking: false,
+        frameShowerNiche: false,
+        addInsulation: false,
+
+        // Floors
+        repairSisterFloorJoists: false,
+        levelFloor: false,
+        installNewPlywoodSubfloor: false,
+        plywoodThickness: '3/4' as const,
+        replaceRottenSubfloor: false,
+
+        // Window & Door Openings
+        addNewWindow: false,
+        enlargeExistingWindow: false,
+        changeDoorwayOpening: false,
+        closeOffWindow: false,
       },
     [designData]
   );
@@ -106,10 +106,8 @@ export default function StructuralLaborSection() {
   const [localLaborItems, setLocalLaborItems] = useState<LaborItem[]>([]);
   const [localFlatFeeItems, setLocalFlatFeeItems] = useState<FlatFeeItem[]>([]);
   const [isWallWorkOpen, setIsWallWorkOpen] = useState(true);
-  const [isStructuralSupportOpen, setIsStructuralSupportOpen] = useState(true);
-  const [isSubfloorWorkOpen, setIsSubfloorWorkOpen] = useState(true);
-  const [isInsulationOpen, setIsInsulationOpen] = useState(true);
-  const [contractorHourlyRate] = useState(85);
+  const [isFloorsOpen, setIsFloorsOpen] = useState(true);
+  const [isWindowDoorOpen, setIsWindowDoorOpen] = useState(true);
 
   // Refs to track user actions
   const userActionRef = useRef(false);
@@ -119,198 +117,207 @@ export default function StructuralLaborSection() {
   const contextLaborItems = getLaborItems('structural');
   const contextFlatFeeItems = getFlatFeeItems('structural');
 
-  // Calculate areas from dimensions
-  const wallArea = useMemo(() => {
-    const w = parseFloat(design.width) || 0;
-    const l = parseFloat(design.length) || 0;
-    const h = parseFloat(design.height) || 0;
-    if (w > 0 && l > 0 && h > 0) {
-      return (2 * (w + l) * h) / 144;
-    }
-    return 0;
-  }, [design.width, design.length, design.height]);
+  // Note: studCount is calculated in materials section for material quantities
 
-  const subfloorArea = useMemo(() => {
-    const area = parseFloat(design.subfloorArea) || 0;
-    return area > 0 ? area : 0;
-  }, [design.subfloorArea]);
-
-  const insulationArea = useMemo(() => {
-    const area = parseFloat(design.insulationArea) || 0;
-    // If no specific insulation area is set, use wall area
-    if (area > 0) return area;
-    return wallArea;
-  }, [design.insulationArea, wallArea]);
-
-  // Generate labor items based on design choices
-  const generateLaborItems = useCallback(() => {
-    const laborItems: LaborItem[] = [];
-    const flatFeeItems: FlatFeeItem[] = [];
-    const laborItemsMap = STRUCTURAL_LABOR_ITEMS(contractorHourlyRate);
-
-    // Wall Work
-    if (design.frameNewWall) {
-      laborItems.push({
-        ...laborItemsMap.frameNewWall,
-        isAutoGenerated: true,
-      });
-    }
-
-    if (design.removeWall) {
-      laborItems.push({
-        ...laborItemsMap.removeWall,
-
-        isAutoGenerated: true,
-      });
-    }
-
-    if (design.frameDoorway) {
-      laborItems.push({
-        ...laborItemsMap.frameDoorway,
-
-        isAutoGenerated: true,
-      });
-    }
-
-    if (design.frameWindow) {
-      laborItems.push({
-        ...laborItemsMap.frameWindow,
-
-        isAutoGenerated: true,
-      });
-    }
-
-    // Structural Support
-    if (design.installBeam) {
-      laborItems.push({
-        ...laborItemsMap.installBeam,
-
-        isAutoGenerated: true,
-      });
-    }
-
-    if (design.installHeader) {
-      laborItems.push({
-        ...laborItemsMap.installHeader,
-
-        isAutoGenerated: true,
-      });
-    }
-
-    if (design.reinforceJoists) {
-      laborItems.push({
-        ...laborItemsMap.reinforceJoists,
-
-        isAutoGenerated: true,
-      });
-    }
-
-    // Subfloor Work
-    if (design.installPlywood && subfloorArea > 0) {
-      const hours = Math.max(1, subfloorArea / 50); // 50 sq/ft per hour
-      laborItems.push({
-        ...laborItemsMap.installPlywood,
-
-        hours: hours.toFixed(1),
-        isAutoGenerated: true,
-      });
-    }
-
-    if (design.repairSubfloor) {
-      laborItems.push({
-        ...laborItemsMap.repairSubfloor,
-
-        isAutoGenerated: true,
-      });
-    }
-
-    // Insulation
-    if (design.installInsulation && insulationArea > 0) {
-      const hours = Math.max(1, insulationArea / 100); // 100 sq/ft per hour
-      laborItems.push({
-        ...laborItemsMap.installInsulation,
-        scope: laborItemsMap.installInsulation.scope as
-          | 'design'
-          | 'construction',
-        hours: hours.toFixed(1),
-        isAutoGenerated: true,
-      });
-    }
-
-    if (design.installVaporBarrier && insulationArea > 0) {
-      const hours = Math.max(1, insulationArea / 150); // 150 sq/ft per hour
-      laborItems.push({
-        ...laborItemsMap.installVaporBarrier,
-        scope: laborItemsMap.installVaporBarrier.scope as
-          | 'design'
-          | 'construction',
-        hours: hours.toFixed(1),
-        isAutoGenerated: true,
-      });
-    }
-
-    return { laborItems, flatFeeItems };
-  }, [design, subfloorArea, insulationArea, contractorHourlyRate]);
-
-  // Auto-generate labor items when design changes
+  // Auto-populate labor items based on selected tasks
   useEffect(() => {
-    if (isReloading) return;
-
-    const currentChoices = JSON.stringify({
-      frameNewWall: design.frameNewWall,
-      removeWall: design.removeWall,
-      frameDoorway: design.frameDoorway,
-      frameWindow: design.frameWindow,
-      installBeam: design.installBeam,
-      installHeader: design.installHeader,
-      reinforceJoists: design.reinforceJoists,
-      installPlywood: design.installPlywood,
-      repairSubfloor: design.repairSubfloor,
-      installInsulation: design.installInsulation,
-      installVaporBarrier: design.installVaporBarrier,
-      subfloorArea: design.subfloorArea,
-      insulationArea: design.insulationArea,
-    });
-
-    // Only regenerate if choices have changed and it's not a user action
-    if (
-      currentChoices !== processedChoicesRef.current &&
-      !userActionRef.current
-    ) {
-      const { laborItems, flatFeeItems } = generateLaborItems();
-
-      // Preserve existing custom items
-      const existingCustomLabor = contextLaborItems.filter(
-        (item) => !item.isAutoGenerated
-      );
-      const existingCustomFlatFee = contextFlatFeeItems.filter(
-        (item) => !('isAutoGenerated' in item) || !item.isAutoGenerated
-      );
-
-      const mergedLaborItems = [...laborItems, ...existingCustomLabor];
-      const mergedFlatFeeItems = [...flatFeeItems, ...existingCustomFlatFee];
-
-      setLocalLaborItems(mergedLaborItems);
-      setLocalFlatFeeItems(mergedFlatFeeItems);
-      setLaborItems('structural', mergedLaborItems);
-      setFlatFeeItems('structural', mergedFlatFeeItems);
-
-      processedChoicesRef.current = currentChoices;
+    if (isReloading || userActionRef.current) {
+      userActionRef.current = false;
+      return;
     }
 
-    // Reset user action flag
-    userActionRef.current = false;
+    const newLaborItems: LaborItem[] = [];
+    const newFlatFeeItems: FlatFeeItem[] = [];
+
+    // Wall Modifications
+    if (design.frameNewWall) {
+      newLaborItems.push({
+        id: 'frame-new-wall',
+        name: 'Frame new wall(s)',
+        hours: '6',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'blue',
+      });
+    }
+
+    if (design.relocateWall) {
+      newLaborItems.push({
+        id: 'relocate-wall',
+        name: 'Relocate wall',
+        hours: '10',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'blue',
+      });
+    }
+
+    if (design.removeNonLoadBearingWall) {
+      newLaborItems.push({
+        id: 'remove-wall',
+        name: 'Remove non-load bearing wall',
+        hours: '6',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'blue',
+      });
+    }
+
+    if (design.installBlocking) {
+      newLaborItems.push({
+        id: 'install-blocking',
+        name: 'Install blocking',
+        hours: '2',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'blue',
+      });
+    }
+
+    if (design.frameShowerNiche) {
+      newLaborItems.push({
+        id: 'frame-shower-niche',
+        name: 'Frame shower niche',
+        hours: '2.5',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'blue',
+      });
+    }
+
+    if (design.addInsulation) {
+      newLaborItems.push({
+        id: 'add-insulation',
+        name: 'Add insulation',
+        hours: '2',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'blue',
+      });
+    }
+
+    // Floors
+    if (design.repairSisterFloorJoists) {
+      newLaborItems.push({
+        id: 'repair-floor-joists',
+        name: 'Repair / sister floor joists',
+        hours: '5',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'green',
+      });
+    }
+
+    if (design.levelFloor) {
+      newLaborItems.push({
+        id: 'level-floor',
+        name: 'Level floor',
+        hours: '3',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'green',
+      });
+    }
+
+    if (design.installNewPlywoodSubfloor) {
+      newLaborItems.push({
+        id: 'install-plywood',
+        name: 'Install new plywood subfloor',
+        hours: '3',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'green',
+      });
+    }
+
+    if (design.replaceRottenSubfloor) {
+      newLaborItems.push({
+        id: 'replace-subfloor',
+        name: 'Replace rotten subfloor',
+        hours: '6',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'green',
+      });
+    }
+
+    // Window & Door Openings
+    if (design.addNewWindow) {
+      newLaborItems.push({
+        id: 'add-new-window',
+        name: 'Add new window',
+        hours: '6',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'purple',
+      });
+    }
+
+    if (design.enlargeExistingWindow) {
+      newLaborItems.push({
+        id: 'enlarge-window',
+        name: 'Enlarge existing window',
+        hours: '6',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'purple',
+      });
+    }
+
+    if (design.changeDoorwayOpening) {
+      newLaborItems.push({
+        id: 'change-doorway',
+        name: 'Change doorway opening',
+        hours: '4',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'purple',
+      });
+    }
+
+    if (design.closeOffWindow) {
+      newLaborItems.push({
+        id: 'close-window',
+        name: 'Close off window',
+        hours: '5',
+        rate: contractorHourlyRate.toString(),
+        category: 'construction',
+        isAutoGenerated: true,
+        color: 'purple',
+      });
+    }
+
+    // Update context
+    setLaborItems('structural', newLaborItems);
+    setFlatFeeItems('structural', newFlatFeeItems);
+    setLocalLaborItems(newLaborItems);
+    setLocalFlatFeeItems(newFlatFeeItems);
+
+    // Update processed choices
+    const choicesString = JSON.stringify(design);
+    processedChoicesRef.current = choicesString;
   }, [
     design,
-    generateLaborItems,
-    contextLaborItems,
-    contextFlatFeeItems,
+    contractorHourlyRate,
+    isReloading,
     setLaborItems,
     setFlatFeeItems,
-    isReloading,
   ]);
 
-  // Sync with context when context changes
+  // Sync with context changes
   useEffect(() => {
     if (!isReloading) {
       setLocalLaborItems(contextLaborItems);
@@ -319,844 +326,295 @@ export default function StructuralLaborSection() {
   }, [contextLaborItems, contextFlatFeeItems, isReloading]);
 
   // Handlers
-  const handleAddWallWorkLaborItem = useCallback(() => {
-    userActionRef.current = true;
+  const handleAddLaborItem = useCallback(() => {
     const newItem: LaborItem = {
-      id: `custom-wall-work-${Date.now()}`,
+      id: `labor-${Date.now()}`,
       name: '',
-      hours: '0',
+      hours: '1',
       rate: contractorHourlyRate.toString(),
-      scope: 'wall_work',
       category: 'construction',
       isAutoGenerated: false,
+      color: 'gray',
     };
 
     const updatedItems = [...localLaborItems, newItem];
     setLocalLaborItems(updatedItems);
     setLaborItems('structural', updatedItems);
-  }, [localLaborItems, contractorHourlyRate, setLaborItems]);
-
-  const handleAddStructuralSupportLaborItem = useCallback(() => {
     userActionRef.current = true;
-    const newItem: LaborItem = {
-      id: `custom-structural-support-${Date.now()}`,
-      name: '',
-      hours: '0',
-      rate: contractorHourlyRate.toString(),
-      scope: 'structural_support',
-      category: 'construction',
-      isAutoGenerated: false,
-    };
-
-    const updatedItems = [...localLaborItems, newItem];
-    setLocalLaborItems(updatedItems);
-    setLaborItems('structural', updatedItems);
   }, [localLaborItems, contractorHourlyRate, setLaborItems]);
 
-  const handleAddSubfloorWorkLaborItem = useCallback(() => {
-    userActionRef.current = true;
-    const newItem: LaborItem = {
-      id: `custom-subfloor-work-${Date.now()}`,
-      name: '',
-      hours: '0',
-      rate: contractorHourlyRate.toString(),
-      scope: 'subfloor_work',
-      category: 'construction',
-      isAutoGenerated: false,
-    };
-
-    const updatedItems = [...localLaborItems, newItem];
-    setLocalLaborItems(updatedItems);
-    setLaborItems('structural', updatedItems);
-  }, [localLaborItems, contractorHourlyRate, setLaborItems]);
-
-  const handleAddInsulationLaborItem = useCallback(() => {
-    userActionRef.current = true;
-    const newItem: LaborItem = {
-      id: `custom-insulation-${Date.now()}`,
-      name: '',
-      hours: '0',
-      rate: contractorHourlyRate.toString(),
-      scope: 'insulation',
-      category: 'construction',
-      isAutoGenerated: false,
-    };
-
-    const updatedItems = [...localLaborItems, newItem];
-    setLocalLaborItems(updatedItems);
-    setLaborItems('structural', updatedItems);
-  }, [localLaborItems, contractorHourlyRate, setLaborItems]);
-
-  const handleChangeLaborItem = useCallback(
+  const handleUpdateLaborItem = useCallback(
     (id: string, field: keyof LaborItem, value: string) => {
-      userActionRef.current = true;
       const updatedItems = localLaborItems.map((item) =>
-        item.id === id
-          ? { ...item, [field]: value, isUserModified: true }
-          : item
+        item.id === id ? { ...item, [field]: value } : item
       );
       setLocalLaborItems(updatedItems);
       setLaborItems('structural', updatedItems);
+      userActionRef.current = true;
     },
     [localLaborItems, setLaborItems]
   );
 
   const handleDeleteLaborItem = useCallback(
     (id: string) => {
-      userActionRef.current = true;
       const updatedItems = localLaborItems.filter((item) => item.id !== id);
       setLocalLaborItems(updatedItems);
       setLaborItems('structural', updatedItems);
+      userActionRef.current = true;
     },
     [localLaborItems, setLaborItems]
   );
 
-  const handleAddFlatFeeItem = useCallback(() => {
-    userActionRef.current = true;
-    const newItem: FlatFeeItem = {
-      id: `custom-fee-${Date.now()}`,
-      name: '',
-      unitPrice: '0',
-      scope: 'construction',
-      category: 'construction',
-      isAutoGenerated: false,
-    };
-
-    const updatedItems = [...localFlatFeeItems, newItem];
-    setLocalFlatFeeItems(updatedItems);
-    setFlatFeeItems('structural', updatedItems);
-  }, [localFlatFeeItems, setFlatFeeItems]);
-
-  const handleChangeFlatFeeItem = useCallback(
-    (id: string, field: keyof FlatFeeItem, value: string) => {
-      userActionRef.current = true;
-      const updatedItems = localFlatFeeItems.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item
-      );
-      setLocalFlatFeeItems(updatedItems);
-      setFlatFeeItems('structural', updatedItems);
-    },
-    [localFlatFeeItems, setFlatFeeItems]
-  );
-
-  const handleDeleteFlatFeeItem = useCallback(
-    (id: string) => {
-      userActionRef.current = true;
-      const updatedItems = localFlatFeeItems.filter((item) => item.id !== id);
-      setLocalFlatFeeItems(updatedItems);
-      setFlatFeeItems('structural', updatedItems);
-    },
-    [localFlatFeeItems, setFlatFeeItems]
-  );
+  // Flat fee handlers removed as they're not used in structural workflow
 
   // Calculate totals
+  const laborTotal = useMemo(() => {
+    return localLaborItems.reduce((total, item) => {
+      const hours = parseFloat(item.hours) || 0;
+      const rate = parseFloat(item.rate) || 0;
+      return total + hours * rate;
+    }, 0);
+  }, [localLaborItems]);
+
   const flatFeeTotal = useMemo(() => {
-    return localFlatFeeItems.reduce((sum, item) => {
-      return sum + (parseFloat(item.unitPrice) || 0);
+    return localFlatFeeItems.reduce((total, item) => {
+      const price = parseFloat(item.unitPrice) || 0;
+      return total + price;
     }, 0);
   }, [localFlatFeeItems]);
 
-  // Separate labor items by category
-  const wallWorkLaborItems = useMemo(() => {
-    return localLaborItems.filter(
-      (item) =>
-        item.scope === 'wall_work' ||
-        item.name.toLowerCase().includes('wall') ||
-        item.name.toLowerCase().includes('frame') ||
-        item.name.toLowerCase().includes('doorway') ||
-        item.name.toLowerCase().includes('window') ||
-        item.name.toLowerCase().includes('stud') ||
-        item.name.toLowerCase().includes('plate')
-    );
-  }, [localLaborItems]);
+  const grandTotal = laborTotal + flatFeeTotal;
 
-  const structuralSupportLaborItems = useMemo(() => {
-    return localLaborItems.filter(
-      (item) =>
-        item.scope === 'structural_support' ||
-        item.name.toLowerCase().includes('beam') ||
-        item.name.toLowerCase().includes('header') ||
-        item.name.toLowerCase().includes('joist') ||
-        item.name.toLowerCase().includes('support') ||
-        item.name.toLowerCase().includes('reinforce') ||
-        item.name.toLowerCase().includes('load')
-    );
-  }, [localLaborItems]);
+  // Group items by category
+  const wallWorkItems = localLaborItems.filter((item) => item.color === 'blue');
+  const floorsItems = localLaborItems.filter((item) => item.color === 'green');
+  const windowDoorItems = localLaborItems.filter(
+    (item) => item.color === 'purple'
+  );
+  const customItems = localLaborItems.filter((item) => item.color === 'gray');
 
-  const subfloorWorkLaborItems = useMemo(() => {
-    return localLaborItems.filter(
-      (item) =>
-        item.scope === 'subfloor_work' ||
-        item.name.toLowerCase().includes('subfloor') ||
-        item.name.toLowerCase().includes('plywood') ||
-        item.name.toLowerCase().includes('floor') ||
-        item.name.toLowerCase().includes('decking')
-    );
-  }, [localLaborItems]);
-
-  const insulationLaborItems = useMemo(() => {
-    return localLaborItems.filter(
-      (item) =>
-        item.scope === 'insulation' ||
-        item.name.toLowerCase().includes('insulation') ||
-        item.name.toLowerCase().includes('insulate') ||
-        item.name.toLowerCase().includes('batts') ||
-        item.name.toLowerCase().includes('foam')
-    );
-  }, [localLaborItems]);
-
-  // Calculate totals for each category
-  const wallWorkTotalHours = wallWorkLaborItems.reduce(
-    (sum, item) => sum + (parseFloat(item.hours) || 0),
-    0
-  );
-  const wallWorkLaborTotal = wallWorkLaborItems.reduce(
-    (sum, item) =>
-      sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
-    0
-  );
-
-  const structuralSupportTotalHours = structuralSupportLaborItems.reduce(
-    (sum, item) => sum + (parseFloat(item.hours) || 0),
-    0
-  );
-  const structuralSupportLaborTotal = structuralSupportLaborItems.reduce(
-    (sum, item) =>
-      sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
-    0
-  );
-
-  const subfloorWorkTotalHours = subfloorWorkLaborItems.reduce(
-    (sum, item) => sum + (parseFloat(item.hours) || 0),
-    0
-  );
-  const subfloorWorkLaborTotal = subfloorWorkLaborItems.reduce(
-    (sum, item) =>
-      sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
-    0
-  );
-
-  const insulationTotalHours = insulationLaborItems.reduce(
-    (sum, item) => sum + (parseFloat(item.hours) || 0),
-    0
-  );
-  const insulationLaborTotal = insulationLaborItems.reduce(
-    (sum, item) =>
-      sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
-    0
+  const renderLaborItem = (item: LaborItem) => (
+    <div
+      key={item.id}
+      className={`p-3 rounded-lg border ${
+        item.isAutoGenerated
+          ? 'bg-blue-50 border-blue-200'
+          : 'bg-white border-gray-200'
+      }`}
+    >
+      <div className='flex items-center gap-3'>
+        <div className='flex-1'>
+          <Input
+            value={item.name}
+            onChange={(e) =>
+              handleUpdateLaborItem(item.id, 'name', e.target.value)
+            }
+            placeholder='Item name'
+            className='font-medium'
+          />
+        </div>
+        <div className='w-20'>
+          <Input
+            type='number'
+            value={item.hours}
+            onChange={(e) =>
+              handleUpdateLaborItem(item.id, 'hours', e.target.value)
+            }
+            placeholder='Hours'
+            className='text-center'
+          />
+        </div>
+        <div className='w-24'>
+          <Input
+            type='number'
+            value={item.rate}
+            onChange={(e) =>
+              handleUpdateLaborItem(item.id, 'rate', e.target.value)
+            }
+            placeholder='Rate'
+            className='text-center'
+          />
+        </div>
+        <div className='w-24 text-right font-semibold text-gray-700'>
+          ${(parseFloat(item.hours) * parseFloat(item.rate)).toFixed(2)}
+        </div>
+        {!item.isAutoGenerated && (
+          <Button
+            onClick={() => handleDeleteLaborItem(item.id)}
+            variant='ghost'
+            size='sm'
+            className='p-1 text-red-500 hover:text-red-700'
+          >
+            <Trash2 size={16} />
+          </Button>
+        )}
+      </div>
+    </div>
   );
 
   return (
-    <div className='space-y-5'>
-      <div className='flex justify-between items-baseline'>
-        <h2 className='text-2xl font-bold text-slate-800'>Labor</h2>
+    <div className='space-y-6'>
+      <div className='pt-2'>
+        <div className='flex justify-between items-baseline'>
+          <h2 className='text-2xl font-bold text-slate-800'>Labor</h2>
+          <div className='text-xl font-bold text-blue-600'>
+            ${laborTotal.toFixed(2)}
+          </div>
+        </div>
       </div>
-      <div className='space-y-4'>
-        {/* Wall Work Labor Section */}
-        <Card>
-          <CardContent className='p-3 space-y-3'>
-            <div
-              className='flex justify-between items-center cursor-pointer'
-              onClick={() => setIsWallWorkOpen(!isWallWorkOpen)}
-            >
-              <div className='flex items-center gap-2 justify-between w-full'>
-                <div className='flex items-center gap-2'>
-                  {isWallWorkOpen ? (
-                    <ChevronDown className='h-4 w-4 text-slate-600' />
-                  ) : (
-                    <ChevronRight className='h-4 w-4 text-slate-600' />
-                  )}
-                  <h3 className='text-lg font-semibold text-slate-700'>
-                    Wall Work
-                  </h3>
-                </div>
-                <span className='text-sm text-slate-500'>
-                  {wallWorkTotalHours.toFixed(1)} hrs
-                </span>
-                <p className='font-bold text-blue-600 text-sm'>
-                  ${wallWorkLaborTotal.toFixed(2)}
-                </p>
-              </div>
-            </div>
-            {isWallWorkOpen && (
-              <>
-                {wallWorkLaborItems.length > 0 ? (
-                  <div className='space-y-2'>
-                    {wallWorkLaborItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`p-3 rounded-lg border bg-white shadow-sm w-full ${
-                          item.color || 'border-slate-200'
-                        }`}
-                      >
-                        <div className='flex items-center gap-2 mb-2 w-full'>
-                          <Input
-                            type='text'
-                            value={item.name}
-                            onChange={(e) =>
-                              handleChangeLaborItem(
-                                item.id,
-                                'name',
-                                e.target.value
-                              )
-                            }
-                            placeholder='Labor item name'
-                            className='border-b-2 border-t-0 border-l-0 border-r-0 border-blue-300 focus:border-blue-500 focus:outline-none bg-transparent w-44 sm:w-full'
-                          />
-                          <Button
-                            onClick={() => handleDeleteLaborItem(item.id)}
-                            variant='ghost'
-                            size='sm'
-                            className='text-red-500 hover:text-red-700 p-1 h-auto flex-shrink-0'
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        </div>
-                        <div className='grid grid-cols-3 gap-3 w-full'>
-                          <div className='w-full'>
-                            <label className='text-xs text-slate-500'>
-                              Hours
-                            </label>
-                            <Input
-                              type='number'
-                              value={item.hours}
-                              onChange={(e) =>
-                                handleChangeLaborItem(
-                                  item.id,
-                                  'hours',
-                                  e.target.value
-                                )
-                              }
-                              placeholder='0'
-                              className='text-center w-full border-blue-300 focus:border-blue-500'
-                            />
-                          </div>
-                          <div className='w-full'>
-                            <label className='text-xs text-slate-500'>
-                              Rate ($/hr)
-                            </label>
-                            <Input
-                              type='number'
-                              value={item.rate}
-                              onChange={(e) =>
-                                handleChangeLaborItem(
-                                  item.id,
-                                  'rate',
-                                  e.target.value
-                                )
-                              }
-                              placeholder='0'
-                              className='text-center w-full border-blue-300 focus:border-blue-500'
-                            />
-                          </div>
-                          <div className='w-full'>
-                            <label className='text-xs text-slate-500'>
-                              Total
-                            </label>
-                            <div className='w-full p-2 text-center font-semibold text-slate-800 bg-slate-50 rounded-md'>
-                              $
-                              {(
-                                (parseFloat(item.hours) || 0) *
-                                (parseFloat(item.rate) || 0)
-                              ).toFixed(2)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className='text-sm text-slate-500 text-center py-4'>
-                    No wall work labor items added yet.
-                  </p>
-                )}
-                <div className='flex justify-center'>
-                  <Button
-                    onClick={handleAddWallWorkLaborItem}
-                    className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
-                  >
-                    <Plus size={16} />
-                    Add Item
-                  </Button>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Structural Support Labor Section */}
-        <Card>
-          <CardContent className='p-3 space-y-3'>
-            <div
-              className='flex justify-between items-center cursor-pointer'
-              onClick={() =>
-                setIsStructuralSupportOpen(!isStructuralSupportOpen)
-              }
-            >
-              <div className='flex items-center gap-2 justify-between w-full'>
-                <div className='flex items-center gap-2'>
-                  {isStructuralSupportOpen ? (
-                    <ChevronDown className='h-4 w-4 text-slate-600' />
-                  ) : (
-                    <ChevronRight className='h-4 w-4 text-slate-600' />
-                  )}
-                  <h3 className='text-lg font-semibold text-slate-700'>
-                    Structural Support
-                  </h3>
-                </div>
-                <span className='text-sm text-slate-500'>
-                  {structuralSupportTotalHours.toFixed(1)} hrs
-                </span>
-                <p className='font-bold text-blue-600 text-sm'>
-                  ${structuralSupportLaborTotal.toFixed(2)}
-                </p>
-              </div>
-            </div>
-            {isStructuralSupportOpen && (
-              <>
-                {structuralSupportLaborItems.length > 0 ? (
-                  <div className='space-y-2'>
-                    {structuralSupportLaborItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`p-3 rounded-lg border bg-white shadow-sm w-full ${
-                          item.color || 'border-slate-200'
-                        }`}
-                      >
-                        <div className='flex items-center gap-2 mb-2 w-full'>
-                          <Input
-                            type='text'
-                            value={item.name}
-                            onChange={(e) =>
-                              handleChangeLaborItem(
-                                item.id,
-                                'name',
-                                e.target.value
-                              )
-                            }
-                            placeholder='Labor item name'
-                            className='border-b-2 border-t-0 border-l-0 border-r-0 border-blue-300 focus:border-blue-500 focus:outline-none bg-transparent w-44 sm:w-full'
-                          />
-                          <Button
-                            onClick={() => handleDeleteLaborItem(item.id)}
-                            variant='ghost'
-                            size='sm'
-                            className='text-red-500 hover:text-red-700 p-1 h-auto flex-shrink-0'
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        </div>
-                        <div className='grid grid-cols-3 gap-3 w-full'>
-                          <div className='w-full'>
-                            <label className='text-xs text-slate-500'>
-                              Hours
-                            </label>
-                            <Input
-                              type='number'
-                              value={item.hours}
-                              onChange={(e) =>
-                                handleChangeLaborItem(
-                                  item.id,
-                                  'hours',
-                                  e.target.value
-                                )
-                              }
-                              placeholder='0'
-                              className='text-center w-full border-blue-300 focus:border-blue-500'
-                            />
-                          </div>
-                          <div className='w-full'>
-                            <label className='text-xs text-slate-500'>
-                              Rate ($/hr)
-                            </label>
-                            <Input
-                              type='number'
-                              value={item.rate}
-                              onChange={(e) =>
-                                handleChangeLaborItem(
-                                  item.id,
-                                  'rate',
-                                  e.target.value
-                                )
-                              }
-                              placeholder='0'
-                              className='text-center w-full border-blue-300 focus:border-blue-500'
-                            />
-                          </div>
-                          <div className='w-full'>
-                            <label className='text-xs text-slate-500'>
-                              Total
-                            </label>
-                            <div className='w-full p-2 text-center font-semibold text-slate-800 bg-slate-50 rounded-md'>
-                              $
-                              {(
-                                (parseFloat(item.hours) || 0) *
-                                (parseFloat(item.rate) || 0)
-                              ).toFixed(2)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className='text-sm text-slate-500 text-center py-4'>
-                    No structural support labor items added yet.
-                  </p>
-                )}
-                <div className='flex justify-center'>
-                  <Button
-                    onClick={handleAddStructuralSupportLaborItem}
-                    className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
-                  >
-                    <Plus size={16} />
-                    Add Item
-                  </Button>
-                </div>
-              </>
+      {/* Wall Work */}
+      <Card>
+        <CardContent className='p-0'>
+          <div
+            className='flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50'
+            onClick={() => setIsWallWorkOpen(!isWallWorkOpen)}
+          >
+            <h3 className='text-lg font-semibold text-gray-900'>Wall Work</h3>
+            {isWallWorkOpen ? (
+              <ChevronDown className='h-5 w-5 text-gray-500' />
+            ) : (
+              <ChevronRight className='h-5 w-5 text-gray-500' />
             )}
-          </CardContent>
-        </Card>
-
-        {/* Subfloor Work Labor Section */}
-        <Card>
-          <CardContent className='p-3 space-y-3'>
-            <div
-              className='flex justify-between items-center cursor-pointer'
-              onClick={() => setIsSubfloorWorkOpen(!isSubfloorWorkOpen)}
-            >
-              <div className='flex items-center gap-2 justify-between w-full'>
-                <div className='flex items-center gap-2'>
-                  {isSubfloorWorkOpen ? (
-                    <ChevronDown className='h-4 w-4 text-slate-600' />
-                  ) : (
-                    <ChevronRight className='h-4 w-4 text-slate-600' />
-                  )}
-                  <h3 className='text-lg font-semibold text-slate-700'>
-                    Subfloor Work
-                  </h3>
+          </div>
+          {isWallWorkOpen && (
+            <div className='px-4 pb-4 space-y-3'>
+              {wallWorkItems.length > 0 ? (
+                wallWorkItems.map(renderLaborItem)
+              ) : (
+                <div className='text-center py-8 text-gray-500'>
+                  No wall work items yet. Select tasks in the Design section to
+                  auto-populate items.
                 </div>
-                <span className='text-sm text-slate-500'>
-                  {subfloorWorkTotalHours.toFixed(1)} hrs
-                </span>
-                <p className='font-bold text-blue-600 text-sm'>
-                  ${subfloorWorkLaborTotal.toFixed(2)}
-                </p>
-              </div>
+              )}
             </div>
-            {isSubfloorWorkOpen && (
-              <>
-                {subfloorWorkLaborItems.length > 0 ? (
-                  <div className='space-y-2'>
-                    {subfloorWorkLaborItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`p-3 rounded-lg border bg-white shadow-sm w-full ${
-                          item.color || 'border-slate-200'
-                        }`}
-                      >
-                        <div className='flex items-center gap-2 mb-2 w-full'>
-                          <Input
-                            type='text'
-                            value={item.name}
-                            onChange={(e) =>
-                              handleChangeLaborItem(
-                                item.id,
-                                'name',
-                                e.target.value
-                              )
-                            }
-                            placeholder='Labor item name'
-                            className='border-b-2 border-t-0 border-l-0 border-r-0 border-blue-300 focus:border-blue-500 focus:outline-none bg-transparent w-44 sm:w-full'
-                          />
-                          <Button
-                            onClick={() => handleDeleteLaborItem(item.id)}
-                            variant='ghost'
-                            size='sm'
-                            className='text-red-500 hover:text-red-700 p-1 h-auto flex-shrink-0'
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        </div>
-                        <div className='grid grid-cols-3 gap-3 w-full'>
-                          <div className='w-full'>
-                            <label className='text-xs text-slate-500'>
-                              Hours
-                            </label>
-                            <Input
-                              type='number'
-                              value={item.hours}
-                              onChange={(e) =>
-                                handleChangeLaborItem(
-                                  item.id,
-                                  'hours',
-                                  e.target.value
-                                )
-                              }
-                              placeholder='0'
-                              className='text-center w-full border-blue-300 focus:border-blue-500'
-                            />
-                          </div>
-                          <div className='w-full'>
-                            <label className='text-xs text-slate-500'>
-                              Rate ($/hr)
-                            </label>
-                            <Input
-                              type='number'
-                              value={item.rate}
-                              onChange={(e) =>
-                                handleChangeLaborItem(
-                                  item.id,
-                                  'rate',
-                                  e.target.value
-                                )
-                              }
-                              placeholder='0'
-                              className='text-center w-full border-blue-300 focus:border-blue-500'
-                            />
-                          </div>
-                          <div className='w-full'>
-                            <label className='text-xs text-slate-500'>
-                              Total
-                            </label>
-                            <div className='w-full p-2 text-center font-semibold text-slate-800 bg-slate-50 rounded-md'>
-                              $
-                              {(
-                                (parseFloat(item.hours) || 0) *
-                                (parseFloat(item.rate) || 0)
-                              ).toFixed(2)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className='text-sm text-slate-500 text-center py-4'>
-                    No subfloor work labor items added yet.
-                  </p>
-                )}
-                <div className='flex justify-center'>
-                  <Button
-                    onClick={handleAddSubfloorWorkLaborItem}
-                    className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
-                  >
-                    <Plus size={16} />
-                    Add Item
-                  </Button>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Insulation Labor Section */}
-        <Card>
-          <CardContent className='p-3 space-y-3'>
-            <div
-              className='flex justify-between items-center cursor-pointer'
-              onClick={() => setIsInsulationOpen(!isInsulationOpen)}
-            >
-              <div className='flex items-center gap-2 justify-between w-full'>
-                <div className='flex items-center gap-2'>
-                  {isInsulationOpen ? (
-                    <ChevronDown className='h-4 w-4 text-slate-600' />
-                  ) : (
-                    <ChevronRight className='h-4 w-4 text-slate-600' />
-                  )}
-                  <h3 className='text-lg font-semibold text-slate-700'>
-                    Insulation
-                  </h3>
+      {/* Floors */}
+      <Card>
+        <CardContent className='p-0'>
+          <div
+            className='flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50'
+            onClick={() => setIsFloorsOpen(!isFloorsOpen)}
+          >
+            <h3 className='text-lg font-semibold text-gray-900'>Floors</h3>
+            {isFloorsOpen ? (
+              <ChevronDown className='h-5 w-5 text-gray-500' />
+            ) : (
+              <ChevronRight className='h-5 w-5 text-gray-500' />
+            )}
+          </div>
+          {isFloorsOpen && (
+            <div className='px-4 pb-4 space-y-3'>
+              {floorsItems.length > 0 ? (
+                floorsItems.map(renderLaborItem)
+              ) : (
+                <div className='text-center py-8 text-gray-500'>
+                  No floor work items yet. Select tasks in the Design section to
+                  auto-populate items.
                 </div>
-                <span className='text-sm text-slate-500'>
-                  {insulationTotalHours.toFixed(1)} hrs
-                </span>
-                <p className='font-bold text-blue-600 text-sm'>
-                  ${insulationLaborTotal.toFixed(2)}
-                </p>
-              </div>
+              )}
             </div>
-            {isInsulationOpen && (
-              <>
-                {insulationLaborItems.length > 0 ? (
-                  <div className='space-y-2'>
-                    {insulationLaborItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`p-3 rounded-lg border bg-white shadow-sm w-full ${
-                          item.color || 'border-slate-200'
-                        }`}
-                      >
-                        <div className='flex items-center gap-2 mb-2 w-full'>
-                          <Input
-                            type='text'
-                            value={item.name}
-                            onChange={(e) =>
-                              handleChangeLaborItem(
-                                item.id,
-                                'name',
-                                e.target.value
-                              )
-                            }
-                            placeholder='Labor item name'
-                            className='border-b-2 border-t-0 border-l-0 border-r-0 border-blue-300 focus:border-blue-500 focus:outline-none bg-transparent w-44 sm:w-full'
-                          />
-                          <Button
-                            onClick={() => handleDeleteLaborItem(item.id)}
-                            variant='ghost'
-                            size='sm'
-                            className='text-red-500 hover:text-red-700 p-1 h-auto flex-shrink-0'
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        </div>
-                        <div className='grid grid-cols-3 gap-3 w-full'>
-                          <div className='w-full'>
-                            <label className='text-xs text-slate-500'>
-                              Hours
-                            </label>
-                            <Input
-                              type='number'
-                              value={item.hours}
-                              onChange={(e) =>
-                                handleChangeLaborItem(
-                                  item.id,
-                                  'hours',
-                                  e.target.value
-                                )
-                              }
-                              placeholder='0'
-                              className='text-center w-full border-blue-300 focus:border-blue-500'
-                            />
-                          </div>
-                          <div className='w-full'>
-                            <label className='text-xs text-slate-500'>
-                              Rate ($/hr)
-                            </label>
-                            <Input
-                              type='number'
-                              value={item.rate}
-                              onChange={(e) =>
-                                handleChangeLaborItem(
-                                  item.id,
-                                  'rate',
-                                  e.target.value
-                                )
-                              }
-                              placeholder='0'
-                              className='text-center w-full border-blue-300 focus:border-blue-500'
-                            />
-                          </div>
-                          <div className='w-full'>
-                            <label className='text-xs text-slate-500'>
-                              Total
-                            </label>
-                            <div className='w-full p-2 text-center font-semibold text-slate-800 bg-slate-50 rounded-md'>
-                              $
-                              {(
-                                (parseFloat(item.hours) || 0) *
-                                (parseFloat(item.rate) || 0)
-                              ).toFixed(2)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className='text-sm text-slate-500 text-center py-4'>
-                    No insulation labor items added yet.
-                  </p>
-                )}
-                <div className='flex justify-center'>
-                  <Button
-                    onClick={handleAddInsulationLaborItem}
-                    className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
-                  >
-                    <Plus size={16} />
-                    Add Item
-                  </Button>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </CardContent>
+      </Card>
 
-        {localFlatFeeItems.length > 0 && (
-          <Card>
-            <CardContent className='p-3 space-y-3'>
+      {/* Window & Door Openings */}
+      <Card>
+        <CardContent className='p-0'>
+          <div
+            className='flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50'
+            onClick={() => setIsWindowDoorOpen(!isWindowDoorOpen)}
+          >
+            <h3 className='text-lg font-semibold text-gray-900'>
+              Window & Door Openings
+            </h3>
+            {isWindowDoorOpen ? (
+              <ChevronDown className='h-5 w-5 text-gray-500' />
+            ) : (
+              <ChevronRight className='h-5 w-5 text-gray-500' />
+            )}
+          </div>
+          {isWindowDoorOpen && (
+            <div className='px-4 pb-4 space-y-3'>
+              {windowDoorItems.length > 0 ? (
+                windowDoorItems.map(renderLaborItem)
+              ) : (
+                <div className='text-center py-8 text-gray-500'>
+                  No window/door work items yet. Select tasks in the Design
+                  section to auto-populate items.
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Custom Items */}
+      <Card>
+        <CardContent className='p-0'>
+          <div className='flex items-center justify-between p-4'>
+            <h3 className='text-lg font-semibold text-gray-900'>
+              Custom Items
+            </h3>
+            <Button
+              onClick={handleAddLaborItem}
+              variant='outline'
+              size='sm'
+              className='flex items-center gap-2'
+            >
+              <Plus size={16} />
+              Add Labor Item
+            </Button>
+          </div>
+          <div className='px-4 pb-4 space-y-3'>
+            {customItems.length > 0 ? (
+              customItems.map(renderLaborItem)
+            ) : (
+              <div className='text-center py-8 text-gray-500'>
+                No custom items yet. Click &quot;Add Labor Item&quot; to create
+                one.
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Totals */}
+      <Card>
+        <CardContent className='p-4'>
+          <div className='space-y-2'>
+            <div className='flex justify-between items-center'>
+              <span className='text-lg font-medium text-gray-700'>
+                Labor Total:
+              </span>
+              <span className='text-lg font-semibold text-gray-900'>
+                ${laborTotal.toFixed(2)}
+              </span>
+            </div>
+            <div className='flex justify-between items-center'>
+              <span className='text-lg font-medium text-gray-700'>
+                Flat Fee Total:
+              </span>
+              <span className='text-lg font-semibold text-gray-900'>
+                ${flatFeeTotal.toFixed(2)}
+              </span>
+            </div>
+            <div className='border-t pt-2'>
               <div className='flex justify-between items-center'>
-                <div className='flex items-center gap-2 justify-between w-full'>
-                  <div className='flex items-center gap-2'>
-                    <h3 className='text-lg font-semibold text-slate-700'>
-                      Flat Fees
-                    </h3>
-                  </div>
-                  <p className='font-bold text-green-600 text-sm'>
-                    ${flatFeeTotal.toFixed(2)}
-                  </p>
-                </div>
+                <span className='text-xl font-bold text-gray-900'>
+                  Grand Total:
+                </span>
+                <span className='text-2xl font-bold text-blue-600'>
+                  ${grandTotal.toFixed(2)}
+                </span>
               </div>
-              {localFlatFeeItems.map((item) => (
-                <div
-                  key={item.id}
-                  className={`p-3 rounded-lg border shadow-sm w-full ${
-                    item.color || 'border-slate-200'
-                  }`}
-                >
-                  <div className='flex items-center gap-2 mb-2 w-full'>
-                    <Input
-                      type='text'
-                      value={item.name}
-                      onChange={(e) =>
-                        handleChangeFlatFeeItem(item.id, 'name', e.target.value)
-                      }
-                      placeholder='Flat fee item name'
-                      className='border-b-2 border-t-0 border-l-0 border-r-0 border-blue-300 focus:border-blue-500 focus:outline-none bg-transparent w-44 sm:w-full'
-                    />
-                    <Button
-                      onClick={() => handleDeleteFlatFeeItem(item.id)}
-                      variant='ghost'
-                      size='sm'
-                      className='text-red-500 hover:text-red-700 p-1 h-auto flex-shrink-0'
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                  <div className='grid grid-cols-1 gap-3 w-full'>
-                    <div className='w-full'>
-                      <label className='text-xs text-slate-500'>Cost</label>
-                      <Input
-                        type='number'
-                        value={item.unitPrice}
-                        onChange={(e) =>
-                          handleChangeFlatFeeItem(
-                            item.id,
-                            'unitPrice',
-                            e.target.value
-                          )
-                        }
-                        placeholder='0'
-                        className='text-center w-full border-blue-300 focus:border-blue-500'
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              <div className='flex justify-center'>
-                <Button
-                  onClick={handleAddFlatFeeItem}
-                  className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-green-200'
-                >
-                  <Plus size={16} />
-                  Add Item
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
