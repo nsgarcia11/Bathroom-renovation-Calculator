@@ -54,34 +54,41 @@ export function ShowerWallsSection() {
   } | null;
 
   const walls = useMemo(() => designData?.walls || [], [designData]);
-  const design = useMemo(() => designData?.design || {
-    tileSize: 'Select tile size',
-    customTileWidth: '',
-    customTileLength: '',
-    tilePattern: 'Select Tile Pattern',
-    customTilePatternName: '',
-    niche: 'None',
-    showerDoor: 'None',
-    waterproofingSystem: 'None / Select System...',
-    customWaterproofingName: '',
-    grabBar: '0',
-    notes: '',
-    constructionNotes: '',
-    designContractorNotes: '',
-    designClientNotes: '',
-    constructionContractorNotes: '',
-    constructionClientNotes: '',
-    clientSuppliesBase: 'No',
-    repairWalls: false,
-    reinsulateWalls: false,
-  }, [designData]);
+  const design = useMemo(
+    () =>
+      designData?.design || {
+        tileSize: 'Select tile size',
+        customTileWidth: '',
+        customTileLength: '',
+        tilePattern: 'Select Tile Pattern',
+        customTilePatternName: '',
+        niche: 'None',
+        showerDoor: 'None',
+        waterproofingSystem: 'None / Select System...',
+        customWaterproofingName: '',
+        grabBar: '0',
+        notes: '',
+        constructionNotes: '',
+        designContractorNotes: '',
+        designClientNotes: '',
+        constructionContractorNotes: '',
+        constructionClientNotes: '',
+        clientSuppliesBase: 'No',
+        repairWalls: false,
+        reinsulateWalls: false,
+      },
+    [designData]
+  );
 
   // Context update functions
-  const setWalls = useCallback((newWalls: Wall[] | ((prev: Wall[]) => Wall[])) => {
-    const wallsArray =
-      typeof newWalls === 'function' ? newWalls(walls) : newWalls;
-    updateDesign('showerWalls', { walls: wallsArray });
-  }, [walls, updateDesign]);
+  const setWalls = useCallback(
+    (newWalls: Wall[] | ((prev: Wall[]) => Wall[])) => {
+      const wallsArray =
+        typeof newWalls === 'function' ? newWalls(walls) : newWalls;
+      updateDesign('showerWalls', { walls: wallsArray });
+    },
+    [walls, updateDesign]
+  );
 
   const setDesign = (
     newDesign:
@@ -193,9 +200,10 @@ export function ShowerWallsSection() {
   };
 
   return (
-    <div className='space-y-4'>
+    <div className='space-y-6'>
+      <h2 className='text-2xl font-bold text-slate-800'>Shower Walls</h2>
       {/* Measurements Section */}
-      <div className='px-4'>
+      <div className='px-0'>
         <CollapsibleSection
           title='Measurements'
           colorScheme='neutral'
@@ -471,22 +479,18 @@ export function ShowerWallsSection() {
               title='Design Notes'
               placeholder='Add design-specific notes here...'
               contractorTags={[
-                'Trim Style',
-                'Grout Color',
-                'Niche Details',
-                'Accent Wall',
-                'Shower Fixtures',
-                'Tile Layout',
-                'Pattern Details',
-                'Waterproofing Notes',
+                'Wall not square',
+                'Valve not centered to layout',
+                'Blocking needed for niche or glass',
+                'Tile layout to align with feature wall',
+                'Recommend upgraded waterproofing system',
               ]}
               clientTags={[
-                'Design Preferences',
-                'Color Choices',
-                'Style Requests',
-                'Budget Considerations',
-                'Timeline Concerns',
-                'Special Requirements',
+                'Trim Style / Color',
+                'Grout Color',
+                'Accent or Border details',
+                'Shower Fixtures color/Finishing',
+                'Tile Name',
               ]}
               useTabs={true}
               alwaysExpanded={true}
@@ -585,23 +589,12 @@ export function ShowerWallsSection() {
               title='Construction Notes'
               placeholder='Add construction-specific notes here...'
               contractorTags={[
-                'Blocking',
-                'Plumbing Move',
-                'Electrical',
-                'Ventilation',
-                'Waterproofing Details',
-                'Tile Installation',
-                'Grout Application',
-                'Sealing Requirements',
+                'Moisture or Mold issue',
+                'Uneven walls / floor',
+                'Existing walls uneven',
+                'Valve height or alignment off',
               ]}
-              clientTags={[
-                'Access Requirements',
-                'Timeline Constraints',
-                'Noise Restrictions',
-                'Cleanup Preferences',
-                'Quality Expectations',
-                'Inspection Needs',
-              ]}
+              clientTags={['Grab bar details', 'Grout sealant']}
               useTabs={true}
               alwaysExpanded={true}
             />

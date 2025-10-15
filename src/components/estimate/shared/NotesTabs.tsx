@@ -92,7 +92,14 @@ export function NotesTabs({
               }`}
             >
               <Icon size={16} />
-              <span>{tab.label}</span>
+              <div className='flex flex-col'>
+                <span>{tab.label}</span>
+                <p className='text-[12px] text-slate-500'>
+                  {tab.id === 'contractor'
+                    ? 'Internal use only'
+                    : 'Appears on estimate'}
+                </p>
+              </div>
             </button>
           );
         })}
@@ -106,9 +113,11 @@ export function NotesTabs({
             <div className='bg-slate-50 rounded-lg p-4'>
               {readOnly ? (
                 <div className='space-y-2'>
-                  <h4 className='text-sm font-medium text-slate-700'>
-                    {activeTabData.label}
-                  </h4>
+                  <div className='space-y-1'>
+                    <h4 className='text-sm font-medium text-slate-700'>
+                      {activeTabData.label}
+                    </h4>
+                  </div>
                   {activeTabData.notes ? (
                     <pre className='whitespace-pre-wrap text-sm text-slate-700 font-mono leading-relaxed'>
                       {activeTabData.notes}
@@ -121,9 +130,11 @@ export function NotesTabs({
                 </div>
               ) : (
                 <div className='space-y-2'>
-                  <label className='block text-sm font-medium text-slate-700'>
-                    {activeTabData.label}
-                  </label>
+                  <div className='space-y-1'>
+                    <label className='block text-sm font-medium text-slate-700'>
+                      {activeTabData.label}
+                    </label>
+                  </div>
                   <textarea
                     value={activeTabData.notes}
                     onChange={(e) => activeTabData.onChange?.(e.target.value)}

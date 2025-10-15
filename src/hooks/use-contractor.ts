@@ -34,7 +34,19 @@ export function useContractor() {
         throw error;
       }
     },
-    retry: false,
+    retry: (failureCount, error) => {
+      // Retry up to 2 times for network errors, but not for auth errors
+      if (
+        failureCount < 2 &&
+        error instanceof Error &&
+        !error.message.includes('JWT')
+      ) {
+        return true;
+      }
+      return false;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 

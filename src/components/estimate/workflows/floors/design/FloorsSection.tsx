@@ -259,6 +259,7 @@ export function FloorsSection() {
 
   return (
     <div className='space-y-6'>
+      <h2 className='text-2xl font-bold text-slate-800'>Floors</h2>
       {/* Measurements Card */}
       <CollapsibleSection
         title='Floor Measurements'
@@ -586,17 +587,15 @@ export function FloorsSection() {
             title='Design Notes'
             placeholder='Add design-specific notes here...'
             contractorTags={[
-              'Tile Pattern',
-              'Tile Size',
-              'Waste Factor',
-              'Layout Direction',
-              'Grout Color',
+              'Offer heated floor upgrade',
+              'Suggest larger format tile for cleaner look',
+              'Verify transition height at doorway',
             ]}
             clientTags={[
-              'Design Preferences',
-              'Style Requirements',
-              'Budget Considerations',
-              'Timeline Requirements',
+              'Grout colour',
+              'transition style / colour',
+              'heated floor confirmed',
+              'Layout direction (square/diagonal)',
             ]}
             useTabs={true}
             alwaysExpanded={true}
@@ -757,17 +756,16 @@ export function FloorsSection() {
             title='Construction Notes'
             placeholder='Add construction-specific notes here...'
             contractorTags={[
-              'Installation Method',
-              'Subfloor Preparation',
-              'Membrane Installation',
-              'Quality Control',
-              'Safety Requirements',
+              'Subfloor damaged or soft',
+              'Moisture signs toilet or tub',
+              'No existing underlayment',
+              'Cracked tiles or grout showing movement',
+              'Check joist spacing',
             ]}
             clientTags={[
-              'Timeline Requirements',
-              'Access Restrictions',
-              'Quality Expectations',
-              'Cleanup Requirements',
+              'Subfloor inspected and leveled for new tile',
+              'Heated Floor',
+              'Grout sealant',
             ]}
             useTabs={true}
             alwaysExpanded={true}

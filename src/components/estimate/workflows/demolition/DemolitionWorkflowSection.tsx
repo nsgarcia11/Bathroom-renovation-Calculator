@@ -5,12 +5,10 @@ import DemolitionMaterialsSection from './materials/DemolitionMaterialsSection';
 
 interface DemolitionWorkflowSectionProps {
   activeSection: 'design' | 'labor' | 'materials';
-  contractorHourlyRate?: number;
 }
 
 export default function DemolitionWorkflowSection({
   activeSection,
-  contractorHourlyRate,
 }: DemolitionWorkflowSectionProps) {
   // Note: All sections now manage their own context updates
 
@@ -19,9 +17,7 @@ export default function DemolitionWorkflowSection({
   }
 
   if (activeSection === 'labor') {
-    return (
-      <DemolitionLaborSection contractorHourlyRate={contractorHourlyRate} />
-    );
+    return <DemolitionLaborSection />;
   }
 
   if (activeSection === 'materials') {

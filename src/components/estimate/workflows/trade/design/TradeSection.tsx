@@ -98,9 +98,7 @@ export function TradeSection() {
 
   return (
     <div className='space-y-6'>
-      <div className='pt-2'>
-        <h1 className='text-4xl font-bold text-slate-800 text-left'>Trade</h1>
-      </div>
+      <h2 className='text-2xl font-bold text-slate-800'>Trades</h2>
 
       {/* Plumbing Card */}
       <CollapsibleSection title='Plumbing' colorScheme='design'>
@@ -220,18 +218,18 @@ export function TradeSection() {
             title='Design Notes'
             placeholder='Add design-specific notes here...'
             contractorTags={[
-              'Plumbing Layout',
-              'Fixture Specifications',
-              'Water Supply Requirements',
-              'Drainage Planning',
-              'Code Compliance',
+              'Pipes visible and accessible',
+              'Old lines corroded or mixed',
+              'Drain may need move',
+              'Low water pressure',
+              'Tight access behind wall',
             ]}
             clientTags={[
-              'Fixture Preferences',
-              'Water Pressure Requirements',
-              'Accessibility Needs',
-              'Quality Standards',
-              'Timeline Requirements',
+              'Fixture models confirmed',
+              'Faucet style chosen',
+              'Sink location approved',
+              'Valve height confirmed',
+              'Tub filler selected',
             ]}
             useTabs={true}
             alwaysExpanded={true}
@@ -314,18 +312,18 @@ export function TradeSection() {
             title='Construction Notes'
             placeholder='Add construction-specific notes here...'
             contractorTags={[
-              'Electrical Code Requirements',
-              'Load Calculations',
-              'Permit Requirements',
-              'Safety Considerations',
-              'Wiring Specifications',
+              'Existing wiring condition checked',
+              'Breaker capacity may be limited',
+              'Access in ceiling confirmed',
+              'Switch or outlet locations to verify',
+              'Fan vent path needs inspection',
             ]}
             clientTags={[
-              'Timeline Requirements',
-              'Access Constraints',
-              'Quality Standards',
-              'Warranty Information',
-              'Future Modifications',
+              'Light fixture style selected',
+              'Outlet and switch layout approved',
+              'Pot light locations confirmed',
+              'Exhaust fan type chosen',
+              'Fixture finish and trim color confirmed',
             ]}
             useTabs={true}
             alwaysExpanded={true}

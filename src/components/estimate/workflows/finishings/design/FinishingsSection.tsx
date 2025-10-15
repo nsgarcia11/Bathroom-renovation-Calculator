@@ -218,11 +218,7 @@ export function FinishingsSection() {
 
   return (
     <div className='space-y-6'>
-      <div className='pt-2'>
-        <h1 className='text-4xl font-bold text-slate-800 text-left'>
-          Finishings
-        </h1>
-      </div>
+      <h2 className='text-2xl font-bold text-slate-800'>Finishings</h2>
 
       {/* Measurements Card */}
       <CollapsibleSection
@@ -381,18 +377,17 @@ export function FinishingsSection() {
             title='Design Notes'
             placeholder='Add design-specific notes here...'
             contractorTags={[
-              'Paint Colors',
-              'Finish Type',
-              'Accent Walls',
-              'Trim Details',
-              'Door Finish',
+              'Wall condition',
+              'Primer coat needed before final color',
+              'Moisture or peeling paint detected',
+              'Paint baseboard',
             ]}
             clientTags={[
-              'Color Preferences',
-              'Finish Quality',
-              'Accent Wall Ideas',
-              'Trim Style',
-              'Door Style',
+              'Paint color and sheen',
+              'Ceiling and trim finish',
+              'Accent wall areas selected',
+              'Client requested low-VOC paint',
+              'Final color approval received',
             ]}
             useTabs={true}
             alwaysExpanded={true}
@@ -598,18 +593,18 @@ export function FinishingsSection() {
             title='Construction Notes'
             placeholder='Add construction-specific notes here...'
             contractorTags={[
-              'Installation Schedule',
-              'Material Delivery',
-              'Access Requirements',
-              'Noise/Dust Concerns',
-              'Cleanup Expectations',
+              'Verify electrical and plumbing rough-ins',
+              'Wall blocking',
+              'Outlet or switch misalignment',
+              'Baseboard or trim needs replacement',
+              'Confirm spacing for vanity and toilet clearance',
             ]}
             clientTags={[
-              'Fixture Selection',
-              'Installation Preferences',
-              'Timing Requirements',
-              'Quality Standards',
-              'Warranty Information',
+              'Fixture and hardware finishes confirmed',
+              'Mirror and lighting placement approved',
+              'Vanity style and dimensions verified',
+              'Toilet model and seat type chosen',
+              'Accessories and towel bars confirmed',
             ]}
             useTabs={true}
             alwaysExpanded={true}

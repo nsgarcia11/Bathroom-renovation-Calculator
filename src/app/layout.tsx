@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { QueryProvider } from '@/providers/QueryProvider';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { ContractorProvider } from '@/contexts/ContractorContext';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -20,7 +21,9 @@ export default function RootLayout({
     <html lang='en'>
       <body className={inter.className} suppressHydrationWarning={true}>
         <QueryProvider>
-          <ContractorProvider>{children}</ContractorProvider>
+          <AuthProvider>
+            <ContractorProvider>{children}</ContractorProvider>
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>

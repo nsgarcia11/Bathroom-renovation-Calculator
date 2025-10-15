@@ -12,9 +12,13 @@ interface AuthGuardProps {
 
 export function AuthGuard({ children }: AuthGuardProps) {
   const { user, loading: authLoading } = useAuth();
-  const { data: contractor, isLoading: contractorLoading } = useContractor();
+  const {
+    data: contractor,
+    isLoading: contractorLoading,
+    error: contractorError,
+  } = useContractor();
 
-  const loading = authLoading || contractorLoading;
+  const loading = authLoading || (user && contractorLoading);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -25,7 +29,13 @@ export function AuthGuard({ children }: AuthGuardProps) {
   }
 
   // If user is authenticated but hasn't completed setup, show setup wizard
-  if (!contractor) {
+  // Only redirect to setup if we're sure there's no contractor data (not just loading)
+  if (!contractor && !contractorLoading && !contractorError) {
+    return <SetupPage />;
+  }
+
+  // If there's an error loading contractor data, show setup page as fallback
+  if (contractorError && !contractor) {
     return <SetupPage />;
   }
 

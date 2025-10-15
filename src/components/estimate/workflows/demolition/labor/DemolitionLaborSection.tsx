@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
+import { useContractorContext } from '@/contexts/ContractorContext';
 import { DEMOLITION_LABOR_ITEMS } from '@/lib/constants';
 
 interface LaborItem {
@@ -40,13 +41,7 @@ interface DemolitionChoices {
   removeWall: 'yes' | 'no';
 }
 
-interface DemolitionLaborSectionProps {
-  contractorHourlyRate?: number;
-}
-
-export default function DemolitionLaborSection({
-  contractorHourlyRate = 95,
-}: DemolitionLaborSectionProps) {
+export default function DemolitionLaborSection() {
   const {
     getDesignData,
     getLaborItems,
@@ -55,6 +50,7 @@ export default function DemolitionLaborSection({
     setFlatFeeItems,
     isReloading,
   } = useEstimateWorkflowContext();
+  const { hourlyRate: contractorHourlyRate } = useContractorContext();
 
   // Ref to track if we're in the middle of a user action
   const isUserActionRef = useRef(false);

@@ -353,26 +353,18 @@ export function DemolitionSection() {
           title='Notes'
           placeholder='Add demolition-specific notes...'
           contractorTags={[
-            'Heavy mortar',
-            'Mold present',
-            'Asbestos concerns',
-            'Structural damage',
-            'Electrical hazards',
-            'Plumbing complications',
-            'Access limitations',
-            'Load-bearing wall',
-            'Pre-demo photos',
-            'Protect finishes',
+            'Check plumbing/electrical disconnect',
+            'Confirm dump/bin access',
+            'Verify floor layers/subfloor',
+            'Set dust barriers',
+            'Note hidden damage/mold',
           ]}
           clientTags={[
-            'Budget constraints',
-            'Timeline concerns',
-            'Special requirements',
-            'Client preferences',
-            'Access restrictions',
-            'Noise limitations',
-            'Cleanup requirements',
-            'Permit issues',
+            'Removal of old fixtures & debris',
+            'Includes dust control & cleanup',
+            'Hidden issues may affect cost',
+            'Disposal fees included',
+            'Area prepped for rebuild',
           ]}
           useTabs={true}
         />

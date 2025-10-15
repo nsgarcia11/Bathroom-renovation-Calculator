@@ -109,11 +109,7 @@ export function StructuralSection() {
 
   return (
     <div className='space-y-6'>
-      <div className='pt-2'>
-        <h1 className='text-4xl font-bold text-slate-800 text-left'>
-          Structural
-        </h1>
-      </div>
+      <h2 className='text-2xl font-bold text-slate-800'>Structural</h2>
 
       {/* Wall Modifications Card */}
       <CollapsibleSection title='Wall Modifications' colorScheme='design'>
@@ -214,18 +210,18 @@ export function StructuralSection() {
             title='Design Notes'
             placeholder='Add design-specific notes here...'
             contractorTags={[
-              'Wall Layout',
-              'Load Bearing Considerations',
-              'Access Requirements',
-              'Structural Requirements',
-              'Insulation Specifications',
+              'Verify if wall is load-bearing before removal',
+              'Check for plumbing or wiring inside wall',
+              'Assess subfloor condition around joists',
+              'Confirm framing spacing and alignment',
+              'Verify insulation type and vapor barrier need',
             ]}
             clientTags={[
-              'Room Layout',
-              'Accessibility Needs',
-              'Future Modifications',
-              'Quality Standards',
-              'Timeline Requirements',
+              'Wall modification approved and included in scope',
+              'Subfloor repair or replacement discussed with client',
+              'New window or door framing included as per plan',
+              'Structural reinforcement or insulation added',
+              'Framing adjustments reviewed and approved by client',
             ]}
             useTabs={true}
             alwaysExpanded={true}
@@ -345,18 +341,18 @@ export function StructuralSection() {
             title='Construction Notes'
             placeholder='Add construction-specific notes here...'
             contractorTags={[
-              'Structural Engineering',
-              'Load Calculations',
-              'Permit Requirements',
-              'Safety Considerations',
-              'Material Specifications',
+              'Verify if wall is load-bearing before removal',
+              'Check for plumbing or wiring inside wall',
+              'Assess subfloor condition around joists',
+              'Confirm framing spacing and alignment',
+              'Verify insulation type and vapor barrier need',
             ]}
             clientTags={[
-              'Timeline Requirements',
-              'Access Constraints',
-              'Noise Restrictions',
-              'Quality Standards',
-              'Warranty Information',
+              'Wall modification approved and included in scope',
+              'Subfloor repair or replacement discussed with client',
+              'New window or door framing included as per plan',
+              'Structural reinforcement or insulation added',
+              'Framing adjustments reviewed and approved by client',
             ]}
             useTabs={true}
             alwaysExpanded={true}

@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
+import { useContractorContext } from '@/contexts/ContractorContext';
 import { FINISHINGS_LABOR_ITEMS } from '@/lib/constants';
 import {
   LaborItem as ContextLaborItem,
@@ -91,7 +92,7 @@ export default function FinishingsLaborSection() {
     [designData]
   );
 
-  const contractorHourlyRate = 75.0;
+  const { hourlyRate: contractorHourlyRate } = useContractorContext();
 
   const contextLaborItems = getLaborItems('finishings');
   const contextFlatFeeItems = getFlatFeeItems('finishings');

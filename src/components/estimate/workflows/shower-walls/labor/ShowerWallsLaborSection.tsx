@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
+import { useContractorContext } from '@/contexts/ContractorContext';
 import { SHOWER_WALLS_LABOR_ITEMS } from '@/lib/constants';
 import {
   LaborItem as ContextLaborItem,
@@ -58,6 +59,7 @@ export default function ShowerWallsLaborSection() {
     setLaborItems,
     isReloading,
   } = useEstimateWorkflowContext();
+  const { hourlyRate: contractorHourlyRate } = useContractorContext();
 
   // Get design data from context
   const designData = getDesignData(
@@ -79,9 +81,6 @@ export default function ShowerWallsLaborSection() {
       },
     [designData]
   );
-
-  // Get contractor hourly rate (default to 85.00 as per business logic)
-  const contractorHourlyRate = 85.0;
 
   // Get context data
   const contextLaborItems = getLaborItems('showerWalls');

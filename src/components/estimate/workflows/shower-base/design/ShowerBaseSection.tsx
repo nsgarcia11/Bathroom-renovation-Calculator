@@ -110,6 +110,7 @@ export function ShowerBaseSection() {
 
   return (
     <div className='space-y-6'>
+      <h2 className='text-2xl font-bold text-slate-800'>Shower Base</h2>
       {/* Measurements Card */}
       <CollapsibleSection title='Measurements' colorScheme='neutral'>
         <div className='grid grid-cols-2 gap-4'>
@@ -326,17 +327,16 @@ export function ShowerBaseSection() {
             title='Design Notes'
             placeholder='Add design-specific notes here...'
             contractorTags={[
-              'Base Type',
-              'Drain Configuration',
-              'Waterproofing System',
-              'Curb Design',
-              'Access Requirements',
+              'Waterproofing system installed',
+              'Slope tested for proper drainage',
+              'Drain location',
+              'Curb/corners sealed',
             ]}
             clientTags={[
-              'Design Preferences',
-              'Accessibility Needs',
-              'Style Requirements',
-              'Budget Considerations',
+              'Tile type',
+              'Grout color',
+              'Slip-resistant tile requested',
+              'Confirm tile size works with slope',
             ]}
             useTabs={true}
             alwaysExpanded={true}
@@ -397,17 +397,15 @@ export function ShowerBaseSection() {
             title='Construction Notes'
             placeholder='Add construction-specific notes here...'
             contractorTags={[
-              'Installation Method',
-              'Waterproofing Details',
-              'Drain Connection',
-              'Subfloor Preparation',
-              'Quality Control',
+              'Subfloor condition verified for slope',
+              'Tile layout centered to drain',
+              'Offer linear drain upgrade',
+              'Suggest curbless conversion if feasible',
             ]}
             clientTags={[
-              'Timeline Requirements',
-              'Access Restrictions',
-              'Quality Expectations',
-              'Cleanup Requirements',
+              'Waterproofing system installed and tested',
+              'Base sloped for proper drainage',
+              'Leak test completed before tiling',
             ]}
             useTabs={true}
             alwaysExpanded={true}
