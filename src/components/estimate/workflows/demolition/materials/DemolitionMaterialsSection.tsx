@@ -36,8 +36,13 @@ interface DemolitionChoices {
 }
 
 export default function DemolitionMaterialsSection() {
-  const { getDesignData, getMaterialItems, setMaterialItems, isReloading } =
-    useEstimateWorkflowContext();
+  const {
+    getDesignData,
+    getMaterialItems,
+    setMaterialItems,
+    updateDesign,
+    isReloading,
+  } = useEstimateWorkflowContext();
 
   // Ref to track if we're in the middle of a user action
   const isUserActionRef = useRef(false);
@@ -129,11 +134,10 @@ export default function DemolitionMaterialsSection() {
 
   // Update auto-generated materials when demolition choices change (separate from user actions)
   useEffect(() => {
-    // Don't run if user is currently making changes or if we're reloading data
-    if (isUserActionRef.current || isReloading) return;
+    // Debug logging removed for cleaner console
 
-    // If we have data from context (Supabase), never override it with defaults
-    if (contextMaterials && contextMaterials.length > 0) {
+    // Don't run if user is currently making changes or if we're reloading data
+    if (isUserActionRef.current || isReloading) {
       return;
     }
 
@@ -146,38 +150,30 @@ export default function DemolitionMaterialsSection() {
     if (processedChoicesRef.current === choicesKey) return;
 
     const currentMaterials = materials || [];
-    const existingAutoMaterials = currentMaterials.filter(
-      (material) => !material.id.startsWith('mat-custom-')
+    const customMaterials = currentMaterials.filter((material) =>
+      material.id.startsWith('mat-custom-')
     );
 
-    // If there are already auto-generated materials, don't regenerate them
-    // This preserves user modifications
-    if (existingAutoMaterials.length > 0) {
-      processedChoicesRef.current = choicesKey;
-      return;
-    }
+    // Generate new materials based on current choices
+    const newAutoMaterials = generateMaterials(
+      demolitionChoices,
+      isDemolitionFlatFee === 'yes',
+      debrisDisposal
+    );
 
-    // Only generate new materials if we have no materials at all (initial load)
-    if (currentMaterials.length === 0) {
-      const newAutoMaterials = generateMaterials(
-        demolitionChoices,
-        isDemolitionFlatFee === 'yes',
-        debrisDisposal
-      );
-
-      if (newAutoMaterials.length > 0) {
-        setMaterialItems('demolition', newAutoMaterials);
-        processedChoicesRef.current = choicesKey;
-      }
-    }
+    // Always update materials based on current choices (add or remove as needed)
+    const updatedMaterials = [...customMaterials, ...newAutoMaterials];
+    setMaterialItems('demolition', updatedMaterials);
+    processedChoicesRef.current = choicesKey;
+    // Materials updated based on demolition choices
   }, [
     demolitionChoices,
     isDemolitionFlatFee,
     debrisDisposal,
     generateMaterials,
     materials,
-    contextMaterials,
-  ]); // Added contextMaterials to prevent overriding Supabase data
+    isReloading,
+  ]);
 
   // Handlers for materials
   const handleAddCustomSupply = useCallback(() => {
@@ -222,6 +218,13 @@ export default function DemolitionMaterialsSection() {
       // Set flag to prevent auto-generation from interfering
       isUserActionRef.current = true;
 
+      // Check if this is the debris disposal material - if so, turn off debris disposal
+      if (id === 'mat-demo-disposal' && !id.startsWith('mat-custom-')) {
+        updateDesign('demolition', {
+          debrisDisposal: 'no',
+        });
+      }
+
       // Update local state immediately for responsive UI
       const updatedMaterials = localMaterials.filter(
         (material) => material.id !== id
@@ -234,7 +237,7 @@ export default function DemolitionMaterialsSection() {
         isUserActionRef.current = false;
       }, 100);
     },
-    [localMaterials, setMaterialItems]
+    [localMaterials, setMaterialItems, updateDesign]
   );
 
   const total = useMemo(

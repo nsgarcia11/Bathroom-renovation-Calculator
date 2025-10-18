@@ -33,6 +33,7 @@ export default function EstimatesOverview({
     getDesignData,
     getLaborItems,
     getMaterialItems,
+    getFlatFeeItems,
     getAllTotals,
     getNotes,
   } = useEstimateWorkflowContext();
@@ -1240,30 +1241,151 @@ export default function EstimatesOverview({
                   );
                 })()}
 
-              <div className='flex justify-between items-center'>
-                <div className='flex-1'>
-                  <p className='text-gray-700'>
-                    Labor (e.g., {workflow.name.toLowerCase()}, installation)
-                  </p>
-                </div>
-                <div className='text-right'>
-                  <p className='font-semibold text-gray-900'>
-                    ${workflow.totalLabor.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-              <div className='flex justify-between items-center'>
-                <div className='flex-1'>
-                  <p className='text-gray-700'>
-                    Materials (e.g., supplies, equipment)
-                  </p>
-                </div>
-                <div className='text-right'>
-                  <p className='font-semibold text-gray-900'>
-                    ${workflow.totalMaterials.toFixed(2)}
-                  </p>
-                </div>
-              </div>
+              {/* Demolition Detailed Breakdown */}
+              {workflow.id === 'demolition' ? (
+                <>
+                  {/* Demolition Labor Items */}
+                  {(() => {
+                    const laborItems = getLaborItems('demolition');
+                    const flatFeeItems = getFlatFeeItems('demolition');
+
+                    if (laborItems.length === 0 && flatFeeItems.length === 0)
+                      return null;
+
+                    return (
+                      <div className='mb-4'>
+                        <h4 className='font-semibold text-gray-800 mb-3 text-sm'>
+                          Labor Breakdown
+                        </h4>
+                        <div className='space-y-2'>
+                          {/* Regular Labor Items */}
+                          {laborItems.map((item) => {
+                            const hours = parseFloat(item.hours) || 0;
+                            const rate = parseFloat(item.rate) || 0;
+                            const total = hours * rate;
+
+                            return (
+                              <div
+                                key={item.id}
+                                className='flex justify-between items-center text-sm bg-gray-50 px-3 py-2 rounded'
+                              >
+                                <div className='flex-1'>
+                                  <span className='text-gray-700'>
+                                    {item.name}
+                                  </span>
+                                  <span className='text-gray-500 ml-2'>
+                                    ({hours}h × ${rate.toFixed(2)}/h)
+                                  </span>
+                                </div>
+                                <div className='text-right'>
+                                  <span className='font-semibold text-gray-900'>
+                                    ${total.toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {/* Flat Fee Items */}
+                          {flatFeeItems.map((item) => {
+                            const price = parseFloat(item.unitPrice) || 0;
+
+                            return (
+                              <div
+                                key={item.id}
+                                className='flex justify-between items-center text-sm bg-gray-50 px-3 py-2 rounded'
+                              >
+                                <div className='flex-1'>
+                                  <span className='text-gray-700'>
+                                    {item.name}
+                                  </span>
+                                </div>
+                                <div className='text-right'>
+                                  <span className='font-semibold text-gray-900'>
+                                    ${price.toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Demolition Material Items */}
+                  {(() => {
+                    const materialItems = getMaterialItems('demolition');
+
+                    if (materialItems.length === 0) return null;
+
+                    return (
+                      <div className='mb-4'>
+                        <h4 className='font-semibold text-gray-800 mb-3 text-sm'>
+                          Materials Breakdown
+                        </h4>
+                        <div className='space-y-2'>
+                          {materialItems.map((item) => {
+                            const quantity = parseFloat(item.quantity) || 0;
+                            const price = parseFloat(item.price) || 0;
+                            const total = quantity * price;
+
+                            return (
+                              <div
+                                key={item.id}
+                                className='flex justify-between items-center text-sm bg-gray-50 px-3 py-2 rounded'
+                              >
+                                <div className='flex-1'>
+                                  <span className='text-gray-700'>
+                                    {item.name}
+                                  </span>
+                                  <span className='text-gray-500 ml-2'>
+                                    ({quantity} {item.unit} × $
+                                    {price.toFixed(2)})
+                                  </span>
+                                </div>
+                                <div className='text-right'>
+                                  <span className='font-semibold text-gray-900'>
+                                    ${total.toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </>
+              ) : (
+                <>
+                  <div className='flex justify-between items-center'>
+                    <div className='flex-1'>
+                      <p className='text-gray-700'>
+                        Labor (e.g., {workflow.name.toLowerCase()},
+                        installation)
+                      </p>
+                    </div>
+                    <div className='text-right'>
+                      <p className='font-semibold text-gray-900'>
+                        ${workflow.totalLabor.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className='flex justify-between items-center'>
+                    <div className='flex-1'>
+                      <p className='text-gray-700'>
+                        Materials (e.g., supplies, equipment)
+                      </p>
+                    </div>
+                    <div className='text-right'>
+                      <p className='font-semibold text-gray-900'>
+                        ${workflow.totalMaterials.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Section Total */}
@@ -1325,32 +1447,17 @@ export default function EstimatesOverview({
                     Client Notes:
                   </h4>
                   <div className='text-sm text-blue-700 space-y-2'>
-                    {allClientNotes.map((noteSection, index) => (
-                      <div
-                        key={index}
-                        className='border-l-2 border-blue-300 pl-3'
-                      >
-                        <p className='font-medium text-blue-800 mb-1'>
-                          {noteSection.split(':')[0]}:
+                    {allClientNotes
+                      .join('\n')
+                      .split('\n')
+                      .filter((line) => line.trim())
+                      .map((noteLine, index) => (
+                        <p key={index} className='mb-1'>
+                          {noteLine.trim().startsWith('-')
+                            ? noteLine.trim()
+                            : `- ${noteLine.trim()}`}
                         </p>
-                        <div className='text-blue-700'>
-                          {noteSection
-                            .split(':')
-                            .slice(1)
-                            .join(':')
-                            .trim()
-                            .split('\n')
-                            .filter((line) => line.trim())
-                            .map((line, lineIndex) => (
-                              <p key={lineIndex} className='mb-1'>
-                                {line.trim().startsWith('-')
-                                  ? line.trim()
-                                  : `- ${line.trim()}`}
-                              </p>
-                            ))}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               );

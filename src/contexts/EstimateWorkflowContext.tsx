@@ -7,6 +7,7 @@ import React, {
   useCallback,
   useEffect,
   useState,
+  useRef,
 } from 'react';
 import { useEstimateData } from '@/hooks/useEstimateData';
 import { useSaveEstimate, useLoadEstimate } from '@/hooks/useEstimateSupabase';
@@ -28,6 +29,7 @@ interface EstimateWorkflowContextType {
   isSaving: boolean;
   isReloading: boolean;
   error: string | null;
+  lastSaved: Date | null;
 
   // Workflow data getters
   getWorkflowData: (workflowType: WorkflowType) => WorkflowData | null;
@@ -129,6 +131,11 @@ export function EstimateWorkflowProvider({
   const [error, setError] = useState<string | null>(null);
   const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
   const [isReloading, setIsReloading] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // Autosave functionality
+  const autosaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const AUTOSAVE_DELAY = 3000; // 3 seconds delay
 
   // Load data when available (only once)
   useEffect(() => {
@@ -194,19 +201,9 @@ export function EstimateWorkflowProvider({
   // Design updates
   const updateDesign = useCallback(
     <T = unknown,>(workflowType: WorkflowType, updates: Partial<T>) => {
-      console.log('EstimateWorkflowContext: updateDesign called', {
-        workflowType,
-        updates,
-        hasLoadedInitialData,
-        currentDesignData: estimateData.workflows?.[workflowType]?.design,
-        willMergeWith: {
-          ...estimateData.workflows?.[workflowType]?.design,
-          ...updates,
-        },
-      });
       actions.updateWorkflowDesign(workflowType, updates);
     },
-    [actions, hasLoadedInitialData, estimateData.workflows]
+    [actions]
   );
 
   // Labor updates
@@ -275,12 +272,7 @@ export function EstimateWorkflowProvider({
 
   const setLaborItems = useCallback(
     (workflowType: WorkflowType, items: LaborItem[]) => {
-      console.log('🔧 EstimateWorkflowContext: setLaborItems called:', {
-        workflowType,
-        items,
-        currentWorkflow: getWorkflowData(workflowType),
-        estimateDataWorkflows: estimateData.workflows,
-      });
+      // Setting labor items for workflow
 
       const currentWorkflow = getWorkflowData(workflowType);
       if (currentWorkflow) {
@@ -291,19 +283,9 @@ export function EstimateWorkflowProvider({
             hourlyItems: items,
           },
         };
-        console.log(
-          '💾 EstimateWorkflowContext: Updating workflow data with labor items:',
-          updatedWorkflow
-        );
+        // Updating workflow data with labor items
         actions.updateWorkflowData(workflowType, updatedWorkflow);
       } else {
-        console.log(
-          '❌ EstimateWorkflowContext: No current workflow found for',
-          workflowType,
-          'Available workflows:',
-          Object.keys(estimateData.workflows || {})
-        );
-
         // Initialize the workflow if it doesn't exist
         const initialWorkflow = {
           labor: { hourlyItems: [], flatFeeItems: [] },
@@ -316,11 +298,6 @@ export function EstimateWorkflowProvider({
             lastUpdated: new Date().toISOString(),
           },
         };
-
-        console.log(
-          '🔧 EstimateWorkflowContext: Initializing workflow with:',
-          initialWorkflow
-        );
 
         const updatedWorkflow = {
           ...initialWorkflow,
@@ -484,12 +461,7 @@ export function EstimateWorkflowProvider({
 
   const setMaterialItems = useCallback(
     (workflowType: WorkflowType, items: MaterialItem[]) => {
-      console.log('🔧 EstimateWorkflowContext: setMaterialItems called:', {
-        workflowType,
-        items,
-        currentWorkflow: getWorkflowData(workflowType),
-        estimateDataWorkflows: estimateData.workflows,
-      });
+      // Setting material items for workflow
 
       const currentWorkflow = getWorkflowData(workflowType);
       if (currentWorkflow) {
@@ -500,19 +472,9 @@ export function EstimateWorkflowProvider({
             items: items,
           },
         };
-        console.log(
-          '💾 EstimateWorkflowContext: Updating workflow data with material items:',
-          updatedWorkflow
-        );
+        // Updating workflow data with material items
         actions.updateWorkflowData(workflowType, updatedWorkflow);
       } else {
-        console.log(
-          '❌ EstimateWorkflowContext: No current workflow found for',
-          workflowType,
-          'Available workflows:',
-          Object.keys(estimateData.workflows || {})
-        );
-
         // Initialize the workflow if it doesn't exist
         const initialWorkflow = {
           labor: { hourlyItems: [], flatFeeItems: [] },
@@ -525,11 +487,6 @@ export function EstimateWorkflowProvider({
             lastUpdated: new Date().toISOString(),
           },
         };
-
-        console.log(
-          '🔧 EstimateWorkflowContext: Initializing workflow with:',
-          initialWorkflow
-        );
 
         const updatedWorkflow = {
           ...initialWorkflow,
@@ -563,6 +520,73 @@ export function EstimateWorkflowProvider({
     [actions, getWorkflowData]
   );
 
+  // Autosave function
+  const autosave = useCallback(async () => {
+    if (isSaving || !hasLoadedInitialData) {
+      return;
+    }
+
+    try {
+      // Use a small delay to ensure all state updates are complete
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Use the exact same logic as the manual saveData function
+      const dataToSave = actions.exportData();
+
+      // Add current context data to the export (same as manual save)
+      const currentDemolitionData = getWorkflowData('demolition');
+
+      if (currentDemolitionData) {
+        dataToSave.workflows = {
+          ...dataToSave.workflows,
+          demolition: {
+            ...dataToSave.workflows?.demolition,
+            ...currentDemolitionData,
+          } as EstimateData['workflows']['demolition'],
+        };
+      }
+
+      await saveEstimateMutation.mutateAsync({
+        projectId,
+        data: dataToSave,
+      });
+
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('Autosave failed:', error);
+      // Don't set error state for autosave failures to avoid disrupting user experience
+    }
+  }, [
+    actions,
+    getWorkflowData,
+    projectId,
+    saveEstimateMutation,
+    isSaving,
+    hasLoadedInitialData,
+  ]);
+
+  // Debounced autosave effect - DISABLED FOR NOW
+  // useEffect(() => {
+  //   // Clear existing timeout
+  //   if (autosaveTimeoutRef.current) {
+  //     clearTimeout(autosaveTimeoutRef.current);
+  //   }
+
+  //   // Only autosave if we have loaded initial data and there are changes
+  //   if (hasLoadedInitialData) {
+  //     autosaveTimeoutRef.current = setTimeout(() => {
+  //       autosave();
+  //     }, AUTOSAVE_DELAY);
+  //   }
+
+  //   // Cleanup timeout on unmount
+  //   return () => {
+  //     if (autosaveTimeoutRef.current) {
+  //       clearTimeout(autosaveTimeoutRef.current);
+  //     }
+  //   };
+  // }, [estimateData, hasLoadedInitialData, autosave]);
+
   // Persistence
   const saveData = useCallback(async () => {
     setIsSaving(true);
@@ -587,6 +611,8 @@ export function EstimateWorkflowProvider({
         projectId,
         data: dataToSave,
       });
+
+      setLastSaved(new Date());
 
       // After successful save, reload data from Supabase using the same transformation logic
       setIsReloading(true);
@@ -750,6 +776,7 @@ export function EstimateWorkflowProvider({
     isSaving,
     isReloading,
     error,
+    lastSaved,
     getWorkflowData,
     getDesignData,
     getLaborItems,

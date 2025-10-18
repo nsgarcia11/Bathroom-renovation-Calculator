@@ -158,6 +158,7 @@ export function useDeleteProject() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // Delete the project
       const { data, error } = await supabase
         .from('projects')
         .delete()
@@ -166,10 +167,24 @@ export function useDeleteProject() {
         .select();
 
       if (error) throw error;
+
+      // Also delete any associated estimates
+      const { error: estimatesError } = await supabase
+        .from('estimates')
+        .delete()
+        .eq('project_id', projectId);
+
+      if (estimatesError) {
+        console.warn('Failed to delete estimates for project:', estimatesError);
+        // Don't throw here as the project deletion was successful
+      }
+
       return data;
     },
     onSuccess: () => {
+      // Invalidate both projects and estimates queries to update the UI
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['all-estimates'] });
     },
   });
 }

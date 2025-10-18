@@ -106,25 +106,10 @@ export function DemolitionSection() {
 
   const handleChoiceChange = useCallback(
     (field: keyof DemolitionChoices, value: 'yes' | 'no') => {
-      console.log(`DemolitionSection: handleChoiceChange called`, {
-        field,
-        value,
-        isDemolitionFlatFee,
-        currentChoices: demolitionChoices,
-      });
-
-      // Don't allow toggling demolition tasks when in flat fee mode
-      if (isDemolitionFlatFee === 'yes') {
-        console.log('DemolitionSection: Skipping - in flat fee mode');
-        return;
-      }
-
       const newChoices = {
         ...demolitionChoices,
         [field]: value,
       };
-
-      console.log('DemolitionSection: New choices:', newChoices);
 
       // Update design choices - labor and materials will be updated by their respective components
       updateDesign('demolition', {

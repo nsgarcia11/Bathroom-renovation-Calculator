@@ -232,22 +232,12 @@ export function useTotalProjectValue() {
       const storedGrandTotal = estimate.estimate?.grandTotal || 0;
       const calculatedGrandTotal = calculateGrandTotal(estimate.workflows);
 
-      // Debug logging
-      console.log('Estimate for project:', estimate.projectId);
-      console.log('Stored grandTotal:', storedGrandTotal);
-      console.log('Calculated grandTotal:', calculatedGrandTotal);
-      console.log('Workflows data:', estimate.workflows);
-
       // Use the calculated value if stored value is 0 or if it's more accurate
       const finalValue =
         storedGrandTotal > 0 ? storedGrandTotal : calculatedGrandTotal;
-      console.log('Final value used:', finalValue);
 
       return sum + finalValue;
     }, 0) || 0;
-
-  console.log('Total value calculated:', totalValue);
-  console.log('Number of estimates:', estimates?.length || 0);
 
   return {
     totalValue,

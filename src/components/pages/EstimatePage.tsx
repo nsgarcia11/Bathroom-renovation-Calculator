@@ -106,6 +106,7 @@ export default function EstimatePage({ projectId }: EstimatePageProps) {
     isLoading: isWorkflowLoading,
     isSaving,
     error,
+    lastSaved,
   } = useEstimateWorkflowContext();
 
   // Memoized save function
@@ -197,6 +198,13 @@ export default function EstimatePage({ projectId }: EstimatePageProps) {
           </div>
 
           <div className='flex items-center space-x-2'>
+            {/* Autosave Indicator */}
+            {lastSaved && (
+              <div className='text-xs text-slate-500 hidden sm:block'>
+                Last saved: {lastSaved.toLocaleTimeString()}
+              </div>
+            )}
+
             {/* Save Button */}
             <Button
               onClick={handleSave}

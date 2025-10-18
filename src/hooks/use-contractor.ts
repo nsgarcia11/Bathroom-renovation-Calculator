@@ -15,7 +15,7 @@ export function useContractor() {
           return null;
         }
 
-        // Try a simpler query first
+        // Query contractors table for the user
         const { data, error } = await supabase
           .from('contractors')
           .select('*')
@@ -47,6 +47,7 @@ export function useContractor() {
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: true, // Ensure the query is always enabled
   });
 }
 

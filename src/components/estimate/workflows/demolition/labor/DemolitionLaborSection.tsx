@@ -48,6 +48,7 @@ export default function DemolitionLaborSection() {
     getFlatFeeItems,
     setLaborItems,
     setFlatFeeItems,
+    updateDesign,
     isReloading,
   } = useEstimateWorkflowContext();
   const { hourlyRate: contractorHourlyRate } = useContractorContext();
@@ -102,6 +103,21 @@ export default function DemolitionLaborSection() {
   const flatFeeItems = localFlatFeeItems;
   const [isDemolitionOpen, setIsDemolitionOpen] = useState(true);
 
+  // Mapping from labor item IDs to design choice fields
+  const laborItemToDesignChoice = useMemo(
+    () => ({
+      'lab-demo-floor': 'removeFlooring',
+      'lab-demo-shower': 'removeShowerWall',
+      'lab-demo-shower-base': 'removeShowerBase',
+      'lab-demo-tub': 'removeTub',
+      'lab-demo-vanity': 'removeVanity',
+      'lab-demo-toilet': 'removeToilet',
+      'lab-demo-accessories': 'removeAccessories',
+      'lab-demo-wall': 'removeWall',
+    }),
+    []
+  );
+
   // Helper function to generate labor items based on demolition choices
   const generateLaborItems = useCallback(
     (choices: DemolitionChoices): LaborItem[] => {
@@ -141,8 +157,12 @@ export default function DemolitionLaborSection() {
 
   // Update auto-generated items when demolition choices change (separate from user actions)
   useEffect(() => {
+    // Debug logging removed for cleaner console
+
     // Don't run if user is currently making changes or if we're reloading data
-    if (isUserActionRef.current || isReloading) return;
+    if (isUserActionRef.current || isReloading) {
+      return;
+    }
 
     // Create a key for the current choices to prevent reprocessing
     const choicesKey = JSON.stringify({
@@ -184,23 +204,20 @@ export default function DemolitionLaborSection() {
         }
       }
     } else {
-      // Hourly mode - generate labor items
-      if (contextLaborItems && contextLaborItems.length > 0) {
-        return; // Don't override existing data
-      }
-
+      // Hourly mode - generate labor items based on current choices
       const currentLabor = laborItems || [];
-      const existingAutoItems = currentLabor.filter(
-        (item) => !item.id.startsWith('custom-')
+      const customItems = currentLabor.filter((item) =>
+        item.id.startsWith('custom-')
       );
 
-      if (existingAutoItems.length === 0 && currentLabor.length === 0) {
-        const newAutoItems = generateLaborItems(demolitionChoices);
-        if (newAutoItems.length > 0) {
-          setLaborItems('demolition', newAutoItems);
-          processedChoicesRef.current = choicesKey;
-        }
-      }
+      // Generate new labor items based on current choices
+      const newAutoItems = generateLaborItems(demolitionChoices);
+
+      // Always update items based on current choices (add or remove as needed)
+      const updatedItems = [...customItems, ...newAutoItems];
+      setLaborItems('demolition', updatedItems);
+      processedChoicesRef.current = choicesKey;
+      // Labor items updated based on demolition choices
     }
   }, [
     demolitionChoices,
@@ -259,6 +276,19 @@ export default function DemolitionLaborSection() {
       // Set flag to prevent auto-generation from interfering
       isUserActionRef.current = true;
 
+      // Check if this is an auto-generated labor item that should update design choices
+      const designChoiceField =
+        laborItemToDesignChoice[id as keyof typeof laborItemToDesignChoice];
+      if (designChoiceField && !id.startsWith('custom-')) {
+        // This is an auto-generated item - update the corresponding design choice to 'no'
+        updateDesign('demolition', {
+          demolitionChoices: {
+            ...demolitionChoices,
+            [designChoiceField]: 'no' as const,
+          },
+        });
+      }
+
       // Update local state immediately for responsive UI
       const updatedLabor = localLaborItems.filter((item) => item.id !== id);
       setLocalLaborItems(updatedLabor);
@@ -269,7 +299,13 @@ export default function DemolitionLaborSection() {
         isUserActionRef.current = false;
       }, 100);
     },
-    [localLaborItems, setLaborItems]
+    [
+      localLaborItems,
+      setLaborItems,
+      laborItemToDesignChoice,
+      updateDesign,
+      demolitionChoices,
+    ]
   );
 
   // Handlers for flat fee items

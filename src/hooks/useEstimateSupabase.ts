@@ -23,10 +23,6 @@ export function useSaveEstimate() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Debug: Check where save is being called from
-      console.log('🚨 SAVE TRIGGERED - Stack trace:');
-      console.trace();
-
       // Convert EstimateData to Supabase payload format
       const transformedWorkflows = { ...data.workflows } as Record<
         string,
