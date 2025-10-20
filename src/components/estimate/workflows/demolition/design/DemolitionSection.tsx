@@ -106,6 +106,18 @@ export function DemolitionSection() {
 
   const handleChoiceChange = useCallback(
     (field: keyof DemolitionChoices, value: 'yes' | 'no') => {
+      // If trying to select a choice while in flat fee mode, switch to hourly mode first
+      if (isFlatFeeMode && value === 'yes') {
+        updateDesign('demolition', {
+          isDemolitionFlatFee: 'no',
+          demolitionChoices: {
+            ...demolitionChoices,
+            [field]: value,
+          },
+        });
+        return;
+      }
+
       const newChoices = {
         ...demolitionChoices,
         [field]: value,
@@ -116,21 +128,31 @@ export function DemolitionSection() {
         demolitionChoices: newChoices,
       });
     },
-    [isDemolitionFlatFee, demolitionChoices, updateDesign]
+    [isFlatFeeMode, demolitionChoices, updateDesign]
   );
 
   const handleFlatFeeToggle = useCallback(
     (checked: boolean) => {
-      updateDesign('demolition', {
-        isDemolitionFlatFee: checked ? 'yes' : 'no',
-      });
-
       if (checked) {
-        // Switching to flat fee mode - set flat fee item
-        // Note: Flat fee items will be managed by the labor component
+        // Switching to flat fee mode - uncheck all demolition choices since they're included in flat fee
+        updateDesign('demolition', {
+          isDemolitionFlatFee: 'yes',
+          demolitionChoices: {
+            removeFlooring: 'no',
+            removeShowerWall: 'no',
+            removeShowerBase: 'no',
+            removeTub: 'no',
+            removeVanity: 'no',
+            removeToilet: 'no',
+            removeAccessories: 'no',
+            removeWall: 'no',
+          },
+        });
       } else {
-        // Switching to hourly mode - clear flat fee items
-        // Note: Labor items will be managed by the labor component
+        // Switching to hourly mode - keep current choices but switch off flat fee
+        updateDesign('demolition', {
+          isDemolitionFlatFee: 'no',
+        });
       }
     },
     [updateDesign]

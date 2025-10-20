@@ -328,18 +328,38 @@ export default function EstimatesOverview({
 
   // Get demolition workflow data
   const demolitionData = useMemo(() => {
-    const designData = getDesignData('demolition');
+    const designData = getDesignData('demolition') as {
+      isDemolitionFlatFee?: 'yes' | 'no';
+      debrisDisposal?: 'yes' | 'no';
+      demolitionChoices?: {
+        removeFlooring: 'yes' | 'no';
+        removeShowerWall: 'yes' | 'no';
+        removeShowerBase: 'yes' | 'no';
+        removeTub: 'yes' | 'no';
+        removeVanity: 'yes' | 'no';
+        removeToilet: 'yes' | 'no';
+        removeAccessories: 'yes' | 'no';
+        removeWall: 'yes' | 'no';
+      };
+      [key: string]: unknown;
+    } | null;
     const laborItems = getLaborItems('demolition');
     const materialItems = getMaterialItems('demolition');
     const totals = getWorkflowTotals('demolition');
 
-    // Check if demolition has any data
-    const hasData =
-      laborItems.length > 0 ||
-      materialItems.length > 0 ||
-      (designData && Object.keys(designData).length > 0);
+    // Check if demolition has any data - including design selections
+    const hasLaborOrMaterials =
+      laborItems.length > 0 || materialItems.length > 0;
+    const hasDesignSelections =
+      designData &&
+      (designData.isDemolitionFlatFee === 'yes' ||
+        designData.debrisDisposal === 'yes' ||
+        (designData.demolitionChoices &&
+          Object.values(designData.demolitionChoices).some(
+            (choice) => choice === 'yes'
+          )));
 
-    if (!hasData) return null;
+    if (!hasLaborOrMaterials && !hasDesignSelections) return null;
 
     return {
       id: 'demolition',
@@ -1248,6 +1268,10 @@ export default function EstimatesOverview({
                   {(() => {
                     const laborItems = getLaborItems('demolition');
                     const flatFeeItems = getFlatFeeItems('demolition');
+                    const designData = getDesignData('demolition') as {
+                      isDemolitionFlatFee?: 'yes' | 'no';
+                      [key: string]: unknown;
+                    } | null;
 
                     if (laborItems.length === 0 && flatFeeItems.length === 0)
                       return null;
@@ -1258,56 +1282,56 @@ export default function EstimatesOverview({
                           Labor Breakdown
                         </h4>
                         <div className='space-y-2'>
-                          {/* Regular Labor Items */}
-                          {laborItems.map((item) => {
-                            const hours = parseFloat(item.hours) || 0;
-                            const rate = parseFloat(item.rate) || 0;
-                            const total = hours * rate;
+                          {/* Show flat fee items if flat fee mode is selected */}
+                          {designData?.isDemolitionFlatFee === 'yes'
+                            ? flatFeeItems.map((item) => {
+                                const price = parseFloat(item.unitPrice) || 0;
 
-                            return (
-                              <div
-                                key={item.id}
-                                className='flex justify-between items-center text-sm bg-gray-50 px-3 py-2 rounded'
-                              >
-                                <div className='flex-1'>
-                                  <span className='text-gray-700'>
-                                    {item.name}
-                                  </span>
-                                  <span className='text-gray-500 ml-2'>
-                                    ({hours}h × ${rate.toFixed(2)}/h)
-                                  </span>
-                                </div>
-                                <div className='text-right'>
-                                  <span className='font-semibold text-gray-900'>
-                                    ${total.toFixed(2)}
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })}
+                                return (
+                                  <div
+                                    key={item.id}
+                                    className='flex justify-between items-center text-sm bg-gray-50 px-3 py-2 rounded'
+                                  >
+                                    <div className='flex-1'>
+                                      <span className='text-gray-700'>
+                                        {item.name}
+                                      </span>
+                                    </div>
+                                    <div className='text-right'>
+                                      <span className='font-semibold text-gray-900'>
+                                        ${price.toFixed(2)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            : /* Show individual labor items if hourly mode */
+                              laborItems.map((item) => {
+                                const hours = parseFloat(item.hours) || 0;
+                                const rate = parseFloat(item.rate) || 0;
+                                const total = hours * rate;
 
-                          {/* Flat Fee Items */}
-                          {flatFeeItems.map((item) => {
-                            const price = parseFloat(item.unitPrice) || 0;
-
-                            return (
-                              <div
-                                key={item.id}
-                                className='flex justify-between items-center text-sm bg-gray-50 px-3 py-2 rounded'
-                              >
-                                <div className='flex-1'>
-                                  <span className='text-gray-700'>
-                                    {item.name}
-                                  </span>
-                                </div>
-                                <div className='text-right'>
-                                  <span className='font-semibold text-gray-900'>
-                                    ${price.toFixed(2)}
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })}
+                                return (
+                                  <div
+                                    key={item.id}
+                                    className='flex justify-between items-center text-sm bg-gray-50 px-3 py-2 rounded'
+                                  >
+                                    <div className='flex-1'>
+                                      <span className='text-gray-700'>
+                                        {item.name}
+                                      </span>
+                                      {/* <span className='text-gray-500 ml-2'>
+                                      ({hours}h × ${rate.toFixed(2)}/h)
+                                    </span> */}
+                                    </div>
+                                    <div className='text-right'>
+                                      <span className='font-semibold text-gray-900'>
+                                        ${total.toFixed(2)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                         </div>
                       </div>
                     );
@@ -1339,10 +1363,10 @@ export default function EstimatesOverview({
                                   <span className='text-gray-700'>
                                     {item.name}
                                   </span>
-                                  <span className='text-gray-500 ml-2'>
+                                  {/* <span className='text-gray-500 ml-2'>
                                     ({quantity} {item.unit} × $
                                     {price.toFixed(2)})
-                                  </span>
+                                  </span> */}
                                 </div>
                                 <div className='text-right'>
                                   <span className='font-semibold text-gray-900'>

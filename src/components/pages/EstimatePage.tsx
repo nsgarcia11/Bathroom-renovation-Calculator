@@ -232,7 +232,7 @@ export default function EstimatePage({ projectId }: EstimatePageProps) {
       </div>
 
       {/* Top Navigation for Construction Categories */}
-      <div className='p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto'>
+      <div className='p-4 max-w-7xl mx-auto'>
         <div className='flex space-x-4 overflow-x-auto pb-2'>
           {CATEGORIES.map((category) => {
             const Icon = category.icon;
@@ -268,7 +268,7 @@ export default function EstimatePage({ projectId }: EstimatePageProps) {
       </div>
 
       {/* Main Content */}
-      <div className='p-4 sm:p-6 lg:p-8 space-y-4 max-w-7xl mx-auto'>
+      <div className='p-0 max-w-7xl mx-auto'>
         {activeSection === 'estimate' ? (
           <EstimatesOverview projectId={projectId} />
         ) : activeSection === 'notes' ? (

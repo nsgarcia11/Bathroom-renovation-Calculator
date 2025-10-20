@@ -157,10 +157,8 @@ export default function DemolitionLaborSection() {
 
   // Update auto-generated items when demolition choices change (separate from user actions)
   useEffect(() => {
-    // Debug logging removed for cleaner console
-
-    // Don't run if user is currently making changes or if we're reloading data
-    if (isUserActionRef.current || isReloading) {
+    // Don't run if we're reloading data
+    if (isReloading) {
       return;
     }
 
@@ -173,51 +171,69 @@ export default function DemolitionLaborSection() {
       return;
     }
 
-    if (isDemolitionFlatFee === 'yes') {
-      // Flat fee mode - generate or update flat fee items
-      const currentFlatFee = flatFeeItems || [];
-      const existingAutoItems = currentFlatFee.filter(
-        (item) => !item.id.startsWith('custom-')
-      );
+    // If user is making changes, delay the update slightly to avoid conflicts
+    if (isUserActionRef.current) {
+      const timeoutId = setTimeout(() => {
+        // Re-check if user is still making changes
+        if (!isUserActionRef.current) {
+          // Process the update
+          processChoicesUpdate();
+        }
+      }, 150);
 
-      // Always update the flat fee amount if it exists
-      if (existingAutoItems.length > 0) {
-        const flatFeeItem = existingAutoItems.find(
-          (item) => item.id === 'flat-fee-demolition'
+      return () => clearTimeout(timeoutId);
+    }
+
+    // Process the update immediately if no user action is in progress
+    processChoicesUpdate();
+
+    function processChoicesUpdate() {
+      if (isDemolitionFlatFee === 'yes') {
+        // Flat fee mode - generate or update flat fee items
+        const currentFlatFee = flatFeeItems || [];
+        const existingAutoItems = currentFlatFee.filter(
+          (item) => !item.id.startsWith('custom-')
         );
-        if (flatFeeItem && flatFeeItem.unitPrice !== flatFeeAmount) {
-          // Update the existing flat fee item with new amount
-          const updatedItems = currentFlatFee.map((item) =>
-            item.id === 'flat-fee-demolition'
-              ? { ...item, unitPrice: flatFeeAmount }
-              : item
+
+        // Always update the flat fee amount if it exists
+        if (existingAutoItems.length > 0) {
+          const flatFeeItem = existingAutoItems.find(
+            (item) => item.id === 'flat-fee-demolition'
           );
-          setFlatFeeItems('demolition', updatedItems);
-          processedChoicesRef.current = choicesKey;
+          if (flatFeeItem && flatFeeItem.unitPrice !== flatFeeAmount) {
+            // Update the existing flat fee item with new amount
+            const updatedItems = currentFlatFee.map((item) =>
+              item.id === 'flat-fee-demolition'
+                ? { ...item, unitPrice: flatFeeAmount }
+                : item
+            );
+            setFlatFeeItems('demolition', updatedItems);
+            processedChoicesRef.current = choicesKey;
+          }
+        } else if (currentFlatFee.length === 0) {
+          // Generate new flat fee items if none exist
+          const newFlatFeeItems = generateFlatFeeItems(flatFeeAmount);
+          if (newFlatFeeItems.length > 0) {
+            setFlatFeeItems('demolition', newFlatFeeItems);
+            processedChoicesRef.current = choicesKey;
+          }
         }
-      } else if (currentFlatFee.length === 0) {
-        // Generate new flat fee items if none exist
-        const newFlatFeeItems = generateFlatFeeItems(flatFeeAmount);
-        if (newFlatFeeItems.length > 0) {
-          setFlatFeeItems('demolition', newFlatFeeItems);
-          processedChoicesRef.current = choicesKey;
-        }
+      } else {
+        // Hourly mode - generate labor items based on current choices
+        const currentLabor = laborItems || [];
+        const customItems = currentLabor.filter((item) =>
+          item.id.startsWith('custom-')
+        );
+
+        // Generate new labor items based on current choices
+        const newAutoItems = generateLaborItems(demolitionChoices);
+
+        // Always update items based on current choices (add or remove as needed)
+        const updatedItems = [...customItems, ...newAutoItems];
+        setLaborItems('demolition', updatedItems);
+        processedChoicesRef.current = choicesKey;
+        // Labor items updated based on demolition choices
       }
-    } else {
-      // Hourly mode - generate labor items based on current choices
-      const currentLabor = laborItems || [];
-      const customItems = currentLabor.filter((item) =>
-        item.id.startsWith('custom-')
-      );
-
-      // Generate new labor items based on current choices
-      const newAutoItems = generateLaborItems(demolitionChoices);
-
-      // Always update items based on current choices (add or remove as needed)
-      const updatedItems = [...customItems, ...newAutoItems];
-      setLaborItems('demolition', updatedItems);
-      processedChoicesRef.current = choicesKey;
-      // Labor items updated based on demolition choices
     }
   }, [
     demolitionChoices,
@@ -545,6 +561,20 @@ export default function DemolitionLaborSection() {
     <div className='space-y-5'>
       <div className='flex justify-between items-baseline'>
         <h2 className='text-2xl font-bold text-slate-800'>Labor</h2>
+        {isDemolitionFlatFee === 'no' && totalHours > 0 && (
+          <div className='flex items-center gap-2 text-sm text-slate-600'>
+            <span className='font-medium'>Total Hours:</span>
+            <span className='font-semibold text-slate-800'>
+              {totalHours.toFixed(1)}
+            </span>
+          </div>
+        )}
+        <div className='flex items-center gap-2 text-sm text-slate-600'>
+          <span className='font-medium'>Total Price:</span>
+          <span className='font-semibold text-blue-600'>
+            ${total.toFixed(2)}
+          </span>
+        </div>
       </div>
 
       <div className='space-y-4'>

@@ -23,16 +23,35 @@ export default function NotesOverview() {
 
   // Get demolition notes data (only construction notes)
   const demolitionNotes = useMemo(() => {
-    const designData = getDesignData('demolition');
+    const designData = getDesignData('demolition') as {
+      isDemolitionFlatFee?: 'yes' | 'no';
+      debrisDisposal?: 'yes' | 'no';
+      demolitionChoices?: {
+        removeFlooring: 'yes' | 'no';
+        removeShowerWall: 'yes' | 'no';
+        removeShowerBase: 'yes' | 'no';
+        removeTub: 'yes' | 'no';
+        removeVanity: 'yes' | 'no';
+        removeToilet: 'yes' | 'no';
+        removeAccessories: 'yes' | 'no';
+        removeWall: 'yes' | 'no';
+      };
+      [key: string]: unknown;
+    } | null;
     const notes = getNotes('demolition');
 
-    // Check if demolition has any notes or design data
+    // Check if demolition has any notes or meaningful design selections
     const hasNotes =
       (notes?.contractorNotes && notes.contractorNotes.trim()) ||
-      (notes?.clientNotes && notes.clientNotes.trim()) ||
-      (designData && Object.keys(designData).length > 0);
+      (notes?.clientNotes && notes.clientNotes.trim());
+    
+    const hasDesignSelections = designData && (
+      designData.isDemolitionFlatFee === 'yes' ||
+      designData.debrisDisposal === 'yes' ||
+      (designData.demolitionChoices && Object.values(designData.demolitionChoices).some(choice => choice === 'yes'))
+    );
 
-    if (!hasNotes) return null;
+    if (!hasNotes && !hasDesignSelections) return null;
 
     return {
       id: 'demolition',
