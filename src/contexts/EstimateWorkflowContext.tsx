@@ -134,8 +134,8 @@ export function EstimateWorkflowProvider({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Autosave functionality
-  const autosaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const AUTOSAVE_DELAY = 3000; // 3 seconds delay
+  const autosaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const AUTOSAVE_INTERVAL = 60000; // 60 seconds interval
 
   // Load data when available (only once)
   useEffect(() => {
@@ -520,73 +520,6 @@ export function EstimateWorkflowProvider({
     [actions, getWorkflowData]
   );
 
-  // Autosave function
-  const autosave = useCallback(async () => {
-    if (isSaving || !hasLoadedInitialData) {
-      return;
-    }
-
-    try {
-      // Use a small delay to ensure all state updates are complete
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      // Use the exact same logic as the manual saveData function
-      const dataToSave = actions.exportData();
-
-      // Add current context data to the export (same as manual save)
-      const currentDemolitionData = getWorkflowData('demolition');
-
-      if (currentDemolitionData) {
-        dataToSave.workflows = {
-          ...dataToSave.workflows,
-          demolition: {
-            ...dataToSave.workflows?.demolition,
-            ...currentDemolitionData,
-          } as EstimateData['workflows']['demolition'],
-        };
-      }
-
-      await saveEstimateMutation.mutateAsync({
-        projectId,
-        data: dataToSave,
-      });
-
-      setLastSaved(new Date());
-    } catch (error) {
-      console.error('Autosave failed:', error);
-      // Don't set error state for autosave failures to avoid disrupting user experience
-    }
-  }, [
-    actions,
-    getWorkflowData,
-    projectId,
-    saveEstimateMutation,
-    isSaving,
-    hasLoadedInitialData,
-  ]);
-
-  // Debounced autosave effect - DISABLED FOR NOW
-  // useEffect(() => {
-  //   // Clear existing timeout
-  //   if (autosaveTimeoutRef.current) {
-  //     clearTimeout(autosaveTimeoutRef.current);
-  //   }
-
-  //   // Only autosave if we have loaded initial data and there are changes
-  //   if (hasLoadedInitialData) {
-  //     autosaveTimeoutRef.current = setTimeout(() => {
-  //       autosave();
-  //     }, AUTOSAVE_DELAY);
-  //   }
-
-  //   // Cleanup timeout on unmount
-  //   return () => {
-  //     if (autosaveTimeoutRef.current) {
-  //       clearTimeout(autosaveTimeoutRef.current);
-  //     }
-  //   };
-  // }, [estimateData, hasLoadedInitialData, autosave]);
-
   // Persistence
   const saveData = useCallback(async () => {
     setIsSaving(true);
@@ -701,10 +634,45 @@ export function EstimateWorkflowProvider({
     }
   }, [actions, saveEstimateMutation, projectId]);
 
+  // Autosave function that uses the existing saveData function
+  const autosave = useCallback(async () => {
+    if (isSaving || !hasLoadedInitialData) {
+      return;
+    }
+
+    try {
+      // Use the existing saveData function to maintain consistency
+      await saveData();
+    } catch (error) {
+      console.error('Autosave failed:', error);
+      // Don't set error state for autosave failures to avoid disrupting user experience
+    }
+  }, [isSaving, hasLoadedInitialData, saveData]);
+
   const loadData = useCallback(async () => {
     // Data is automatically loaded via useLoadEstimate query
     console.log('Data loading is handled automatically');
   }, []);
+
+  // Periodic autosave effect - runs every 60 seconds
+  useEffect(() => {
+    if (!hasLoadedInitialData) {
+      return;
+    }
+
+    // Set up the interval
+    autosaveIntervalRef.current = setInterval(() => {
+      autosave();
+    }, AUTOSAVE_INTERVAL);
+
+    // Cleanup interval on unmount or when dependencies change
+    return () => {
+      if (autosaveIntervalRef.current) {
+        clearInterval(autosaveIntervalRef.current);
+        autosaveIntervalRef.current = null;
+      }
+    };
+  }, [hasLoadedInitialData, autosave]);
 
   // Totals
   const getWorkflowTotals = useCallback(

@@ -47,7 +47,7 @@ export function useContractor() {
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: true, // Ensure the query is always enabled
+    enabled: true, // Keep enabled to allow the query to run
   });
 }
 

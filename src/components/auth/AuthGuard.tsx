@@ -16,6 +16,8 @@ export function AuthGuard({ children }: AuthGuardProps) {
     data: contractor,
     isLoading: contractorLoading,
     error: contractorError,
+    isFetching: contractorFetching,
+    isSuccess: contractorSuccess,
   } = useContractor();
 
   const loading = authLoading || (user && contractorLoading);
@@ -28,9 +30,14 @@ export function AuthGuard({ children }: AuthGuardProps) {
     return <LoginForm />;
   }
 
+  // If we're still fetching contractor data, show loading
+  if (contractorFetching && !contractor) {
+    return <LoadingSpinner />;
+  }
+
   // If user is authenticated but hasn't completed setup, show setup wizard
-  // Only redirect to setup if we're sure there's no contractor data (not just loading)
-  if (!contractor && !contractorLoading && !contractorError) {
+  // Only redirect to setup if we're sure there's no contractor data and the query has completed successfully
+  if (!contractor && contractorSuccess && !contractorError) {
     return <SetupPage />;
   }
 
