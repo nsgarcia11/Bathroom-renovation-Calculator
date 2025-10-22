@@ -4,6 +4,7 @@ import './globals.css';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ContractorProvider } from '@/contexts/ContractorContext';
+import { ToastProvider } from '@/contexts/ToastContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,7 +23,9 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning={true}>
         <QueryProvider>
           <AuthProvider>
-            <ContractorProvider>{children}</ContractorProvider>
+            <ContractorProvider>
+              <ToastProvider>{children}</ToastProvider>
+            </ContractorProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCreateProject } from '@/hooks/use-projects';
+import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,6 +14,7 @@ import { Plus, Trash2 } from 'lucide-react';
 export function NewProjectPage() {
   const router = useRouter();
   const createProject = useCreateProject();
+  const { success: showSuccess, error: showError } = useToast();
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -81,15 +83,14 @@ export function NewProjectPage() {
 
       await createProject.mutateAsync(projectPayload);
 
-      setMessage('Project created successfully!');
+      showSuccess('Project created successfully!');
 
       // Redirect to home page after successful creation
       setTimeout(() => {
         router.push('/');
       }, 1500);
-    } catch (error) {
-      console.error('❌ Project creation error:', error);
-      setMessage('Failed to create project. Please try again.');
+    } catch {
+      showError('Failed to create project', 'Please try again.');
     } finally {
       setIsLoading(false);
     }

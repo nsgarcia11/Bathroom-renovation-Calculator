@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import { useContractor } from '@/hooks/use-contractor';
 import { useProject } from '@/hooks/use-projects';
+import { useToast } from '@/contexts/ToastContext';
 import { Hammer, ShowerHead, Layers, Paintbrush, Download } from 'lucide-react';
 import { ShowerBaseIcon } from '@/components/icons/ShowerBaseIcon';
 import { StructuralIcon } from '@/components/icons/StructuralIcon';
@@ -41,6 +42,7 @@ export default function EstimatesOverview({
   // Get contractor and project data
   const { data: contractor } = useContractor();
   const { data: project } = useProject(projectId);
+  const { error: showError, success: showSuccess } = useToast();
 
   // State for pricing adjustments
   const [markup, setMarkup] = useState<string>('0');
@@ -304,13 +306,13 @@ export default function EstimatesOverview({
 
       // Download PDF
       pdf.save(filename);
+      showSuccess('PDF exported successfully');
 
       // Cleanup: Remove temporary styles and class
       document.head.removeChild(style);
       estimateRef.current.classList.remove('pdf-export');
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+    } catch {
+      showError('Error generating PDF', 'Please try again.');
 
       // Cleanup on error
       try {
@@ -320,20 +322,19 @@ export default function EstimatesOverview({
         if (estimateRef.current) {
           estimateRef.current.classList.remove('pdf-export');
         }
-      } catch (cleanupError) {
-        console.error('Cleanup error:', cleanupError);
+      } catch {
+        // Silent cleanup error - no need to show to user
       }
     }
   };
 
-  // Get demolition workflow data
+  // Get demolition workflow data from saved data
   const demolitionDesignData = getDesignData('demolition');
   const demolitionLaborItems = getLaborItems('demolition');
   const demolitionMaterialItems = getMaterialItems('demolition');
   const demolitionTotals = getWorkflowTotals('demolition');
 
   const demolitionData = useMemo(() => {
-
     const designData = demolitionDesignData as {
       isDemolitionFlatFee?: 'yes' | 'no';
       debrisDisposal?: 'yes' | 'no';
@@ -1665,6 +1666,7 @@ export default function EstimatesOverview({
         </div>
       </div>
 
+      {/* Action Buttons */}
       {/* Export to PDF Button */}
       <div className='px-8 pb-8'>
         <div className='flex justify-center'>

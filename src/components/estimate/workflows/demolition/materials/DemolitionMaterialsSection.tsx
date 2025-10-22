@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2 } from 'lucide-react';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
-import { DEMOLITION_MATERIALS_ITEMS } from '@/lib/constants';
 
 interface MaterialItem {
   id: string;
@@ -24,53 +23,15 @@ interface MaterialItem {
   color?: string;
 }
 
-interface DemolitionChoices {
-  removeFlooring: 'yes' | 'no';
-  removeShowerWall: 'yes' | 'no';
-  removeShowerBase: 'yes' | 'no';
-  removeTub: 'yes' | 'no';
-  removeVanity: 'yes' | 'no';
-  removeToilet: 'yes' | 'no';
-  removeAccessories: 'yes' | 'no';
-  removeWall: 'yes' | 'no';
-}
-
 export default function DemolitionMaterialsSection() {
-  const {
-    getDesignData,
-    getMaterialItems,
-    setMaterialItems,
-    updateDesign,
-    isReloading,
-  } = useEstimateWorkflowContext();
+  const { getMaterialItems, setMaterialItems, updateDesign } =
+    useEstimateWorkflowContext();
 
   // Ref to track if we're in the middle of a user action
   const isUserActionRef = useRef(false);
-  // Ref to track if we've already processed the current demolition choices
-  const processedChoicesRef = useRef<string>('');
 
   // Local state for materials to handle input changes
   const [localMaterials, setLocalMaterials] = useState<MaterialItem[]>([]);
-
-  // Get current data from context
-  const design = getDesignData<{
-    demolitionChoices: DemolitionChoices;
-    isDemolitionFlatFee: 'yes' | 'no';
-    debrisDisposal: 'yes' | 'no';
-  }>('demolition');
-
-  const demolitionChoices = design?.demolitionChoices || {
-    removeFlooring: 'no',
-    removeShowerWall: 'no',
-    removeShowerBase: 'no',
-    removeTub: 'no',
-    removeVanity: 'no',
-    removeToilet: 'no',
-    removeAccessories: 'no',
-    removeWall: 'no',
-  };
-  const isDemolitionFlatFee = design?.isDemolitionFlatFee || 'no';
-  const debrisDisposal = design?.debrisDisposal || 'no';
 
   // Get current materials from context
   const contextMaterials = getMaterialItems('demolition');
@@ -84,42 +45,6 @@ export default function DemolitionMaterialsSection() {
   // Use local state for display and editing
   const materials = localMaterials;
 
-  // Helper function to generate materials based on business rules
-  const generateMaterials = useCallback(
-    (
-      choices: DemolitionChoices,
-      isFlatFee: boolean,
-      disposal: string
-    ): MaterialItem[] => {
-      const materials: MaterialItem[] = [];
-      const hasAnyDemolitionTask = choices
-        ? Object.values(choices).some((choice) => choice === 'yes')
-        : false;
-
-      if (isFlatFee) {
-        // Flat-fee = YES: Skip Bags & Masks (assumed included in flat-fee)
-        // Only add Disposal Fee if toggle = YES
-        if (disposal === 'yes') {
-          materials.push(DEMOLITION_MATERIALS_ITEMS.debrisDisposal);
-        }
-      } else {
-        // Flat-fee = NO: If any demolition task is selected → auto add bags + masks
-        if (hasAnyDemolitionTask) {
-          materials.push(DEMOLITION_MATERIALS_ITEMS.contractorBags);
-          materials.push(DEMOLITION_MATERIALS_ITEMS.dustMasks);
-        }
-
-        // Debris disposal = YES (applies in both flat-fee and hourly)
-        if (disposal === 'yes') {
-          materials.push(DEMOLITION_MATERIALS_ITEMS.debrisDisposal);
-        }
-      }
-
-      return materials;
-    },
-    []
-  );
-
   // Initialize materials only on first load - DISABLED to prevent overwriting saved data
   // useEffect(() => {
   //   if ((!materials || materials.length === 0) && !isReloading) {
@@ -132,48 +57,7 @@ export default function DemolitionMaterialsSection() {
   //   }
   // }, []); // Only run once on mount - intentionally empty dependency array
 
-  // Update auto-generated materials when demolition choices change (separate from user actions)
-  useEffect(() => {
-    // Debug logging removed for cleaner console
-
-    // Don't run if user is currently making changes or if we're reloading data
-    if (isUserActionRef.current || isReloading) {
-      return;
-    }
-
-    // Create a key for the current choices to prevent reprocessing
-    const choicesKey = JSON.stringify({
-      demolitionChoices,
-      isDemolitionFlatFee,
-      debrisDisposal,
-    });
-    if (processedChoicesRef.current === choicesKey) return;
-
-    const currentMaterials = materials || [];
-    const customMaterials = currentMaterials.filter((material) =>
-      material.id.startsWith('mat-custom-')
-    );
-
-    // Generate new materials based on current choices
-    const newAutoMaterials = generateMaterials(
-      demolitionChoices,
-      isDemolitionFlatFee === 'yes',
-      debrisDisposal
-    );
-
-    // Always update materials based on current choices (add or remove as needed)
-    const updatedMaterials = [...customMaterials, ...newAutoMaterials];
-    setMaterialItems('demolition', updatedMaterials);
-    processedChoicesRef.current = choicesKey;
-    // Materials updated based on demolition choices
-  }, [
-    demolitionChoices,
-    isDemolitionFlatFee,
-    debrisDisposal,
-    generateMaterials,
-    materials,
-    isReloading,
-  ]);
+  // Items are now managed centrally by the context - no useEffect needed
 
   // Handlers for materials
   const handleAddCustomSupply = useCallback(() => {

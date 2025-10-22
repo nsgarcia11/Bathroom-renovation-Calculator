@@ -57,7 +57,6 @@ export default function CallbackHandler() {
 
         throw new Error('No authentication tokens found');
       } catch (err) {
-        console.error('Auth callback error:', err);
         setError(err instanceof Error ? err.message : 'Authentication failed');
       } finally {
         setLoading(false);

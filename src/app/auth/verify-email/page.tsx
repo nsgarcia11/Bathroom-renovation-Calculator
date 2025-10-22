@@ -38,10 +38,11 @@ export default function VerifyEmailPage() {
           );
         }
       } catch (error) {
-        console.error('Email verification error:', error);
         setStatus('error');
         setMessage(
-          (error instanceof Error ? error.message : 'An error occurred during email verification.')
+          error instanceof Error
+            ? error.message
+            : 'An error occurred during email verification.'
         );
       }
     };

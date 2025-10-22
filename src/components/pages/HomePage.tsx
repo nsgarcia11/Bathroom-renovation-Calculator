@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useContractor } from '@/hooks/use-contractor';
 import { useProjects, useDeleteProject } from '@/hooks/use-projects';
 import { useTotalProjectValue } from '@/hooks/use-all-estimates';
+import { useToast } from '@/contexts/ToastContext';
 import { Project } from '@/types';
 import { DashboardCard } from '@/components/ui/card';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
@@ -28,6 +29,7 @@ export function HomePage() {
   const { data: projects, isLoading: projectsLoading } = useProjects();
   const { totalValue, isLoading: totalValueLoading } = useTotalProjectValue();
   const deleteProject = useDeleteProject();
+  const { error: showError, success: showSuccess } = useToast();
 
   // Confirmation modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -60,10 +62,9 @@ export function HomePage() {
       await deleteProject.mutateAsync(projectToDelete.id);
       setShowDeleteModal(false);
       setProjectToDelete(null);
-    } catch (error) {
-      console.error('Failed to delete project:', error);
-      // You could add a toast notification here instead of alert
-      alert('Failed to delete project. Please try again.');
+      showSuccess('Project deleted successfully');
+    } catch {
+      showError('Failed to delete project', 'Please try again.');
     }
   };
 

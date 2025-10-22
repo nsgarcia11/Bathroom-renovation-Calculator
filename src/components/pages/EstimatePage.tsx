@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { useEstimate } from '@/contexts/EstimateContext';
 import type { ConstructionCategory } from '@/contexts/EstimateContext';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
+import { useToast } from '@/contexts/ToastContext';
 // Removed unused imports
 
 // Unified Workflow Sections
@@ -108,15 +109,17 @@ export default function EstimatePage({ projectId }: EstimatePageProps) {
     error,
     lastSaved,
   } = useEstimateWorkflowContext();
+  const { error: showError, success: showSuccess } = useToast();
 
   // Memoized save function
   const handleSave = useCallback(async () => {
     try {
       await saveData();
-    } catch (error) {
-      console.error('Save failed:', error);
+      showSuccess('Estimate saved successfully');
+    } catch {
+      showError('Failed to save estimate', 'Please try again.');
     }
-  }, [saveData]);
+  }, [saveData, showSuccess, showError]);
 
   // Render workflow section based on selected category
   const renderWorkflowSection = () => {

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useContractor } from '@/hooks/use-contractor';
 import { useUpdateContractor } from '@/hooks/use-contractor';
+import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -17,6 +18,7 @@ export function SettingsPage() {
   const router = useRouter();
   const { data: contractor } = useContractor();
   const updateContractor = useUpdateContractor();
+  const { success: showSuccess, error: showError } = useToast();
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -132,15 +134,14 @@ export function SettingsPage() {
       };
 
       await updateContractor.mutateAsync(contractorData);
-      setMessage('Settings updated successfully!');
+      showSuccess('Settings updated successfully!');
 
       // Redirect to home page after successful save
       setTimeout(() => {
         router.push('/');
       }, 1500);
-    } catch (error) {
-      console.error('Settings update error:', error);
-      setMessage('Failed to update settings. Please try again.');
+    } catch {
+      showError('Failed to update settings', 'Please try again.');
     } finally {
       setIsLoading(false);
     }

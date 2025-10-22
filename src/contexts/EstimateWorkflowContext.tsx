@@ -13,6 +13,10 @@ import { useEstimateData } from '@/hooks/useEstimateData';
 import { useSaveEstimate, useLoadEstimate } from '@/hooks/useEstimateSupabase';
 import { supabase } from '@/lib/supabase';
 import {
+  DEMOLITION_LABOR_ITEMS,
+  DEMOLITION_MATERIALS_ITEMS,
+} from '@/lib/constants';
+import {
   EstimateData,
   WorkflowType,
   WorkflowData,
@@ -143,7 +147,103 @@ export function EstimateWorkflowProvider({
       actions.importData(loadedData);
       setHasLoadedInitialData(true);
     }
-  }, [loadedData, initialData, actions, hasLoadedInitialData]);
+  }, [
+    loadedData,
+    initialData,
+    actions,
+    hasLoadedInitialData,
+    estimateData.workflows,
+  ]);
+
+  // Clean up stale items after data is loaded
+  useEffect(() => {
+    if (hasLoadedInitialData && estimateData.workflows?.demolition) {
+      const demolitionData = estimateData.workflows.demolition;
+      const designData = demolitionData.design;
+
+      if (designData?.demolitionChoices) {
+        const demolitionChoices = designData.demolitionChoices;
+        const isDemolitionFlatFee = designData.isDemolitionFlatFee === 'yes';
+
+        // Clean up labor items
+        const currentWorkflow = demolitionData.workflow;
+        if (currentWorkflow) {
+          if (isDemolitionFlatFee) {
+            // Flat fee mode: clear all hourly items, ensure we have flat fee item
+            const flatFeeAmount = designData.flatFeeAmount || '0';
+            const flatFeeItems: FlatFeeItem[] = [
+              {
+                id: 'flat-fee-demolition',
+                name: 'Demolition & Debris Removal',
+                unitPrice: flatFeeAmount,
+              },
+            ];
+
+            // Only update if there are hourly items to clear or flat fee items to add
+            const hasHourlyItems =
+              (currentWorkflow.labor?.hourlyItems?.length || 0) > 0;
+            const needsFlatFeeUpdate =
+              (currentWorkflow.labor?.flatFeeItems?.length || 0) !== 1 ||
+              currentWorkflow.labor?.flatFeeItems?.[0]?.unitPrice !==
+                flatFeeAmount;
+
+            if (hasHourlyItems || needsFlatFeeUpdate) {
+              actions.updateWorkflowData('demolition', {
+                ...currentWorkflow,
+                labor: {
+                  ...currentWorkflow.labor,
+                  flatFeeItems,
+                  hourlyItems: [],
+                },
+              });
+            }
+          } else {
+            // Hourly mode: generate items based on design choices
+            const contractorHourlyRate = 75;
+            const laborConfigs = DEMOLITION_LABOR_ITEMS(contractorHourlyRate);
+
+            const existingLaborItems = currentWorkflow.labor?.hourlyItems || [];
+            const customItems = existingLaborItems.filter((item) =>
+              item.id.startsWith('custom-')
+            );
+
+            const autoLaborItems: LaborItem[] = [];
+            Object.entries(demolitionChoices).forEach(([choice, value]) => {
+              if (
+                value === 'yes' &&
+                laborConfigs[choice as keyof typeof laborConfigs]
+              ) {
+                const laborConfig =
+                  laborConfigs[choice as keyof typeof laborConfigs];
+                autoLaborItems.push({
+                  id: laborConfig.id,
+                  name: laborConfig.name,
+                  hours: laborConfig.hours,
+                  rate: laborConfig.rate,
+                  scope: 'demolition',
+                });
+              }
+            });
+
+            // Only update if there's a difference
+            if (
+              existingLaborItems.length !==
+              customItems.length + autoLaborItems.length
+            ) {
+              actions.updateWorkflowData('demolition', {
+                ...currentWorkflow,
+                labor: {
+                  ...currentWorkflow.labor,
+                  hourlyItems: [...customItems, ...autoLaborItems],
+                  flatFeeItems: [],
+                },
+              });
+            }
+          }
+        }
+      }
+    }
+  }, [hasLoadedInitialData, estimateData.workflows, actions]);
 
   // Data getters
   const getWorkflowData = useCallback(
@@ -157,6 +257,7 @@ export function EstimateWorkflowProvider({
     <T = unknown,>(workflowType: WorkflowType): T | null => {
       const designData =
         (estimateData.workflows?.[workflowType]?.design as T) || null;
+
       return designData;
     },
     [estimateData.workflows]
@@ -164,10 +265,11 @@ export function EstimateWorkflowProvider({
 
   const getLaborItems = useCallback(
     (workflowType: WorkflowType): LaborItem[] => {
-      return (
+      const items =
         estimateData.workflows?.[workflowType]?.workflow?.labor?.hourlyItems ||
-        []
-      );
+        [];
+
+      return items;
     },
     [estimateData.workflows]
   );
@@ -202,8 +304,156 @@ export function EstimateWorkflowProvider({
   const updateDesign = useCallback(
     <T = unknown,>(workflowType: WorkflowType, updates: Partial<T>) => {
       actions.updateWorkflowDesign(workflowType, updates);
+
+      // For demolition, update the saved labor and material items when design changes
+      if (workflowType === 'demolition') {
+        setTimeout(() => {
+          const designData = getDesignData('demolition') as {
+            demolitionChoices?: Record<string, string>;
+            isDemolitionFlatFee?: string;
+            flatFeeAmount?: string;
+            debrisDisposal?: string;
+          } | null;
+
+          if (!designData) return;
+
+          const demolitionChoices = designData.demolitionChoices || {};
+          const isDemolitionFlatFee = designData.isDemolitionFlatFee === 'yes';
+          const flatFeeAmount = designData.flatFeeAmount || '0';
+          const debrisDisposal = designData.debrisDisposal || 'no';
+
+          const currentWorkflow = getWorkflowData('demolition');
+          if (!currentWorkflow) return;
+
+          // Update labor items in saved data
+          if (isDemolitionFlatFee) {
+            // Flat fee mode
+            const flatFeeItems: FlatFeeItem[] = [
+              {
+                id: 'flat-fee-demolition',
+                name: 'Demolition & Debris Removal',
+                unitPrice: flatFeeAmount,
+              },
+            ];
+
+            actions.updateWorkflowData('demolition', {
+              ...currentWorkflow,
+              labor: {
+                ...currentWorkflow.labor,
+                flatFeeItems,
+                hourlyItems: [],
+              },
+            });
+          } else {
+            // Hourly mode - update saved labor items
+            const contractorHourlyRate = 75; // TODO: Get from contractor context
+            const laborConfigs = DEMOLITION_LABOR_ITEMS(contractorHourlyRate);
+
+            // Get existing custom items from saved data (preserve user-added items)
+            const existingLaborItems = currentWorkflow.labor?.hourlyItems || [];
+            const customItems = existingLaborItems.filter((item) =>
+              item.id.startsWith('custom-')
+            );
+
+            // Generate ONLY the auto labor items that match current design choices
+            const autoLaborItems: LaborItem[] = [];
+            Object.entries(demolitionChoices).forEach(([choice, value]) => {
+              if (
+                value === 'yes' &&
+                laborConfigs[choice as keyof typeof laborConfigs]
+              ) {
+                const laborConfig =
+                  laborConfigs[choice as keyof typeof laborConfigs];
+                autoLaborItems.push({
+                  id: laborConfig.id,
+                  name: laborConfig.name,
+                  hours: laborConfig.hours,
+                  rate: laborConfig.rate,
+                  scope: 'demolition',
+                });
+              }
+            });
+
+            // Update saved labor items - this will REMOVE items that are no longer selected
+            actions.updateWorkflowData('demolition', {
+              ...currentWorkflow,
+              labor: {
+                ...currentWorkflow.labor,
+                hourlyItems: [...customItems, ...autoLaborItems],
+                flatFeeItems: [],
+              },
+            });
+          }
+
+          // Update material items in saved data
+          const currentMaterials = currentWorkflow.materials?.items || [];
+          const customMaterials = currentMaterials.filter((item) =>
+            item.id.startsWith('mat-custom-')
+          );
+
+          const autoMaterialItems: MaterialItem[] = [];
+          const hasAnyDemolitionTask = Object.values(demolitionChoices).some(
+            (choice) => choice === 'yes'
+          );
+
+          if (isDemolitionFlatFee) {
+            // Flat-fee mode: Only add disposal fee if debris disposal is yes
+            if (debrisDisposal === 'yes') {
+              autoMaterialItems.push({
+                id: 'mat-debris-disposal',
+                name: DEMOLITION_MATERIALS_ITEMS.debrisDisposal.name,
+                quantity: DEMOLITION_MATERIALS_ITEMS.debrisDisposal.quantity,
+                price: DEMOLITION_MATERIALS_ITEMS.debrisDisposal.price,
+                unit: DEMOLITION_MATERIALS_ITEMS.debrisDisposal.unit,
+                scope: 'demolition',
+              });
+            }
+          } else {
+            // Hourly mode: Add bags and masks if any demolition task is selected
+            if (hasAnyDemolitionTask) {
+              autoMaterialItems.push({
+                id: 'mat-contractor-bags',
+                name: DEMOLITION_MATERIALS_ITEMS.contractorBags.name,
+                quantity: DEMOLITION_MATERIALS_ITEMS.contractorBags.quantity,
+                price: DEMOLITION_MATERIALS_ITEMS.contractorBags.price,
+                unit: DEMOLITION_MATERIALS_ITEMS.contractorBags.unit,
+                scope: 'demolition',
+              });
+              autoMaterialItems.push({
+                id: 'mat-dust-masks',
+                name: DEMOLITION_MATERIALS_ITEMS.dustMasks.name,
+                quantity: DEMOLITION_MATERIALS_ITEMS.dustMasks.quantity,
+                price: DEMOLITION_MATERIALS_ITEMS.dustMasks.price,
+                unit: DEMOLITION_MATERIALS_ITEMS.dustMasks.unit,
+                scope: 'demolition',
+              });
+            }
+
+            // Add disposal fee if debris disposal is yes
+            if (debrisDisposal === 'yes') {
+              autoMaterialItems.push({
+                id: 'mat-debris-disposal',
+                name: DEMOLITION_MATERIALS_ITEMS.debrisDisposal.name,
+                quantity: DEMOLITION_MATERIALS_ITEMS.debrisDisposal.quantity,
+                price: DEMOLITION_MATERIALS_ITEMS.debrisDisposal.price,
+                unit: DEMOLITION_MATERIALS_ITEMS.debrisDisposal.unit,
+                scope: 'demolition',
+              });
+            }
+          }
+
+          // Update saved material items
+          actions.updateWorkflowData('demolition', {
+            ...currentWorkflow,
+            materials: {
+              ...currentWorkflow.materials,
+              items: [...customMaterials, ...autoMaterialItems],
+            },
+          });
+        }, 50);
+      }
     },
-    [actions]
+    [actions, getDesignData, getWorkflowData]
   );
 
   // Labor updates
@@ -625,7 +875,7 @@ export function EstimateWorkflowProvider({
           actions.importData(transformedData);
         }
       }
-    } catch (error) {
+    } catch {
       setError('Save failed. Please try again.');
       throw error;
     } finally {
@@ -643,9 +893,8 @@ export function EstimateWorkflowProvider({
     try {
       // Use the existing saveData function to maintain consistency
       await saveData();
-    } catch (error) {
-      console.error('Autosave failed:', error);
-      // Don't set error state for autosave failures to avoid disrupting user experience
+    } catch {
+      // Silent autosave failure - no need to show to user
     }
   }, [isSaving, hasLoadedInitialData, saveData]);
 

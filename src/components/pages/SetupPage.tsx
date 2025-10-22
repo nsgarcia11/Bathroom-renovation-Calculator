@@ -3,10 +3,12 @@
 import { useRouter } from 'next/navigation';
 import { useUpdateContractor } from '@/hooks/use-contractor';
 import { SetupWizard } from '@/components/setup/SetupWizard';
+import { useToast } from '@/contexts/ToastContext';
 
 export function SetupPage() {
   const router = useRouter();
   const updateContractor = useUpdateContractor();
+  const { error: showError } = useToast();
 
   const handleFinish = async (settings: {
     companyName: string;
@@ -38,7 +40,7 @@ export function SetupPage() {
       // Redirect to home page
       router.push('/');
     } catch (error) {
-      console.error('❌ Setup error:', error);
+      showError('Setup failed', 'Please try again.');
 
       // If it's an auth error, redirect to home (which will show login form)
       if (

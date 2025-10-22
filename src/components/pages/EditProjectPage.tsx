@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProject, useUpdateProject } from '@/hooks/use-projects';
+import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,6 +20,7 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
   const router = useRouter();
   const { data: project, isLoading: projectLoading } = useProject(projectId);
   const updateProject = useUpdateProject();
+  const { success: showSuccess, error: showError } = useToast();
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -115,15 +117,14 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
 
       await updateProject.mutateAsync(projectPayload);
 
-      setMessage('Project updated successfully!');
+      showSuccess('Project updated successfully!');
 
       // Redirect to home page after successful update
       setTimeout(() => {
         router.push('/');
       }, 1500);
-    } catch (error) {
-      console.error('❌ Project update error:', error);
-      setMessage('Failed to update project. Please try again.');
+    } catch {
+      showError('Failed to update project', 'Please try again.');
     } finally {
       setIsLoading(false);
     }

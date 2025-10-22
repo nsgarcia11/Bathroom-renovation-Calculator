@@ -13,7 +13,6 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import { useContractorContext } from '@/contexts/ContractorContext';
-import { DEMOLITION_LABOR_ITEMS } from '@/lib/constants';
 
 interface LaborItem {
   id: string;
@@ -55,8 +54,6 @@ export default function DemolitionLaborSection() {
 
   // Ref to track if we're in the middle of a user action
   const isUserActionRef = useRef(false);
-  // Ref to track if we've already processed the current demolition choices
-  const processedChoicesRef = useRef<string>('');
 
   // Local state for labor items to handle input changes
   const [localLaborItems, setLocalLaborItems] = useState<LaborItem[]>([]);
@@ -85,7 +82,6 @@ export default function DemolitionLaborSection() {
     [design]
   );
   const isDemolitionFlatFee = design?.isDemolitionFlatFee || 'no';
-  const flatFeeAmount = design?.flatFeeAmount || '0';
   // const debrisDisposal = design?.debrisDisposal || 'no'; // Not used in labor section
 
   const contextLaborItems = getLaborItems('demolition');
@@ -118,137 +114,7 @@ export default function DemolitionLaborSection() {
     []
   );
 
-  // Helper function to generate labor items based on demolition choices
-  const generateLaborItems = useCallback(
-    (choices: DemolitionChoices): LaborItem[] => {
-      const laborItems: LaborItem[] = [];
-
-      // For hourly mode, add individual labor items based on choices
-      const laborItemsConfig = DEMOLITION_LABOR_ITEMS(contractorHourlyRate);
-      Object.entries(choices).forEach(([key, value]) => {
-        if (
-          value === 'yes' &&
-          laborItemsConfig[key as keyof typeof laborItemsConfig]
-        ) {
-          laborItems.push(
-            laborItemsConfig[key as keyof typeof laborItemsConfig]
-          );
-        }
-      });
-
-      return laborItems;
-    },
-    [contractorHourlyRate]
-  );
-
-  // Helper function to generate flat fee items based on demolition choices
-  const generateFlatFeeItems = useCallback((amount: string): FlatFeeItem[] => {
-    const flatFeeItems: FlatFeeItem[] = [];
-
-    // For flat fee mode, add a single flat fee item with the actual amount
-    flatFeeItems.push({
-      id: 'flat-fee-demolition',
-      name: 'Demolition & Debris Removal',
-      unitPrice: amount || '0',
-    });
-
-    return flatFeeItems;
-  }, []);
-
-  // Update auto-generated items when demolition choices change (separate from user actions)
-  useEffect(() => {
-    // Don't run if we're reloading data
-    if (isReloading) {
-      return;
-    }
-
-    // Create a key for the current choices to prevent reprocessing
-    const choicesKey = JSON.stringify({
-      demolitionChoices,
-      isDemolitionFlatFee,
-    });
-    if (processedChoicesRef.current === choicesKey) {
-      return;
-    }
-
-    // If user is making changes, delay the update slightly to avoid conflicts
-    if (isUserActionRef.current) {
-      const timeoutId = setTimeout(() => {
-        // Re-check if user is still making changes
-        if (!isUserActionRef.current) {
-          // Process the update
-          processChoicesUpdate();
-        }
-      }, 150);
-
-      return () => clearTimeout(timeoutId);
-    }
-
-    // Process the update immediately if no user action is in progress
-    processChoicesUpdate();
-
-    function processChoicesUpdate() {
-      if (isDemolitionFlatFee === 'yes') {
-        // Flat fee mode - generate or update flat fee items
-        const currentFlatFee = flatFeeItems || [];
-        const existingAutoItems = currentFlatFee.filter(
-          (item) => !item.id.startsWith('custom-')
-        );
-
-        // Always update the flat fee amount if it exists
-        if (existingAutoItems.length > 0) {
-          const flatFeeItem = existingAutoItems.find(
-            (item) => item.id === 'flat-fee-demolition'
-          );
-          if (flatFeeItem && flatFeeItem.unitPrice !== flatFeeAmount) {
-            // Update the existing flat fee item with new amount
-            const updatedItems = currentFlatFee.map((item) =>
-              item.id === 'flat-fee-demolition'
-                ? { ...item, unitPrice: flatFeeAmount }
-                : item
-            );
-            setFlatFeeItems('demolition', updatedItems);
-            processedChoicesRef.current = choicesKey;
-          }
-        } else if (currentFlatFee.length === 0) {
-          // Generate new flat fee items if none exist
-          const newFlatFeeItems = generateFlatFeeItems(flatFeeAmount);
-          if (newFlatFeeItems.length > 0) {
-            setFlatFeeItems('demolition', newFlatFeeItems);
-            processedChoicesRef.current = choicesKey;
-          }
-        }
-      } else {
-        // Hourly mode - generate labor items based on current choices
-        const currentLabor = laborItems || [];
-        const customItems = currentLabor.filter((item) =>
-          item.id.startsWith('custom-')
-        );
-
-        // Generate new labor items based on current choices
-        const newAutoItems = generateLaborItems(demolitionChoices);
-
-        // Always update items based on current choices (add or remove as needed)
-        const updatedItems = [...customItems, ...newAutoItems];
-        setLaborItems('demolition', updatedItems);
-        processedChoicesRef.current = choicesKey;
-        // Labor items updated based on demolition choices
-      }
-    }
-  }, [
-    demolitionChoices,
-    isDemolitionFlatFee,
-    flatFeeAmount,
-    generateLaborItems,
-    generateFlatFeeItems,
-    laborItems,
-    flatFeeItems,
-    contextLaborItems,
-    contextFlatFeeItems,
-    isReloading,
-    setLaborItems,
-    setFlatFeeItems,
-  ]);
+  // Items are now managed centrally by the context - no useEffect needed
 
   // Handlers for labor items
   const handleAddLaborItem = useCallback(() => {

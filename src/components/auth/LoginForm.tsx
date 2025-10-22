@@ -77,7 +77,7 @@ export function LoginForm() {
       } else {
         setMessage(errorMessage);
       }
-      console.error('Auth error:', error);
+      // Auth error handled by message state
     } finally {
       setIsLoading(false);
     }
