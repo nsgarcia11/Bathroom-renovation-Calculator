@@ -327,8 +327,14 @@ export default function EstimatesOverview({
   };
 
   // Get demolition workflow data
+  const demolitionDesignData = getDesignData('demolition');
+  const demolitionLaborItems = getLaborItems('demolition');
+  const demolitionMaterialItems = getMaterialItems('demolition');
+  const demolitionTotals = getWorkflowTotals('demolition');
+
   const demolitionData = useMemo(() => {
-    const designData = getDesignData('demolition') as {
+
+    const designData = demolitionDesignData as {
       isDemolitionFlatFee?: 'yes' | 'no';
       debrisDisposal?: 'yes' | 'no';
       demolitionChoices?: {
@@ -343,9 +349,9 @@ export default function EstimatesOverview({
       };
       [key: string]: unknown;
     } | null;
-    const laborItems = getLaborItems('demolition');
-    const materialItems = getMaterialItems('demolition');
-    const totals = getWorkflowTotals('demolition');
+    const laborItems = demolitionLaborItems;
+    const materialItems = demolitionMaterialItems;
+    const totals = demolitionTotals;
 
     // Check if demolition has any data - including design selections
     const hasLaborOrMaterials =
@@ -359,9 +365,11 @@ export default function EstimatesOverview({
             (choice) => choice === 'yes'
           )));
 
-    if (!hasLaborOrMaterials && !hasDesignSelections) return null;
+    if (!hasLaborOrMaterials && !hasDesignSelections) {
+      return null;
+    }
 
-    return {
+    const result = {
       id: 'demolition',
       name: 'Demolition',
       icon: <Hammer size={24} />,
@@ -374,14 +382,26 @@ export default function EstimatesOverview({
       totalMaterials: totals.materialsTotal,
       total: totals.grandTotal,
     };
-  }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
+
+    return result;
+  }, [
+    demolitionDesignData,
+    demolitionLaborItems,
+    demolitionMaterialItems,
+    demolitionTotals,
+  ]);
 
   // Get shower walls workflow data
+  const showerWallsDesignData = getDesignData('showerWalls');
+  const showerWallsLaborItems = getLaborItems('showerWalls');
+  const showerWallsMaterialItems = getMaterialItems('showerWalls');
+  const showerWallsTotals = getWorkflowTotals('showerWalls');
+
   const showerWallsData = useMemo(() => {
-    const designData = getDesignData('showerWalls');
-    const laborItems = getLaborItems('showerWalls');
-    const materialItems = getMaterialItems('showerWalls');
-    const totals = getWorkflowTotals('showerWalls');
+    const designData = showerWallsDesignData;
+    const laborItems = showerWallsLaborItems;
+    const materialItems = showerWallsMaterialItems;
+    const totals = showerWallsTotals;
 
     // Check if shower walls has any data
     const hasData =
@@ -439,14 +459,24 @@ export default function EstimatesOverview({
       totalMaterials: totals.materialsTotal,
       total: totals.grandTotal,
     };
-  }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
+  }, [
+    showerWallsDesignData,
+    showerWallsLaborItems,
+    showerWallsMaterialItems,
+    showerWallsTotals,
+  ]);
 
   // Get shower base workflow data
+  const showerBaseDesignData = getDesignData('showerBase');
+  const showerBaseLaborItems = getLaborItems('showerBase');
+  const showerBaseMaterialItems = getMaterialItems('showerBase');
+  const showerBaseTotals = getWorkflowTotals('showerBase');
+
   const showerBaseData = useMemo(() => {
-    const designData = getDesignData('showerBase');
-    const laborItems = getLaborItems('showerBase');
-    const materialItems = getMaterialItems('showerBase');
-    const totals = getWorkflowTotals('showerBase');
+    const designData = showerBaseDesignData;
+    const laborItems = showerBaseLaborItems;
+    const materialItems = showerBaseMaterialItems;
+    const totals = showerBaseTotals;
 
     // Check if there's any data
     const hasData =
@@ -504,14 +534,24 @@ export default function EstimatesOverview({
       totalMaterials: totals.materialsTotal,
       total: totals.grandTotal,
     };
-  }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
+  }, [
+    showerBaseDesignData,
+    showerBaseLaborItems,
+    showerBaseMaterialItems,
+    showerBaseTotals,
+  ]);
 
   // Get floors workflow data
+  const floorsDesignData = getDesignData('floors');
+  const floorsLaborItems = getLaborItems('floors');
+  const floorsMaterialItems = getMaterialItems('floors');
+  const floorsTotals = getWorkflowTotals('floors');
+
   const floorsData = useMemo(() => {
-    const designData = getDesignData('floors');
-    const laborItems = getLaborItems('floors');
-    const materialItems = getMaterialItems('floors');
-    const totals = getWorkflowTotals('floors');
+    const designData = floorsDesignData;
+    const laborItems = floorsLaborItems;
+    const materialItems = floorsMaterialItems;
+    const totals = floorsTotals;
 
     // Check if there's any data
     const hasData =
@@ -569,14 +609,19 @@ export default function EstimatesOverview({
       totalMaterials: totals.materialsTotal,
       total: totals.grandTotal,
     };
-  }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
+  }, [floorsDesignData, floorsLaborItems, floorsMaterialItems, floorsTotals]);
 
   // Get finishings workflow data
+  const finishingsDesignData = getDesignData('finishings');
+  const finishingsLaborItems = getLaborItems('finishings');
+  const finishingsMaterialItems = getMaterialItems('finishings');
+  const finishingsTotals = getWorkflowTotals('finishings');
+
   const finishingsData = useMemo(() => {
-    const designData = getDesignData('finishings');
-    const laborItems = getLaborItems('finishings');
-    const materialItems = getMaterialItems('finishings');
-    const totals = getWorkflowTotals('finishings');
+    const designData = finishingsDesignData;
+    const laborItems = finishingsLaborItems;
+    const materialItems = finishingsMaterialItems;
+    const totals = finishingsTotals;
 
     // Check if there's any data
     const hasData =
@@ -634,14 +679,24 @@ export default function EstimatesOverview({
       totalMaterials: totals.materialsTotal,
       total: totals.grandTotal,
     };
-  }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
+  }, [
+    finishingsDesignData,
+    finishingsLaborItems,
+    finishingsMaterialItems,
+    finishingsTotals,
+  ]);
 
   // Get structural workflow data
+  const structuralDesignData = getDesignData('structural');
+  const structuralLaborItems = getLaborItems('structural');
+  const structuralMaterialItems = getMaterialItems('structural');
+  const structuralTotals = getWorkflowTotals('structural');
+
   const structuralData = useMemo(() => {
-    const designData = getDesignData('structural');
-    const laborItems = getLaborItems('structural');
-    const materialItems = getMaterialItems('structural');
-    const totals = getWorkflowTotals('structural');
+    const designData = structuralDesignData;
+    const laborItems = structuralLaborItems;
+    const materialItems = structuralMaterialItems;
+    const totals = structuralTotals;
 
     // Check if there's any data
     const hasData =
@@ -699,14 +754,24 @@ export default function EstimatesOverview({
       totalMaterials: totals.materialsTotal,
       total: totals.grandTotal,
     };
-  }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
+  }, [
+    structuralDesignData,
+    structuralLaborItems,
+    structuralMaterialItems,
+    structuralTotals,
+  ]);
 
   // Get trade workflow data
+  const tradeDesignData = getDesignData('trade');
+  const tradeLaborItems = getLaborItems('trade');
+  const tradeMaterialItems = getMaterialItems('trade');
+  const tradeTotals = getWorkflowTotals('trade');
+
   const tradeData = useMemo(() => {
-    const designData = getDesignData('trade');
-    const laborItems = getLaborItems('trade');
-    const materialItems = getMaterialItems('trade');
-    const totals = getWorkflowTotals('trade');
+    const designData = tradeDesignData;
+    const laborItems = tradeLaborItems;
+    const materialItems = tradeMaterialItems;
+    const totals = tradeTotals;
 
     // Check if there's any data
     const hasData =
@@ -764,7 +829,7 @@ export default function EstimatesOverview({
       totalMaterials: totals.materialsTotal,
       total: totals.grandTotal,
     };
-  }, [getDesignData, getLaborItems, getMaterialItems, getWorkflowTotals]);
+  }, [tradeDesignData, tradeLaborItems, tradeMaterialItems, tradeTotals]);
 
   // Create workflows array
   const workflows = useMemo(() => {

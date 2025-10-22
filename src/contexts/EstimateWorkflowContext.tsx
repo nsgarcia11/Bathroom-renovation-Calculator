@@ -651,7 +651,6 @@ export function EstimateWorkflowProvider({
 
   const loadData = useCallback(async () => {
     // Data is automatically loaded via useLoadEstimate query
-    console.log('Data loading is handled automatically');
   }, []);
 
   // Periodic autosave effect - runs every 60 seconds
