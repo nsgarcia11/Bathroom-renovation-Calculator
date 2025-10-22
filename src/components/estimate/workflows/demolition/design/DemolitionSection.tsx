@@ -233,22 +233,6 @@ export function DemolitionSection() {
                     className='border-blue-300 focus:border-blue-500 focus:ring-blue-500'
                   />
                 </div>
-                <div>
-                  <label className='block text-sm font-semibold text-slate-700 mb-1.5'>
-                    What&apos;s included in the flat fee?
-                  </label>
-                  <Textarea
-                    id='flat-fee-description'
-                    label='Flat Fee Description'
-                    value={flatFeeDescription}
-                    onChange={(e) =>
-                      handleFlatFeeDescriptionChange(e.target.value)
-                    }
-                    placeholder='e.g., Removal of all bathroom fixtures, flooring, and debris...'
-                    rows={3}
-                    className='border-blue-300 focus:border-blue-500 focus:ring-blue-500'
-                  />
-                </div>
               </div>
             )}
           </CardContent>
