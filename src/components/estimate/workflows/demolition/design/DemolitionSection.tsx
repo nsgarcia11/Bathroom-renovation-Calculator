@@ -3,7 +3,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { NotesCard } from '@/components/estimate/shared/NotesCard';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
@@ -96,8 +95,6 @@ export function DemolitionSection() {
   const debrisDisposal = contextDesign?.debrisDisposal || 'no';
   const isDemolitionFlatFee = contextDesign?.isDemolitionFlatFee || 'no';
   const flatFeeAmount = contextDesign?.flatFeeAmount || '';
-  const flatFeeDescription =
-    contextDesign?.flatFeeDescription || 'Demolition & Debris Removal';
   const contractorNotes = contextNotes?.contractorNotes || '';
   const clientNotes = contextNotes?.clientNotes || '';
 
@@ -172,13 +169,6 @@ export function DemolitionSection() {
     [updateDesign]
   );
 
-  const handleFlatFeeDescriptionChange = useCallback(
-    (value: string) => {
-      updateDesign('demolition', { flatFeeDescription: value });
-    },
-    [updateDesign]
-  );
-
   const handleContractorNotesChange = useCallback(
     (notes: string) => {
       updateNotes('demolition', { contractorNotes: notes });
@@ -209,7 +199,7 @@ export function DemolitionSection() {
                 if (!checked) {
                   updateDesign('demolition', {
                     flatFeeAmount: '',
-                    flatFeeDescription: 'Demolition & Debris Removal',
+                    flatFeeDescription: 'Demolition Flat Fee',
                   });
                 }
               }}

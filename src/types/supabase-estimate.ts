@@ -195,8 +195,7 @@ export function migrateOldDataToNewStructure(
             (oldData.isDemolitionFlatFee as 'yes' | 'no') || 'no',
           flatFeeAmount: (oldData.flatFeeAmount as string) || '0',
           flatFeeDescription:
-            (oldData.flatFeeDescription as string) ||
-            'Demolition & Debris Removal',
+            (oldData.flatFeeDescription as string) || 'Demolition Flat Fee',
         },
         labor: {
           hourlyItems:

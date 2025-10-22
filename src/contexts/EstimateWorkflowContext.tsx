@@ -174,7 +174,7 @@ export function EstimateWorkflowProvider({
             const flatFeeItems: FlatFeeItem[] = [
               {
                 id: 'flat-fee-demolition',
-                name: 'Demolition & Debris Removal',
+                name: 'Demolition Flat Fee',
                 unitPrice: flatFeeAmount,
               },
             ];
@@ -331,7 +331,7 @@ export function EstimateWorkflowProvider({
             const flatFeeItems: FlatFeeItem[] = [
               {
                 id: 'flat-fee-demolition',
-                name: 'Demolition & Debris Removal',
+                name: 'Demolition Flat Fee',
                 unitPrice: flatFeeAmount,
               },
             ];

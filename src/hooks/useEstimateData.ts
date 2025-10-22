@@ -21,7 +21,7 @@ const createEmptyEstimateData = (projectId: string): EstimateData => ({
         debrisDisposal: 'no',
         isDemolitionFlatFee: 'no',
         flatFeeAmount: '',
-        flatFeeDescription: 'Demolition & Debris Removal',
+        flatFeeDescription: 'Demolition Flat Fee',
       },
       workflow: {
         labor: { hourlyItems: [], flatFeeItems: [] },
