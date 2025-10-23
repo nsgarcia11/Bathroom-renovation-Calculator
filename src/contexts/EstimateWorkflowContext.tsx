@@ -11,6 +11,7 @@ import React, {
 } from 'react';
 import { useEstimateData } from '@/hooks/useEstimateData';
 import { useSaveEstimate, useLoadEstimate } from '@/hooks/useEstimateSupabase';
+import { useContractor } from '@/hooks/use-contractor';
 import { supabase } from '@/lib/supabase';
 import {
   DEMOLITION_LABOR_ITEMS,
@@ -130,6 +131,7 @@ export function EstimateWorkflowProvider({
   const saveEstimateMutation = useSaveEstimate();
   const { data: loadedData, isLoading: isLoadingData } =
     useLoadEstimate(projectId);
+  const { data: contractor } = useContractor();
 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -199,7 +201,7 @@ export function EstimateWorkflowProvider({
             }
           } else {
             // Hourly mode: generate items based on design choices
-            const contractorHourlyRate = 75;
+            const contractorHourlyRate = contractor?.hourly_rate || 0;
             const laborConfigs = DEMOLITION_LABOR_ITEMS(contractorHourlyRate);
 
             const existingLaborItems = currentWorkflow.labor?.hourlyItems || [];
@@ -346,7 +348,7 @@ export function EstimateWorkflowProvider({
             });
           } else {
             // Hourly mode - update saved labor items
-            const contractorHourlyRate = 75; // TODO: Get from contractor context
+            const contractorHourlyRate = contractor?.hourly_rate || 0;
             const laborConfigs = DEMOLITION_LABOR_ITEMS(contractorHourlyRate);
 
             // Get existing custom items from saved data (preserve user-added items)

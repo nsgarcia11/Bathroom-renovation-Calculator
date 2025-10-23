@@ -429,15 +429,13 @@ export default function DemolitionLaborSection() {
         <h2 className='text-2xl font-bold text-slate-800'>Labor</h2>
         {isDemolitionFlatFee === 'no' && totalHours > 0 && (
           <div className='flex items-center gap-2 text-sm text-slate-600'>
-            <span className='font-medium'>Total Hours:</span>
-            <span className='font-semibold text-slate-800'>
-              {totalHours.toFixed(1)}
+            <span className='font-semibold text-xl text-slate-800'>
+              {totalHours.toFixed(1)} hrs
             </span>
           </div>
         )}
         <div className='flex items-center gap-2 text-sm text-slate-600'>
-          <span className='font-medium'>Total Price:</span>
-          <span className='font-semibold text-blue-600'>
+          <span className='font-semibold text-xl text-blue-600'>
             ${total.toFixed(2)}
           </span>
         </div>
