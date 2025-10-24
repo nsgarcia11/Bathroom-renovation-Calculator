@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import { useContractorContext } from '@/contexts/ContractorContext';
+import { DEMOLITION_ITEM_ORDER } from '@/lib/constants';
 
 interface LaborItem {
   id: string;
@@ -238,13 +239,55 @@ export default function DemolitionLaborSection() {
   const labor = useMemo(() => laborItems || [], [laborItems]);
   const flatFees = useMemo(() => flatFeeItems || [], [flatFeeItems]);
 
-  // Filter demolition tasks only
+  // Filter and sort demolition tasks according to standardized order
   const demolitionTasks = useMemo(() => {
     const filtered = labor.filter(
       (item) =>
         item && (item.id.startsWith('lab-') || item.id.startsWith('labor-'))
     );
-    return filtered;
+
+    // Sort items according to DEMOLITION_ITEM_ORDER
+    return filtered.sort((a, b) => {
+      const aIndex = DEMOLITION_ITEM_ORDER.findIndex((orderKey) => {
+        const laborConfigs = {
+          removeFlooring: 'lab-demo-floor',
+          removeShowerWall: 'lab-demo-shower',
+          removeShowerBase: 'lab-demo-shower-base',
+          removeTub: 'lab-demo-tub',
+          removeVanity: 'lab-demo-vanity',
+          removeToilet: 'lab-demo-toilet',
+          removeAccessories: 'lab-demo-accessories',
+          removeWall: 'lab-demo-wall',
+        };
+        return a.id === laborConfigs[orderKey];
+      });
+
+      const bIndex = DEMOLITION_ITEM_ORDER.findIndex((orderKey) => {
+        const laborConfigs = {
+          removeFlooring: 'lab-demo-floor',
+          removeShowerWall: 'lab-demo-shower',
+          removeShowerBase: 'lab-demo-shower-base',
+          removeTub: 'lab-demo-tub',
+          removeVanity: 'lab-demo-vanity',
+          removeToilet: 'lab-demo-toilet',
+          removeAccessories: 'lab-demo-accessories',
+          removeWall: 'lab-demo-wall',
+        };
+        return b.id === laborConfigs[orderKey];
+      });
+
+      // If both items are in the order, sort by order
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+
+      // If only one is in the order, prioritize it
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+
+      // If neither is in the order, maintain original order
+      return 0;
+    });
   }, [labor]);
 
   // Filter custom tasks

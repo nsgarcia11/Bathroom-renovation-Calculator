@@ -24,7 +24,7 @@ interface MaterialItem {
 }
 
 export default function DemolitionMaterialsSection() {
-  const { getMaterialItems, setMaterialItems, updateDesign } =
+  const { getMaterialItems, setMaterialItems, updateDesign, getDesignData } =
     useEstimateWorkflowContext();
 
   // Ref to track if we're in the middle of a user action
@@ -36,28 +36,71 @@ export default function DemolitionMaterialsSection() {
   // Get current materials from context
   const contextMaterials = getMaterialItems('demolition');
 
-  // Sync local state with context data
+  // Get design data to filter materials
+  const design = getDesignData<{
+    demolitionChoices: {
+      removeFlooring: 'yes' | 'no';
+      removeShowerWall: 'yes' | 'no';
+      removeShowerBase: 'yes' | 'no';
+      removeTub: 'yes' | 'no';
+      removeVanity: 'yes' | 'no';
+      removeToilet: 'yes' | 'no';
+      removeAccessories: 'yes' | 'no';
+      removeWall: 'yes' | 'no';
+    };
+    debrisDisposal: 'yes' | 'no';
+  }>('demolition');
+
+  const demolitionChoices = design?.demolitionChoices || {
+    removeFlooring: 'no',
+    removeShowerWall: 'no',
+    removeShowerBase: 'no',
+    removeTub: 'no',
+    removeVanity: 'no',
+    removeToilet: 'no',
+    removeAccessories: 'no',
+    removeWall: 'no',
+  };
+  const debrisDisposal = design?.debrisDisposal || 'no';
+
+  // Filter materials based on design choices
+  const filteredMaterials = useMemo(() => {
+    if (!contextMaterials) return [];
+
+    // Check if any demolition choices are enabled
+    const hasAnyDemolition = Object.values(demolitionChoices).some(
+      (choice) => choice === 'yes'
+    );
+
+    // Filter materials based on specific choices
+    return contextMaterials.filter((material) => {
+      // Always show custom materials
+      if (material.id.startsWith('mat-custom-')) return true;
+
+      // Show debris disposal only if debris disposal is enabled
+      if (material.id === 'mat-debris-disposal') {
+        return debrisDisposal === 'yes';
+      }
+
+      // Show contractor bags and dust masks only if any demolition is happening
+      if (
+        material.id === 'mat-contractor-bags' ||
+        material.id === 'mat-dust-masks'
+      ) {
+        return hasAnyDemolition;
+      }
+
+      return true;
+    });
+  }, [contextMaterials, demolitionChoices, debrisDisposal]);
+
+  // Sync local state with filtered materials
   useEffect(() => {
-    // Always sync with context data, even if arrays are empty
-    setLocalMaterials(contextMaterials || []);
-  }, [contextMaterials]);
+    setLocalMaterials(filteredMaterials);
+  }, [filteredMaterials]);
 
   // Use local state for display and editing
   const materials = localMaterials;
-
-  // Initialize materials only on first load - DISABLED to prevent overwriting saved data
-  // useEffect(() => {
-  //   if ((!materials || materials.length === 0) && !isReloading) {
-  //     const autoMaterials = generateMaterials(
-  //       demolitionChoices,
-  //       isDemolitionFlatFee === 'yes',
-  //       debrisDisposal
-  //     );
-  //     setMaterialItems('demolition', autoMaterials);
-  //   }
-  // }, []); // Only run once on mount - intentionally empty dependency array
-
-  // Items are now managed centrally by the context - no useEffect needed
 
   // Handlers for materials
   const handleAddCustomSupply = useCallback(() => {

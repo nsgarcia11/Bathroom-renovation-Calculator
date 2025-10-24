@@ -34,6 +34,18 @@ export const DEFAULT_SETTINGS = {
   currency: 'CAD',
 };
 
+// Demolition item order for consistent display across Design, Labor, and Estimate sections
+export const DEMOLITION_ITEM_ORDER = [
+  'removeFlooring',
+  'removeShowerWall',
+  'removeShowerBase',
+  'removeTub',
+  'removeVanity',
+  'removeToilet',
+  'removeAccessories',
+  'removeWall',
+] as const;
+
 // Demolition labor items mapping
 export const DEMOLITION_LABOR_ITEMS = (contractorHourlyRate: number) => ({
   removeFlooring: {

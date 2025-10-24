@@ -141,7 +141,7 @@ export function EstimateWorkflowProvider({
 
   // Autosave functionality
   const autosaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const AUTOSAVE_INTERVAL = 60000; // 60 seconds interval
+  const AUTOSAVE_INTERVAL = 5000; // 5 seconds interval
 
   // Load data when available (only once)
   useEffect(() => {
