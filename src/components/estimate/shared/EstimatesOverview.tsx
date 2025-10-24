@@ -13,6 +13,7 @@ import { StructuralIcon } from '@/components/icons/StructuralIcon';
 import { TradeIcon } from '@/components/icons/TradeIcon';
 import domtoimage from 'dom-to-image';
 import jsPDF from 'jspdf';
+import { DEMOLITION_ITEM_ORDER } from '@/lib/constants';
 
 interface EstimatesOverviewProps {
   projectId: string;
@@ -1342,6 +1343,53 @@ export default function EstimatesOverview({
                     if (laborItems.length === 0 && flatFeeItems.length === 0)
                       return null;
 
+                    // Sort labor items according to DEMOLITION_ITEM_ORDER
+                    const sortedLaborItems = laborItems.sort((a, b) => {
+                      const aIndex = DEMOLITION_ITEM_ORDER.findIndex(
+                        (orderKey) => {
+                          const laborConfigs = {
+                            removeFlooring: 'lab-demo-floor',
+                            removeShowerWall: 'lab-demo-shower',
+                            removeShowerBase: 'lab-demo-shower-base',
+                            removeTub: 'lab-demo-tub',
+                            removeVanity: 'lab-demo-vanity',
+                            removeToilet: 'lab-demo-toilet',
+                            removeAccessories: 'lab-demo-accessories',
+                            removeWall: 'lab-demo-wall',
+                          };
+                          return a.id === laborConfigs[orderKey];
+                        }
+                      );
+
+                      const bIndex = DEMOLITION_ITEM_ORDER.findIndex(
+                        (orderKey) => {
+                          const laborConfigs = {
+                            removeFlooring: 'lab-demo-floor',
+                            removeShowerWall: 'lab-demo-shower',
+                            removeShowerBase: 'lab-demo-shower-base',
+                            removeTub: 'lab-demo-tub',
+                            removeVanity: 'lab-demo-vanity',
+                            removeToilet: 'lab-demo-toilet',
+                            removeAccessories: 'lab-demo-accessories',
+                            removeWall: 'lab-demo-wall',
+                          };
+                          return b.id === laborConfigs[orderKey];
+                        }
+                      );
+
+                      // If both items are in the order, sort by order
+                      if (aIndex !== -1 && bIndex !== -1) {
+                        return aIndex - bIndex;
+                      }
+
+                      // If only one is in the order, prioritize it
+                      if (aIndex !== -1) return -1;
+                      if (bIndex !== -1) return 1;
+
+                      // If neither is in the order, maintain original order
+                      return 0;
+                    });
+
                     return (
                       <div className='mb-4'>
                         <h4 className='font-semibold text-gray-800 mb-3 text-sm'>
@@ -1372,7 +1420,7 @@ export default function EstimatesOverview({
                                 );
                               })
                             : /* Show individual labor items if hourly mode */
-                              laborItems.map((item) => {
+                              sortedLaborItems.map((item) => {
                                 const hours = parseFloat(item.hours) || 0;
                                 const rate = parseFloat(item.rate) || 0;
                                 const total = hours * rate;
