@@ -129,13 +129,15 @@ export function EstimateWorkflowProvider({
 }: EstimateWorkflowProviderProps) {
   const { estimateData, actions } = useEstimateData(projectId, initialData);
   const saveEstimateMutation = useSaveEstimate();
-  const { data: loadedData, isLoading: isLoadingData } =
-    useLoadEstimate(projectId);
+  const {
+    data: loadedData,
+    isLoading: isLoadingData,
+    refetch: refetchEstimate,
+  } = useLoadEstimate(projectId);
   const { data: contractor } = useContractor();
 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
   const [isReloading, setIsReloading] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
@@ -143,23 +145,29 @@ export function EstimateWorkflowProvider({
   const autosaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const AUTOSAVE_INTERVAL = 5000; // 5 seconds interval
 
-  // Load data when available (only once)
-  useEffect(() => {
-    if (loadedData && !initialData && !hasLoadedInitialData) {
-      actions.importData(loadedData);
-      setHasLoadedInitialData(true);
-    }
-  }, [
-    loadedData,
-    initialData,
-    actions,
-    hasLoadedInitialData,
-    estimateData.workflows,
-  ]);
+  // Track previous loadedData to detect changes
+  const prevLoadedDataRef = useRef<EstimateData | null>(null);
 
-  // Clean up stale items after data is loaded
+  // Refetch on mount to get latest data
   useEffect(() => {
-    if (hasLoadedInitialData && estimateData.workflows?.demolition) {
+    refetchEstimate();
+  }, [refetchEstimate]);
+
+  // Load data when it changes (after refetch)
+  useEffect(() => {
+    if (
+      loadedData &&
+      !initialData &&
+      prevLoadedDataRef.current !== loadedData
+    ) {
+      actions.importData(loadedData);
+      prevLoadedDataRef.current = loadedData;
+    }
+  }, [loadedData, initialData, actions]);
+
+  // Auto-generate labor items when design choices change
+  useEffect(() => {
+    if (estimateData.workflows?.demolition) {
       const demolitionData = estimateData.workflows.demolition;
       const designData = demolitionData.design;
 
@@ -167,11 +175,10 @@ export function EstimateWorkflowProvider({
         const demolitionChoices = designData.demolitionChoices;
         const isDemolitionFlatFee = designData.isDemolitionFlatFee === 'yes';
 
-        // Clean up labor items
         const currentWorkflow = demolitionData.workflow;
         if (currentWorkflow) {
           if (isDemolitionFlatFee) {
-            // Flat fee mode: clear all hourly items, ensure we have flat fee item
+            // Flat fee mode
             const flatFeeAmount = designData.flatFeeAmount || '0';
             const flatFeeItems: FlatFeeItem[] = [
               {
@@ -181,7 +188,6 @@ export function EstimateWorkflowProvider({
               },
             ];
 
-            // Only update if there are hourly items to clear or flat fee items to add
             const hasHourlyItems =
               (currentWorkflow.labor?.hourlyItems?.length || 0) > 0;
             const needsFlatFeeUpdate =
@@ -209,7 +215,13 @@ export function EstimateWorkflowProvider({
               item.id.startsWith('custom-')
             );
 
-            const autoLaborItems: LaborItem[] = [];
+            // Get existing auto-generated items
+            const existingAutoItems = existingLaborItems.filter(
+              (item) => !item.id.startsWith('custom-')
+            );
+
+            // Build expected labor items based on design choices
+            const expectedAutoItems: LaborItem[] = [];
             Object.entries(demolitionChoices).forEach(([choice, value]) => {
               if (
                 value === 'yes' &&
@@ -217,7 +229,7 @@ export function EstimateWorkflowProvider({
               ) {
                 const laborConfig =
                   laborConfigs[choice as keyof typeof laborConfigs];
-                autoLaborItems.push({
+                expectedAutoItems.push({
                   id: laborConfig.id,
                   name: laborConfig.name,
                   hours: laborConfig.hours,
@@ -227,16 +239,27 @@ export function EstimateWorkflowProvider({
               }
             });
 
-            // Only update if there's a difference
-            if (
-              existingLaborItems.length !==
-              customItems.length + autoLaborItems.length
-            ) {
+            // Merge existing and expected items
+            const mergedAutoItems: LaborItem[] = [];
+            expectedAutoItems.forEach((expectedItem) => {
+              const existingItem = existingAutoItems.find(
+                (item) => item.id === expectedItem.id
+              );
+              if (existingItem) {
+                mergedAutoItems.push(existingItem);
+              } else {
+                mergedAutoItems.push(expectedItem);
+              }
+            });
+
+            // Update only if there's a difference
+            const expectedCount = customItems.length + mergedAutoItems.length;
+            if (existingLaborItems.length !== expectedCount) {
               actions.updateWorkflowData('demolition', {
                 ...currentWorkflow,
                 labor: {
                   ...currentWorkflow.labor,
-                  hourlyItems: [...customItems, ...autoLaborItems],
+                  hourlyItems: [...customItems, ...mergedAutoItems],
                   flatFeeItems: [],
                 },
               });
@@ -245,7 +268,7 @@ export function EstimateWorkflowProvider({
         }
       }
     }
-  }, [hasLoadedInitialData, estimateData.workflows, actions]);
+  }, [estimateData.workflows, actions, contractor]);
 
   // Data getters
   const getWorkflowData = useCallback(
@@ -888,7 +911,7 @@ export function EstimateWorkflowProvider({
 
   // Autosave function that uses the existing saveData function
   const autosave = useCallback(async () => {
-    if (isSaving || !hasLoadedInitialData) {
+    if (isSaving || !loadedData) {
       return;
     }
 
@@ -898,15 +921,15 @@ export function EstimateWorkflowProvider({
     } catch {
       // Silent autosave failure - no need to show to user
     }
-  }, [isSaving, hasLoadedInitialData, saveData]);
+  }, [isSaving, loadedData, saveData]);
 
   const loadData = useCallback(async () => {
     // Data is automatically loaded via useLoadEstimate query
   }, []);
 
-  // Periodic autosave effect - runs every 60 seconds
+  // Periodic autosave effect - runs every 5 seconds
   useEffect(() => {
-    if (!hasLoadedInitialData) {
+    if (!loadedData) {
       return;
     }
 
@@ -922,7 +945,7 @@ export function EstimateWorkflowProvider({
         autosaveIntervalRef.current = null;
       }
     };
-  }, [hasLoadedInitialData, autosave]);
+  }, [loadedData, autosave]);
 
   // Totals
   const getWorkflowTotals = useCallback(
