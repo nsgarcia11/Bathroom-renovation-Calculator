@@ -144,12 +144,21 @@ export function HomePage() {
                   onClick={() => router.push(`/project/${project.id}/estimate`)}
                   className='flex-grow p-4 text-left'
                 >
-                  <h3 className='font-bold text-slate-800 text-base sm:text-sm mb-2'>
-                    {project.project_name || 'Untitled Project'}
-                  </h3>
-                  <p className='text-base sm:text-sm text-slate-500'>
-                    {project.client_name || 'No customer name'}
-                  </p>
+                  <div className='flex justify-between items-center'>
+                    <div>
+                      <h3 className='font-bold text-slate-800 text-base sm:text-sm mb-2'>
+                        {project.project_name || 'Untitled Project'}
+                      </h3>
+                      <p className='text-base sm:text-sm text-slate-500'>
+                        {project.client_name || 'No customer name'}
+                      </p>
+                    </div>
+                    <div>
+                      <span className='text-slate-500 text-xs'>
+                        {new Date(project.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
                 </button>
                 <div className='flex justify-end space-x-2 p-4 pt-0 border-t border-slate-100'>
                   <button
