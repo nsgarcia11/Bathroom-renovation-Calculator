@@ -1,31 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useContractor } from '@/hooks/use-contractor';
-import { useProjects, useDeleteProject } from '@/hooks/use-projects';
-import { useTotalProjectValue } from '@/hooks/use-all-estimates';
-import { useToast } from '@/contexts/ToastContext';
-import { Project } from '@/types';
 import { DashboardCard } from '@/components/ui/card';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useToast } from '@/contexts/ToastContext';
+import { useTotalProjectValue } from '@/hooks/use-all-estimates';
+import { useContractor } from '@/hooks/use-contractor';
+import { useDeleteProject, useProjects } from '@/hooks/use-projects';
+import { Project } from '@/types';
 import {
-  Plus,
-  Briefcase,
   BarChart2,
-  Users,
+  Briefcase,
   Pencil,
+  Plus,
   Trash2,
+  Users,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export function HomePage() {
   const router = useRouter();
-  const {
-    data: contractor,
-    isLoading: contractorLoading,
-    refetch: refetchContractor,
-  } = useContractor();
+  const { isLoading: contractorLoading, refetch: refetchContractor } =
+    useContractor();
   const { data: projects, isLoading: projectsLoading } = useProjects();
   const { totalValue, isLoading: totalValueLoading } = useTotalProjectValue();
   const deleteProject = useDeleteProject();
@@ -75,11 +72,6 @@ export function HomePage() {
 
   if (loading) {
     return <LoadingSpinner />;
-  }
-
-  if (!contractor) {
-    router.push('/setup');
-    return null;
   }
 
   return (
