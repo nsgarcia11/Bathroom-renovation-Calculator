@@ -64,15 +64,20 @@ export function AuthGuard({ children }: AuthGuardProps) {
     !contractorError &&
     !contractorFetching
   ) {
+    const stringHasValue = (value: string | null | undefined) =>
+      typeof value === 'string' && value.trim().length > 0;
+    const numberHasValue = (value: number | null | undefined) =>
+      typeof value === 'number' && !Number.isNaN(value);
+
     const hasRequiredFields =
-      contractor.name &&
-      contractor.email &&
-      contractor.phone &&
-      contractor.address &&
-      contractor.postal_code &&
-      contractor.province &&
-      contractor.hourly_rate &&
-      contractor.tax_rate !== undefined;
+      stringHasValue(contractor.name) &&
+      stringHasValue(contractor.email) &&
+      stringHasValue(contractor.phone) &&
+      stringHasValue(contractor.address) &&
+      stringHasValue(contractor.postal_code) &&
+      stringHasValue(contractor.province) &&
+      numberHasValue(contractor.hourly_rate) &&
+      numberHasValue(contractor.tax_rate);
 
     if (!hasRequiredFields) {
       return <SetupPage />;

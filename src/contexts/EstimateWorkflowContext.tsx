@@ -911,7 +911,7 @@ export function EstimateWorkflowProvider({
 
   // Autosave function that uses the existing saveData function
   const autosave = useCallback(async () => {
-    if (isSaving || !loadedData) {
+    if (isSaving || typeof loadedData === 'undefined') {
       return;
     }
 
@@ -929,7 +929,7 @@ export function EstimateWorkflowProvider({
 
   // Periodic autosave effect - runs every 5 seconds
   useEffect(() => {
-    if (!loadedData) {
+    if (typeof loadedData === 'undefined') {
       return;
     }
 
