@@ -238,7 +238,7 @@ export function ShowerWallsSection() {
       </div>
 
       {/* Design Section */}
-      <div className='px-4 space-y-4'>
+      <div className='px-0 space-y-4'>
         <CollapsibleSection title='Design' colorScheme='design'>
           <div className='space-y-4'>
             <div className='pb-4 border-b border-slate-200'>
@@ -256,7 +256,7 @@ export function ShowerWallsSection() {
                           clientSuppliesBase: option,
                         }))
                       }
-                      className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                      className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
                         design.clientSuppliesBase === option
                           ? 'bg-blue-600 text-white'
                           : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
@@ -393,7 +393,7 @@ export function ShowerWallsSection() {
               </div>
             </div>
             {calculatedWasteNote && showWasteNote && (
-              <div className='text-orange-500 text-sm p-3 flex items-start space-x-3 mt-2'>
+              <div className='text-orange-500 text-xs flex items-start space-x-2 mt-2'>
                 <AlertTriangle className='w-5 h-5 flex-shrink-0 mt-0.5' />
                 <div className='flex-grow'>{calculatedWasteNote}</div>
                 <button

@@ -639,10 +639,39 @@ export default function ShowerWallsLaborSection() {
     0
   );
 
+  // Calculate total hours
+  const totalHours = useMemo(() => {
+    return laborItems.reduce(
+      (sum, item) => sum + (parseFloat(item.hours) || 0),
+      0
+    );
+  }, [laborItems]);
+
+  // Calculate total amount
+  const totalAmount = useMemo(() => {
+    return (
+      designLaborTotal +
+      constructionLaborTotal +
+      flatFeeTotal
+    );
+  }, [designLaborTotal, constructionLaborTotal, flatFeeTotal]);
+
   return (
     <div className='space-y-5'>
       <div className='flex justify-between items-baseline'>
         <h2 className='text-2xl font-bold text-slate-800'>Labor</h2>
+        {totalHours > 0 && (
+          <div className='flex items-center gap-2 text-sm text-slate-600'>
+            <span className='font-semibold text-xl text-slate-800'>
+              {totalHours.toFixed(1)} hrs
+            </span>
+          </div>
+        )}
+        <div className='flex items-center gap-2 text-sm text-slate-600'>
+          <span className='font-semibold text-xl text-blue-600'>
+            ${totalAmount.toFixed(2)}
+          </span>
+        </div>
       </div>
 
       <div className='space-y-4'>

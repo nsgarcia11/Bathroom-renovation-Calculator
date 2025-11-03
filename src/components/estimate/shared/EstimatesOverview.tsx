@@ -1328,67 +1328,71 @@ export default function EstimatesOverview({
                   );
                 })()}
 
-              {/* Demolition Detailed Breakdown */}
-              {workflow.id === 'demolition' ? (
+              {/* Demolition & Shower Walls Detailed Breakdown */}
+              {workflow.id === 'demolition' || workflow.id === 'showerWalls' ? (
                 <>
-                  {/* Demolition Labor Items */}
+                  {/* Labor Items */}
                   {(() => {
-                    const laborItems = getLaborItems('demolition');
-                    const flatFeeItems = getFlatFeeItems('demolition');
-                    const designData = getDesignData('demolition') as {
-                      isDemolitionFlatFee?: 'yes' | 'no';
-                      [key: string]: unknown;
-                    } | null;
+                    const laborItems = getLaborItems(workflow.id as 'demolition' | 'showerWalls');
+                    const flatFeeItems = getFlatFeeItems(workflow.id as 'demolition' | 'showerWalls');
+                    const designData = workflow.id === 'demolition'
+                      ? (getDesignData('demolition') as {
+                          isDemolitionFlatFee?: 'yes' | 'no';
+                          [key: string]: unknown;
+                        } | null)
+                      : null;
 
                     if (laborItems.length === 0 && flatFeeItems.length === 0)
                       return null;
 
-                    // Sort labor items according to DEMOLITION_ITEM_ORDER
-                    const sortedLaborItems = laborItems.sort((a, b) => {
-                      const aIndex = DEMOLITION_ITEM_ORDER.findIndex(
-                        (orderKey) => {
-                          const laborConfigs = {
-                            removeFlooring: 'lab-demo-floor',
-                            removeShowerWall: 'lab-demo-shower',
-                            removeShowerBase: 'lab-demo-shower-base',
-                            removeTub: 'lab-demo-tub',
-                            removeVanity: 'lab-demo-vanity',
-                            removeToilet: 'lab-demo-toilet',
-                            removeAccessories: 'lab-demo-accessories',
-                            removeWall: 'lab-demo-wall',
-                          };
-                          return a.id === laborConfigs[orderKey];
-                        }
-                      );
+                    // Sort labor items according to DEMOLITION_ITEM_ORDER (only for demolition)
+                    const sortedLaborItems = workflow.id === 'demolition'
+                      ? laborItems.sort((a, b) => {
+                          const aIndex = DEMOLITION_ITEM_ORDER.findIndex(
+                            (orderKey) => {
+                              const laborConfigs = {
+                                removeFlooring: 'lab-demo-floor',
+                                removeShowerWall: 'lab-demo-shower',
+                                removeShowerBase: 'lab-demo-shower-base',
+                                removeTub: 'lab-demo-tub',
+                                removeVanity: 'lab-demo-vanity',
+                                removeToilet: 'lab-demo-toilet',
+                                removeAccessories: 'lab-demo-accessories',
+                                removeWall: 'lab-demo-wall',
+                              };
+                              return a.id === laborConfigs[orderKey];
+                            }
+                          );
 
-                      const bIndex = DEMOLITION_ITEM_ORDER.findIndex(
-                        (orderKey) => {
-                          const laborConfigs = {
-                            removeFlooring: 'lab-demo-floor',
-                            removeShowerWall: 'lab-demo-shower',
-                            removeShowerBase: 'lab-demo-shower-base',
-                            removeTub: 'lab-demo-tub',
-                            removeVanity: 'lab-demo-vanity',
-                            removeToilet: 'lab-demo-toilet',
-                            removeAccessories: 'lab-demo-accessories',
-                            removeWall: 'lab-demo-wall',
-                          };
-                          return b.id === laborConfigs[orderKey];
-                        }
-                      );
+                          const bIndex = DEMOLITION_ITEM_ORDER.findIndex(
+                            (orderKey) => {
+                              const laborConfigs = {
+                                removeFlooring: 'lab-demo-floor',
+                                removeShowerWall: 'lab-demo-shower',
+                                removeShowerBase: 'lab-demo-shower-base',
+                                removeTub: 'lab-demo-tub',
+                                removeVanity: 'lab-demo-vanity',
+                                removeToilet: 'lab-demo-toilet',
+                                removeAccessories: 'lab-demo-accessories',
+                                removeWall: 'lab-demo-wall',
+                              };
+                              return b.id === laborConfigs[orderKey];
+                            }
+                          );
 
-                      // If both items are in the order, sort by order
-                      if (aIndex !== -1 && bIndex !== -1) {
-                        return aIndex - bIndex;
-                      }
+                          // If both items are in the order, sort by order
+                          if (aIndex !== -1 && bIndex !== -1) {
+                            return aIndex - bIndex;
+                          }
 
-                      // If only one is in the order, prioritize it
-                      if (aIndex !== -1) return -1;
-                      if (bIndex !== -1) return 1;
+                          // If only one is in the order, prioritize it
+                          if (aIndex !== -1) return -1;
+                          if (bIndex !== -1) return 1;
 
-                      // If neither is in the order, maintain original order
-                      return 0;
-                    });
+                          // If neither is in the order, maintain original order
+                          return 0;
+                        })
+                      : laborItems;
 
                     return (
                       <div className='mb-4'>
@@ -1451,9 +1455,9 @@ export default function EstimatesOverview({
                     );
                   })()}
 
-                  {/* Demolition Material Items */}
+                  {/* Material Items */}
                   {(() => {
-                    const materialItems = getMaterialItems('demolition');
+                    const materialItems = getMaterialItems(workflow.id as 'demolition' | 'showerWalls');
 
                     if (materialItems.length === 0) return null;
 

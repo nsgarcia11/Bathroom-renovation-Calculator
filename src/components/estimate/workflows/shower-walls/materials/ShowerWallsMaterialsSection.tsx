@@ -264,12 +264,25 @@ export default function ShowerWallsMaterialsSection() {
       }
 
       if (design.niche !== 'None') {
-        const nicheSize =
-          design.niche === 'Custom Size' ? ' (Custom)' : ` (${design.niche})`;
+        // Determine niche pricing based on size
+        let nicheConfig;
+        let nichePrice;
+
+        if (design.niche === '12x12') {
+          nicheConfig = SHOWER_WALLS_MATERIALS_ITEMS.niche12x12;
+          nichePrice = DEFAULT_PRICES.niche12x12;
+        } else if (design.niche === 'Standard (12x24)') {
+          nicheConfig = SHOWER_WALLS_MATERIALS_ITEMS.niche12x24;
+          nichePrice = DEFAULT_PRICES.niche12x24;
+        } else {
+          // Custom Size
+          nicheConfig = SHOWER_WALLS_MATERIALS_ITEMS.nicheCustom;
+          nichePrice = DEFAULT_PRICES.nicheCustom;
+        }
+
         materials.push({
-          ...SHOWER_WALLS_MATERIALS_ITEMS.niche,
-          name: `Niche${nicheSize}`,
-          price: DEFAULT_PRICES.niche.toFixed(2),
+          ...nicheConfig,
+          price: nichePrice.toFixed(2),
         });
       }
 
