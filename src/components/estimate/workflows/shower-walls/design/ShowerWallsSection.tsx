@@ -106,9 +106,10 @@ export function ShowerWallsSection() {
   );
   const [showWasteNote, setShowWasteNote] = useState(true);
   const [showClientSuppliesNote, setShowClientSuppliesNote] = useState(true);
+  const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
 
   // Use the calculator hook for all calculations
-  const { totalSqft, wasteNote: calculatedWasteNote } =
+  const { totalSqft, wasteNote: calculatedWasteNote, warnings } =
     useShowerWallsCalculations({
       walls,
       design,
@@ -403,6 +404,39 @@ export function ShowerWallsSection() {
                 >
                   <X className='w-4 h-4' />
                 </button>
+              </div>
+            )}
+
+            {/* Display warnings for large-format tiles */}
+            {warnings && warnings.length > 0 && (
+              <div className='space-y-2 mt-2'>
+                {warnings.map((warning, index) => {
+                  const warningKey = `warning-${index}`;
+                  if (dismissedWarnings.has(warningKey)) return null;
+
+                  return (
+                    <div
+                      key={warningKey}
+                      className='bg-yellow-50 border border-yellow-300 text-yellow-800 text-xs flex items-start space-x-2 p-3 rounded-md'
+                    >
+                      <AlertTriangle className='w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-600' />
+                      <div className='flex-grow font-medium'>{warning}</div>
+                      <button
+                        onClick={() => {
+                          setDismissedWarnings(prev => {
+                            const newSet = new Set(prev);
+                            newSet.add(warningKey);
+                            return newSet;
+                          });
+                        }}
+                        className='text-yellow-700 hover:text-yellow-900 p-0.5 rounded-full hover:bg-yellow-200 -mt-1 -mr-1'
+                        title='Dismiss warning'
+                      >
+                        <X className='w-4 h-4' />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
 

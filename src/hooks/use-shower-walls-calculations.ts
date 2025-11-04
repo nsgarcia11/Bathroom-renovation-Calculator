@@ -23,6 +23,7 @@ export function useShowerWallsCalculations({
     wasteFactor: calculations.wasteFactor,
     tileNeeded: calculations.tileNeeded,
     wasteNote: calculations.wasteNote,
+    warnings: calculations.warnings || [],
     autoLaborItems: calculations.laborItems,
     autoMaterialItems: calculations.materialItems,
   };
