@@ -74,7 +74,9 @@ export class ShowerWallsCalculator {
     kerdiMembrane: 2.5,
     otherWaterproofing: 150.0,
     insulation: 75.0,
-    niche: 100.0,
+    niche12x12: 100.0,
+    niche12x24: 150.0,
+    nicheCustom: 150.0,
     showerDoor: 800.0,
     doorBlocking: 50.0,
     grabBar: 50.0,
@@ -119,9 +121,13 @@ export class ShowerWallsCalculator {
     }
 
     // Categorize tile size
+    // Small: 2x2, 3x6 subway (longest side < 8")
+    // Medium: 12x12 (longest side 8-24" exclusive)
+    // Large: 12x24, 24x24 (longest side >= 24" but <= 24")
+    // Oversized: >24"
     if (longestSide > 24) {
       category = 'oversized';
-    } else if (longestSide >= 15) {
+    } else if (longestSide >= 24) {
       category = 'large';
     } else if (longestSide >= 8) {
       category = 'medium';
@@ -251,8 +257,8 @@ export class ShowerWallsCalculator {
     const warnings: string[] = [];
     const { longestSide } = this.getTileSizeInfo(tileSize, customWidth, customLength);
 
-    // Warning for large-format tile with 1/2 offset
-    if (longestSide >= 15 && tilePattern === '1/2 Offset') {
+    // Warning for large-format tile (12x24, 24x24) with 1/2 offset
+    if (longestSide >= 24 && longestSide <= 24 && tilePattern === '1/2 Offset') {
       warnings.push('Large-format tile with 1/2 offset may cause lippage — recommend 1/3 offset.');
     }
 
@@ -304,8 +310,8 @@ export class ShowerWallsCalculator {
     // Additional adjustments for large-format tiles
     const { longestSide } = this.getTileSizeInfo(tileSize, customWidth, customLength);
 
-    // Add 5% labor for large-format with 1/2 offset (extra leveling)
-    if (longestSide >= 15 && tilePattern === '1/2 Offset') {
+    // Add 5% labor for large-format (12x24, 24x24) with 1/2 offset (extra leveling)
+    if (longestSide >= 24 && longestSide <= 24 && tilePattern === '1/2 Offset') {
       finalHours *= 1.05;
     }
 
@@ -716,11 +722,23 @@ export class ShowerWallsCalculator {
     }
 
     if (design.niche !== 'None') {
+      // Determine niche pricing based on size
+      let nichePrice: number;
+
+      if (design.niche === '12x12') {
+        nichePrice = this.DEFAULT_PRICES.niche12x12;
+      } else if (design.niche === 'Standard (12x24)') {
+        nichePrice = this.DEFAULT_PRICES.niche12x24;
+      } else {
+        // Custom Size
+        nichePrice = this.DEFAULT_PRICES.nicheCustom;
+      }
+
       materialItems.push({
         id: 'mat-niche',
         name: `Niche: ${design.niche}`,
         quantity: 1,
-        price: this.DEFAULT_PRICES.niche,
+        price: nichePrice,
         unit: 'piece',
         scope: 'showerWalls_construction',
         source: 'calculated',
