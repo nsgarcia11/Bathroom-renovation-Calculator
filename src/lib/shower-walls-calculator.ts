@@ -102,105 +102,50 @@ export class ShowerWallsCalculator {
   }
 
   /**
-   * Get tile size category and dimensions
+   * Check if tile is subway tile (3"x6" or similar)
    */
-  static getTileSizeInfo(tileSize: string, customWidth: string, customLength: string): {
-    category: 'small' | 'medium' | 'large' | 'oversized';
-    longestSide: number;
-  } {
-    let longestSide = 0;
-    let category: 'small' | 'medium' | 'large' | 'oversized' = 'medium';
-
-    if (tileSize === 'Custom') {
-      const width = parseFloat(customWidth) || 0;
-      const length = parseFloat(customLength) || 0;
-      longestSide = Math.max(width, length);
-    } else if (tileSize.includes('x')) {
-      const [w, h] = tileSize.split('x').map(s => parseFloat(s.replace(/[^0-9.]/g, '')));
-      longestSide = Math.max(w || 0, h || 0);
-    }
-
-    // Categorize tile size
-    // Small: 2x2, 3x6 subway (longest side < 8")
-    // Medium: 12x12 (longest side 8-24" exclusive)
-    // Large: 12x24, 24x24 (longest side >= 24" but <= 24")
-    // Oversized: >24"
-    if (longestSide > 24) {
-      category = 'oversized';
-    } else if (longestSide >= 24) {
-      category = 'large';
-    } else if (longestSide >= 8) {
-      category = 'medium';
-    } else {
-      category = 'small';
-    }
-
-    return { category, longestSide };
+  static isSubwayTile(tileSize: string): boolean {
+    // Match "Subway 3"x6"" or similar subway tile formats
+    return tileSize.toLowerCase().includes('subway');
   }
 
   /**
-   * Calculate tile size labor factor
+   * Get base productivity rate (sq ft per hour)
+   * Subway tile = 7 sq ft per hour
+   * All other tiles = 10 sq ft per hour
    */
-  static getTileSizeLaborFactor(tileSize: string, customWidth: string, customLength: string): number {
-    const { category } = this.getTileSizeInfo(tileSize, customWidth, customLength);
-
-    switch (category) {
-      case 'small':
-        return 1.25; // Small tiles: +25% time
-      case 'medium':
-        return 1.00; // Medium tiles: baseline
-      case 'large':
-        return 1.10; // Large tiles: +10% time
-      case 'oversized':
-        return 1.25; // Oversized tiles: +25% time
-      default:
-        return 1.00;
-    }
+  static getBaseProductivityRate(tileSize: string): number {
+    return this.isSubwayTile(tileSize) ? 7 : 10;
   }
 
   /**
-   * Calculate tile pattern labor factor
+   * Calculate tile pattern labor multiplier
    */
   static getTilePatternLaborFactor(tilePattern: string): number {
     switch (tilePattern) {
       case 'Stacked':
-        return 1.00; // Baseline
+        return 1.00; // No change
       case '1/2 Offset':
       case '1/3 Offset':
-        return 1.15; // +15% time
+        return 1.15; // +15%
       case 'Herringbone':
-        return 1.30; // +30% time
+        return 1.30; // +30%
       case 'Custom':
-        return 1.20; // +20% time
+        return 1.00; // No change
       default:
         return 1.00;
     }
   }
 
   /**
-   * Calculate tile size waste factor
+   * Calculate waste factor based on tile pattern only
+   * Stacked = 1.10 (10% waste)
+   * 1/2 Offset = 1.15 (15% waste)
+   * 1/3 Offset = 1.15 (15% waste)
+   * Herringbone = 1.25 (25% waste)
+   * Custom = 1.10 (10% waste)
    */
-  static getTileSizeWasteFactor(tileSize: string, customWidth: string, customLength: string): number {
-    const { category } = this.getTileSizeInfo(tileSize, customWidth, customLength);
-
-    switch (category) {
-      case 'small':
-        return 1.08; // +8%
-      case 'medium':
-        return 1.10; // +10%
-      case 'large':
-        return 1.12; // +12%
-      case 'oversized':
-        return 1.15; // +15%
-      default:
-        return 1.10;
-    }
-  }
-
-  /**
-   * Calculate tile pattern waste factor
-   */
-  static getTilePatternWasteFactor(tilePattern: string): number {
+  static calculateWasteFactor(tilePattern: string): number {
     switch (tilePattern) {
       case 'Stacked':
         return 1.10; // +10%
@@ -210,64 +155,10 @@ export class ShowerWallsCalculator {
       case 'Herringbone':
         return 1.25; // +25%
       case 'Custom':
-        return 1.20; // +20%
+        return 1.10; // +10%
       default:
         return 1.10;
     }
-  }
-
-  /**
-   * Calculate combined waste factor based on tile size and pattern
-   */
-  static calculateWasteFactor(
-    tilePattern: string,
-    tileSize?: string,
-    customWidth?: string,
-    customLength?: string
-  ): number {
-    if (!tileSize) {
-      // Legacy behavior for backward compatibility
-      switch (tilePattern) {
-        case 'Herringbone':
-          return 1.25;
-        case '1/2 Offset':
-        case '1/3 Offset':
-          return 1.15;
-        default:
-          return 1.1;
-      }
-    }
-
-    const sizeWaste = this.getTileSizeWasteFactor(tileSize, customWidth || '', customLength || '');
-    const patternWaste = this.getTilePatternWasteFactor(tilePattern);
-
-    // Combined waste factor
-    return sizeWaste * patternWaste;
-  }
-
-  /**
-   * Check for large-format tile warnings
-   */
-  static checkTileWarnings(
-    tileSize: string,
-    customWidth: string,
-    customLength: string,
-    tilePattern: string
-  ): string[] {
-    const warnings: string[] = [];
-    const { longestSide } = this.getTileSizeInfo(tileSize, customWidth, customLength);
-
-    // Warning for large-format tile (12x24, 24x24) with 1/2 offset
-    if (longestSide >= 24 && longestSide <= 24 && tilePattern === '1/2 Offset') {
-      warnings.push('Large-format tile with 1/2 offset may cause lippage — recommend 1/3 offset.');
-    }
-
-    // Suggestion for oversized tiles
-    if (longestSide > 24) {
-      warnings.push('Oversized tiles (>24") require tile leveling clips and may need two installers.');
-    }
-
-    return warnings;
   }
 
   /**
@@ -275,89 +166,58 @@ export class ShowerWallsCalculator {
    */
   static calculateTileNeeded(
     totalSqft: number,
-    tilePattern: string,
-    tileSize?: string,
-    customWidth?: string,
-    customLength?: string
+    tilePattern: string
   ): number {
-    const wasteFactor = this.calculateWasteFactor(tilePattern, tileSize, customWidth, customLength);
+    const wasteFactor = this.calculateWasteFactor(tilePattern);
     return totalSqft * wasteFactor;
   }
 
   /**
    * Calculate tiling hours based on tile size and pattern
-   * Uses comprehensive factor-based calculation
+   * Formula: (Total SqFt ÷ Base Rate) × Pattern Modifier
+   *
+   * Base Rate:
+   *   - Subway tile = 7 sq ft per hour
+   *   - All other tiles = 10 sq ft per hour
+   *
+   * Pattern Modifier:
+   *   - Stacked = 1.00
+   *   - 1/2 Offset = 1.15
+   *   - 1/3 Offset = 1.15
+   *   - Herringbone = 1.30
+   *   - Custom = 1.00
    */
   static calculateTilingHours(
     totalSqft: number,
     tileSize: string,
-    tilePattern: string,
-    customWidth: string = '',
-    customLength: string = ''
+    tilePattern: string
   ): number {
-    // Base hours calculation (baseline speed for medium tiles)
-    const baseHours = totalSqft / 10; // 10 sq/ft per hour baseline
+    // Step 1: Get base productivity rate (sq ft per hour)
+    const baseRate = this.getBaseProductivityRate(tileSize);
 
-    // Get tile size factor
-    const tileSizeFactor = this.getTileSizeLaborFactor(tileSize, customWidth, customLength);
+    // Step 2: Get pattern complexity multiplier
+    const patternMultiplier = this.getTilePatternLaborFactor(tilePattern);
 
-    // Get tile pattern factor
-    const tilePatternFactor = this.getTilePatternLaborFactor(tilePattern);
+    // Step 3: Calculate tiling hours
+    // Formula: (Total SqFt ÷ Base Rate) × Pattern Modifier
+    const tilingHours = (totalSqft / baseRate) * patternMultiplier;
 
-    // Calculate final hours with both factors applied
-    let finalHours = baseHours * tileSizeFactor * tilePatternFactor;
-
-    // Additional adjustments for large-format tiles
-    const { longestSide } = this.getTileSizeInfo(tileSize, customWidth, customLength);
-
-    // Add 5% labor for large-format (12x24, 24x24) with 1/2 offset (extra leveling)
-    if (longestSide >= 24 && longestSide <= 24 && tilePattern === '1/2 Offset') {
-      finalHours *= 1.05;
-    }
-
-    // Add 5% labor for oversized tiles (leveling clips setup)
-    if (longestSide > 24) {
-      finalHours *= 1.05;
-    }
-
-    // Apply minimum hours for small jobs
-    if (totalSqft < 50) {
-      finalHours = Math.max(finalHours, 2);
-    }
-
-    // Add 10% for large jobs (>120 sq ft) due to complexity
-    if (totalSqft > 120) {
-      finalHours *= 1.10;
-    }
-
-    return finalHours;
+    // Round to 2 decimals
+    return Math.round(tilingHours * 100) / 100;
   }
 
   /**
    * Generate waste note text for UI display
    */
-  static generateWasteNote(
-    tileSize: string,
-    tilePattern: string,
-    customWidth: string = '',
-    customLength: string = ''
-  ): string | null {
-    if (
-      tileSize === 'Select tile size' ||
-      tilePattern === 'Select Tile Pattern'
-    ) {
+  static generateWasteNote(tilePattern: string): string | null {
+    if (tilePattern === 'Select Tile Pattern') {
       return null;
     }
 
-    const wasteFactor = this.calculateWasteFactor(tilePattern, tileSize, customWidth, customLength);
+    const wasteFactor = this.calculateWasteFactor(tilePattern);
     const wastePercentage = Math.round((wasteFactor - 1) * 100);
 
-    const { category } = this.getTileSizeInfo(tileSize, customWidth, customLength);
-    const sizeLabel = category === 'small' ? 'small' :
-                      category === 'large' ? 'large-format' :
-                      category === 'oversized' ? 'oversized' : 'medium';
-
-    return `A ${wastePercentage}% waste factor has been applied for ${sizeLabel} tiles with ${tilePattern} pattern.`;
+    return `Includes ${wastePercentage}% waste factor for pattern complexity.`;
   }
 
   /**
@@ -382,13 +242,11 @@ export class ShowerWallsCalculator {
         source: 'calculated',
       });
 
-      // Tiling - using enhanced calculation with size and pattern factors
+      // Tiling - using base rate and pattern multiplier
       const tilingHours = this.calculateTilingHours(
         totalSqft,
         design.tileSize,
-        design.tilePattern,
-        design.customTileWidth,
-        design.customTileLength
+        design.tilePattern
       );
       const patternName =
         design.tilePattern === 'Custom'
@@ -564,10 +422,7 @@ export class ShowerWallsCalculator {
       if (design.clientSuppliesBase === 'No') {
         const tileNeeded = this.calculateTileNeeded(
           totalSqft,
-          design.tilePattern,
-          design.tileSize,
-          design.customTileWidth,
-          design.customTileLength
+          design.tilePattern
         );
         const tileSizeLabel =
           design.tileSize === 'Custom'
@@ -790,35 +645,11 @@ export class ShowerWallsCalculator {
     design: ShowerWallsDesign
   ): ShowerWallsCalculationResult {
     const totalSqft = this.calculateTotalSqft(walls);
-    const wasteFactor = this.calculateWasteFactor(
-      design.tilePattern,
-      design.tileSize,
-      design.customTileWidth,
-      design.customTileLength
-    );
-    const tileNeeded = this.calculateTileNeeded(
-      totalSqft,
-      design.tilePattern,
-      design.tileSize,
-      design.customTileWidth,
-      design.customTileLength
-    );
+    const wasteFactor = this.calculateWasteFactor(design.tilePattern);
+    const tileNeeded = this.calculateTileNeeded(totalSqft, design.tilePattern);
     const laborItems = this.generateAutoLabor(walls, design);
     const materialItems = this.generateAutoMaterials(walls, design);
-    const wasteNote = this.generateWasteNote(
-      design.tileSize,
-      design.tilePattern,
-      design.customTileWidth,
-      design.customTileLength
-    );
-
-    // Generate warnings for large-format tiles
-    const warnings = this.checkTileWarnings(
-      design.tileSize,
-      design.customTileWidth,
-      design.customTileLength,
-      design.tilePattern
-    );
+    const wasteNote = this.generateWasteNote(design.tilePattern);
 
     return {
       totalSqft,
@@ -827,7 +658,7 @@ export class ShowerWallsCalculator {
       laborItems,
       materialItems,
       wasteNote,
-      warnings,
+      warnings: [], // No warnings in simplified business logic
     };
   }
 }
