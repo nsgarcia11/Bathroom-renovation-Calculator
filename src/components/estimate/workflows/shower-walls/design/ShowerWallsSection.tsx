@@ -45,7 +45,7 @@ interface ShowerWallsDesign {
 }
 
 export function ShowerWallsSection() {
-  const { getDesignData, updateDesign } = useEstimateWorkflowContext();
+  const { getDesignData, updateDesign, setLaborItems, setMaterialItems } = useEstimateWorkflowContext();
 
   // Get design data from context
   const designData = getDesignData('showerWalls') as {
@@ -109,7 +109,7 @@ export function ShowerWallsSection() {
   const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
 
   // Use the calculator hook for all calculations
-  const { totalSqft, wasteNote: calculatedWasteNote, warnings } =
+  const { totalSqft, wasteNote: calculatedWasteNote, warnings, autoLaborItems, autoMaterialItems } =
     useShowerWallsCalculations({
       walls,
       design,
@@ -153,6 +153,32 @@ export function ShowerWallsSection() {
       setShowClientSuppliesNote(true);
     }
   }, [design.clientSuppliesBase]);
+
+  // Sync auto-generated labor items to context
+  useEffect(() => {
+    if (autoLaborItems && autoLaborItems.length > 0) {
+      // Convert number types to string for context compatibility
+      const formattedLaborItems = autoLaborItems.map(item => ({
+        ...item,
+        hours: item.hours.toString(),
+        rate: item.rate.toString(),
+      }));
+      setLaborItems('showerWalls', formattedLaborItems);
+    }
+  }, [autoLaborItems, setLaborItems]);
+
+  // Sync auto-generated material items to context
+  useEffect(() => {
+    if (autoMaterialItems && autoMaterialItems.length > 0) {
+      // Convert number types to string for context compatibility
+      const formattedMaterialItems = autoMaterialItems.map(item => ({
+        ...item,
+        quantity: item.quantity.toString(),
+        price: item.price.toString(),
+      }));
+      setMaterialItems('showerWalls', formattedMaterialItems);
+    }
+  }, [autoMaterialItems, setMaterialItems]);
 
   // Calculate square footage for each wall for display
   const wallsWithSqft = walls.map((wall) => {
