@@ -173,6 +173,21 @@ export class ShowerWallsCalculator {
   }
 
   /**
+   * Get longest side dimension of a tile
+   */
+  static getTileLongestSide(tileSize: string, customWidth: string = '', customLength: string = ''): number {
+    if (tileSize === 'Custom') {
+      const width = parseFloat(customWidth) || 0;
+      const length = parseFloat(customLength) || 0;
+      return Math.max(width, length);
+    } else if (tileSize.includes('x')) {
+      const [w, h] = tileSize.split('x').map(s => parseFloat(s.replace(/[^0-9.]/g, '')));
+      return Math.max(w || 0, h || 0);
+    }
+    return 0;
+  }
+
+  /**
    * Calculate tiling hours based on tile size and pattern
    * Formula: (Total SqFt ÷ Base Rate) × Pattern Modifier
    *
@@ -186,11 +201,16 @@ export class ShowerWallsCalculator {
    *   - 1/3 Offset = 1.15
    *   - Herringbone = 1.30
    *   - Custom = 1.00
+   *
+   * Lippage Rule:
+   *   - If tile is ≥15" and pattern is 1/2 Offset, add +5% to hours
    */
   static calculateTilingHours(
     totalSqft: number,
     tileSize: string,
-    tilePattern: string
+    tilePattern: string,
+    customWidth: string = '',
+    customLength: string = ''
   ): number {
     // Step 1: Get base productivity rate (sq ft per hour)
     const baseRate = this.getBaseProductivityRate(tileSize);
@@ -200,7 +220,13 @@ export class ShowerWallsCalculator {
 
     // Step 3: Calculate tiling hours
     // Formula: (Total SqFt ÷ Base Rate) × Pattern Modifier
-    const tilingHours = (totalSqft / baseRate) * patternMultiplier;
+    let tilingHours = (totalSqft / baseRate) * patternMultiplier;
+
+    // Step 4: Apply lippage rule (+5% if tile ≥15" with 1/2 Offset)
+    const longestSide = this.getTileLongestSide(tileSize, customWidth, customLength);
+    if (longestSide >= 15 && tilePattern === '1/2 Offset') {
+      tilingHours *= 1.05; // Add 5% for lippage concerns
+    }
 
     // Round to 2 decimals
     return Math.round(tilingHours * 100) / 100;
@@ -246,7 +272,9 @@ export class ShowerWallsCalculator {
       const tilingHours = this.calculateTilingHours(
         totalSqft,
         design.tileSize,
-        design.tilePattern
+        design.tilePattern,
+        design.customTileWidth,
+        design.customTileLength
       );
       const patternName =
         design.tilePattern === 'Custom'
