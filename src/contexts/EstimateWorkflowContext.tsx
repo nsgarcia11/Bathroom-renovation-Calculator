@@ -26,6 +26,7 @@ import {
   FlatFeeItem,
   WorkflowNotes,
 } from '@/types/estimate';
+import type { ShowerWallsDesign } from '@/lib/shower-walls-calculator';
 
 interface EstimateWorkflowContextType {
   // Data
@@ -281,11 +282,7 @@ export function EstimateWorkflowProvider({
           height: { ft: number; inch: number };
           width: { ft: number; inch: number };
         }>;
-        design?: {
-          tileSize: string;
-          tilePattern: string;
-          [key: string]: unknown;
-        };
+        design?: ShowerWallsDesign;
       };
 
       if (
@@ -300,7 +297,7 @@ export function EstimateWorkflowProvider({
           import('../lib/shower-walls-calculator').then(({ ShowerWallsCalculator }) => {
             const calculations = ShowerWallsCalculator.calculate(
               designData.walls || [],
-              designData.design as any
+              designData.design as ShowerWallsDesign
             );
 
             const existingLaborItems = currentWorkflow.labor?.hourlyItems || [];

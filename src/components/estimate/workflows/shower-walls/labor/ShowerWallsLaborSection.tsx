@@ -460,7 +460,6 @@ export default function ShowerWallsLaborSection() {
     [localLaborItems, setLaborItems]
   );
 
-  const laborItems = localLaborItems;
   const flatFeeItems = localFlatFeeItems;
 
   const renderLaborItem = useCallback(
