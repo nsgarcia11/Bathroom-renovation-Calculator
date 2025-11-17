@@ -191,21 +191,22 @@ export class ShowerWallsCalculator {
 
   /**
    * Calculate tiling hours based on tile size and pattern
-   * Formula: (Total SqFt ÷ Base Rate) × Pattern Modifier
+   * Formula: (Total SqFt ÷ Base Productivity) × Pattern Multiplier
    *
-   * Base Rate:
-   *   - Subway tile = 7 sq ft per hour
-   *   - All other tiles = 10 sq ft per hour
+   * Base Productivity (sq ft per hour):
+   *   - Subway 3"x6" = 7 sq ft/hr
+   *   - 12x24 = 10 sq ft/hr
+   *   - 24x24 = 10 sq ft/hr
+   *   - Custom = 10 sq ft/hr
    *
-   * Pattern Modifier:
+   * Pattern Multiplier:
    *   - Stacked = 1.00
    *   - 1/2 Offset = 1.15
    *   - 1/3 Offset = 1.15
    *   - Herringbone = 1.30
    *   - Custom = 1.00
    *
-   * Lippage Rule:
-   *   - If tile is ≥15" and pattern is 1/2 Offset, add +5% to hours
+   * Example: 100 sq ft ÷ 10 × 1.15 = 11.50 hours
    */
   static calculateTilingHours(
     totalSqft: number,
@@ -221,14 +222,8 @@ export class ShowerWallsCalculator {
     const patternMultiplier = this.getTilePatternLaborFactor(tilePattern);
 
     // Step 3: Calculate tiling hours
-    // Formula: (Total SqFt ÷ Base Rate) × Pattern Modifier
-    let tilingHours = (totalSqft / baseRate) * patternMultiplier;
-
-    // Step 4: Apply lippage rule (+5% if tile ≥15" with 1/2 Offset)
-    const longestSide = this.getTileLongestSide(tileSize, customWidth, customLength);
-    if (longestSide >= 15 && tilePattern === '1/2 Offset') {
-      tilingHours *= 1.05; // Add 5% for lippage concerns
-    }
+    // Formula: (Total SqFt ÷ Base Productivity) × Pattern Multiplier
+    const tilingHours = (totalSqft / baseRate) * patternMultiplier;
 
     // Round to 2 decimals
     return Math.round(tilingHours * 100) / 100;
