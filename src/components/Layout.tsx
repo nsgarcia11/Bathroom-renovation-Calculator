@@ -66,7 +66,10 @@ function LayoutContent({
         <header className='bg-white border-b border-slate-200 sticky top-0 z-20 flex-shrink-0'>
           <div className='max-w-7xl mx-auto px-8 py-3 flex items-center justify-between'>
             {/* Logo on the left */}
-            <div className='flex-1'>
+            <div onClick={(e) => {
+              e.preventDefault();
+              router.push('/')
+            }} className='flex-1'>
               <Image
                 src='/logo.svg'
                 alt='Bathroom Calculator Logo'

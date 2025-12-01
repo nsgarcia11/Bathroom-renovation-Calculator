@@ -491,9 +491,13 @@ export function ShowerWallsSection() {
                 <Input
                   type='number'
                   value={design.grabBar.toString()}
-                  onChange={(e) =>
-                    setDesign((prev) => ({ ...prev, grabBar: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Prevent negative numbers
+                    if (value === '' || parseInt(value) >= 0) {
+                      setDesign((prev) => ({ ...prev, grabBar: value }));
+                    }
+                  }}
                   className='w-24 bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-slate-800 text-center focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                   aria-label='Number of Grab Bars'
                 />

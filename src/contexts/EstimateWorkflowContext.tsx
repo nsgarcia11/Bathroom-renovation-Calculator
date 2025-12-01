@@ -295,9 +295,11 @@ export function EstimateWorkflowProvider({
         if (currentWorkflow) {
           // Import calculator dynamically
           import('../lib/shower-walls-calculator').then(({ ShowerWallsCalculator }) => {
+            const contractorHourlyRate = contractor?.hourly_rate || 85;
             const calculations = ShowerWallsCalculator.calculate(
               designData.walls || [],
-              designData.design as ShowerWallsDesign
+              designData.design as ShowerWallsDesign,
+              contractorHourlyRate
             );
 
             const existingLaborItems = currentWorkflow.labor?.hourlyItems || [];
@@ -652,9 +654,11 @@ export function EstimateWorkflowProvider({
 
           // Import calculator dynamically to avoid circular dependency
           import('../lib/shower-walls-calculator').then(({ ShowerWallsCalculator }) => {
+            const contractorHourlyRate = contractor?.hourly_rate || 85;
             const calculations = ShowerWallsCalculator.calculate(
               designData.walls || [],
-              designData.design!
+              designData.design!,
+              contractorHourlyRate
             );
 
             // Get existing custom labor items (preserve user-added items)
