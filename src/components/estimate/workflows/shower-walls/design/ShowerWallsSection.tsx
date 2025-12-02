@@ -396,7 +396,7 @@ export function ShowerWallsSection() {
               </div>
             </div>
             {calculatedWasteNote && showWasteNote && (
-              <div className='text-orange-500 text-xs flex items-start space-x-2 mt-2'>
+              <div className='text-orange-500 text-xs flex items-center space-x-2 mt-2'>
                 <AlertTriangle className='w-5 h-5 flex-shrink-0 mt-0.5' />
                 <div className='flex-grow'>{calculatedWasteNote}</div>
                 <button
