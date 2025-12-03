@@ -93,9 +93,10 @@ export function ShowerBaseSection() {
   // Waterproofing system options (only for tiled base)
   const waterproofingOptions = [
     { value: 'none', label: 'None / Select System...' },
-    { value: 'kerdi', label: 'Schluter-Kerdi System' },
-    { value: 'liquid', label: 'Liquid Membrane' },
-    { value: 'kerdi-board', label: 'Kerdi-Board' },
+    { value: 'schluter', label: 'Schluter' },
+    { value: 'mortar', label: 'Mortar Bed' },
+    { value: 'wedi', label: 'Wedi' },
+    { value: 'laticrete', label: 'Laticrete' },
   ];
 
   // Entry type options (only for tiled base)

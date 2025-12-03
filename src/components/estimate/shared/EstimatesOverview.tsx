@@ -1197,24 +1197,21 @@ export default function EstimatesOverview({
               {/* Design Options for Shower Base */}
               {workflow.id === 'showerBase' &&
                 (() => {
-                  const designData = getDesignData('showerBase') as {
-                    design?: {
-                      width?: string;
-                      length?: string;
-                      baseType?: string;
-                      drainType?: string;
-                      waterproofingSystem?: string;
-                      entryType?: string;
-                      drainLocation?: string;
-                      subfloorRepair?: boolean;
-                      joistModification?: boolean;
-                      clientSuppliesBase?: string;
-                    };
+                  const design = getDesignData('showerBase') as {
+                    width?: string;
+                    length?: string;
+                    baseType?: string;
+                    drainType?: string;
+                    waterproofingSystem?: string;
+                    entryType?: string;
+                    drainLocation?: string;
+                    subfloorRepair?: boolean;
+                    joistModification?: boolean;
+                    clientSuppliesBase?: string;
+                    installationBy?: string;
                   } | null;
 
-                  if (!designData?.design) return null;
-
-                  const design = designData.design;
+                  if (!design || !design.baseType || design.baseType === 'Select base type') return null;
 
                   return (
                     <div className='mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200'>
@@ -1239,6 +1236,29 @@ export default function EstimatesOverview({
                           </div>
                         </div>
 
+                        {/* Tub/Acrylic Base Options */}
+                        {(design.baseType === 'Tub' || design.baseType === 'Acrylic Base') && (
+                          <>
+                            <div>
+                              <span className='font-medium text-gray-700'>
+                                Client Supplies Base:
+                              </span>
+                              <div className='text-gray-600'>
+                                {design.clientSuppliesBase || 'No'}
+                              </div>
+                            </div>
+
+                            <div>
+                              <span className='font-medium text-gray-700'>
+                                Installation By:
+                              </span>
+                              <div className='text-gray-600'>
+                                {design.installationBy || 'Me'}
+                              </div>
+                            </div>
+                          </>
+                        )}
+
                         {/* Tiled Base Options */}
                         {design.baseType === 'Tiled Base' && (
                           <>
@@ -1247,7 +1267,7 @@ export default function EstimatesOverview({
                                 Entry:
                               </span>
                               <div className='text-gray-600 capitalize'>
-                                {design.entryType}
+                                {design.entryType || 'curb'}
                               </div>
                             </div>
 
@@ -1256,9 +1276,9 @@ export default function EstimatesOverview({
                                 Drain Type:
                               </span>
                               <div className='text-gray-600 capitalize'>
-                                {design.drainType === 'regular'
-                                  ? 'Regular Drain'
-                                  : 'Linear Drain'}
+                                {design.drainType === 'linear'
+                                  ? 'Linear Drain'
+                                  : 'Regular Drain'}
                               </div>
                             </div>
 
@@ -1267,7 +1287,7 @@ export default function EstimatesOverview({
                                 Drain Location:
                               </span>
                               <div className='text-gray-600 capitalize'>
-                                {design.drainLocation}
+                                {design.drainLocation || 'center'}
                               </div>
                             </div>
 
@@ -1278,16 +1298,19 @@ export default function EstimatesOverview({
                                     Waterproofing:
                                   </span>
                                   <div className='text-gray-600'>
-                                    {design.waterproofingSystem === 'kerdi' &&
-                                      'Schluter-Kerdi System'}
-                                    {design.waterproofingSystem === 'liquid' &&
-                                      'Liquid Membrane'}
-                                    {design.waterproofingSystem ===
-                                      'kerdi-board' && 'Kerdi-Board'}
+                                    {design.waterproofingSystem === 'schluter' &&
+                                      'Schluter'}
+                                    {design.waterproofingSystem === 'mortar' &&
+                                      'Mortar Bed'}
+                                    {design.waterproofingSystem === 'wedi' &&
+                                      'Wedi'}
+                                    {design.waterproofingSystem === 'laticrete' &&
+                                      'Laticrete'}
                                     {![
-                                      'kerdi',
-                                      'liquid',
-                                      'kerdi-board',
+                                      'schluter',
+                                      'mortar',
+                                      'wedi',
+                                      'laticrete',
                                     ].includes(design.waterproofingSystem) &&
                                       design.waterproofingSystem}
                                   </div>
@@ -1296,21 +1319,10 @@ export default function EstimatesOverview({
                           </>
                         )}
 
-                        {/* Client Supplies */}
-                        {design.clientSuppliesBase &&
-                          design.clientSuppliesBase !== 'No' && (
-                            <div>
-                              <span className='font-medium text-gray-700'>
-                                Client Supplies:
-                              </span>
-                              <div className='text-gray-600'>Base</div>
-                            </div>
-                          )}
-
                         {/* Construction Options */}
                         {(design.subfloorRepair ||
                           design.joistModification) && (
-                          <div>
+                          <div className='col-span-2'>
                             <span className='font-medium text-gray-700'>
                               Construction:
                             </span>
@@ -1324,17 +1336,39 @@ export default function EstimatesOverview({
                           </div>
                         )}
                       </div>
+
+                      {/* Notes for Tub/Acrylic Base */}
+                      {(design.baseType === 'Tub' || design.baseType === 'Acrylic Base') && (
+                        <div className='mt-3 space-y-2'>
+                          {design.clientSuppliesBase === 'Yes' && (
+                            <div className='flex items-center gap-2 text-orange-600 text-xs bg-orange-50 p-2 rounded border border-orange-200'>
+                              <svg className='w-4 h-4 flex-shrink-0' fill='currentColor' viewBox='0 0 20 20'>
+                                <path fillRule='evenodd' d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z' clipRule='evenodd' />
+                              </svg>
+                              <span>Note: Base will be removed from the Materials screen.</span>
+                            </div>
+                          )}
+                          {design.installationBy === 'Trade' && (
+                            <div className='flex items-center gap-2 text-orange-600 text-xs bg-orange-50 p-2 rounded border border-orange-200'>
+                              <svg className='w-4 h-4 flex-shrink-0' fill='currentColor' viewBox='0 0 20 20'>
+                                <path fillRule='evenodd' d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z' clipRule='evenodd' />
+                              </svg>
+                              <span>Note: The cost for installation by a trade professional should be added on the Trades screen.</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
 
-              {/* Demolition & Shower Walls Detailed Breakdown */}
-              {workflow.id === 'demolition' || workflow.id === 'showerWalls' ? (
+              {/* Demolition, Shower Walls & Shower Base Detailed Breakdown */}
+              {workflow.id === 'demolition' || workflow.id === 'showerWalls' || workflow.id === 'showerBase' ? (
                 <>
                   {/* Labor Items */}
                   {(() => {
-                    const laborItems = getLaborItems(workflow.id as 'demolition' | 'showerWalls');
-                    const flatFeeItems = getFlatFeeItems(workflow.id as 'demolition' | 'showerWalls');
+                    const laborItems = getLaborItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase');
+                    const flatFeeItems = getFlatFeeItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase');
                     const designData = workflow.id === 'demolition'
                       ? (getDesignData('demolition') as {
                           isDemolitionFlatFee?: 'yes' | 'no';
@@ -1457,7 +1491,7 @@ export default function EstimatesOverview({
 
                   {/* Material Items */}
                   {(() => {
-                    const materialItems = getMaterialItems(workflow.id as 'demolition' | 'showerWalls');
+                    const materialItems = getMaterialItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase');
 
                     if (materialItems.length === 0) return null;
 

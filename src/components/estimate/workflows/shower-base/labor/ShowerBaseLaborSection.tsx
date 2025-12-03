@@ -133,26 +133,17 @@ export default function ShowerBaseLaborSection() {
         });
       }
     } else if (baseType === 'Tiled Base') {
-      // Design Labor for Tiled Base
+      // Get entry type from design
+      const entryType = design.entryType || 'curb';
+
+      // ===== DESIGN LABOR =====
+      // Tile Shower Base (always for Tiled Base)
       laborItems.push({
         ...laborItemsMap.tileBase,
         id: `lab-base-tile-${Date.now()}`,
       });
 
-      // Curb Logic
-      if (drainType === 'curb') {
-        laborItems.push({
-          ...laborItemsMap.buildCurb,
-          id: `lab-base-curb-${Date.now()}`,
-        });
-      } else if (drainType === 'curbless') {
-        laborItems.push({
-          ...laborItemsMap.buildCurblessEntry,
-          id: `lab-base-curbless-${Date.now()}`,
-        });
-      }
-
-      // Drain Installation
+      // Drain Installation (Design)
       if (drainType === 'regular') {
         laborItems.push({
           ...laborItemsMap.installRegularDrain,
@@ -165,36 +156,61 @@ export default function ShowerBaseLaborSection() {
         });
       }
 
-      // Waterproofing System
-      if (waterproofingSystem === 'kerdi') {
+      // ===== CONSTRUCTION LABOR =====
+      // Perform Flood Test (always for Tiled Base)
+      laborItems.push({
+        ...laborItemsMap.performFloodTest,
+        id: `lab-base-flood-test-${Date.now()}`,
+      });
+
+      // Entry Type Logic (Construction)
+      if (entryType === 'curbless') {
         laborItems.push({
-          ...laborItemsMap.installKerdiSystem,
-          id: `lab-base-kerdi-${Date.now()}`,
+          ...laborItemsMap.createCurblessEntry,
+          id: `lab-base-curbless-${Date.now()}`,
         });
-      } else if (waterproofingSystem === 'liquid') {
+      } else {
         laborItems.push({
-          ...laborItemsMap.installLiquidMembrane,
-          id: `lab-base-liquid-${Date.now()}`,
+          ...laborItemsMap.buildCurb,
+          id: `lab-base-curb-${Date.now()}`,
         });
-      } else if (waterproofingSystem === 'kerdi-board') {
+      }
+
+      // Waterproofing System (Construction)
+      if (waterproofingSystem === 'schluter') {
         laborItems.push({
-          ...laborItemsMap.installKerdiBoard,
-          id: `lab-base-kerdi-board-${Date.now()}`,
+          ...laborItemsMap.installSchluterSystem,
+          id: `lab-base-schluter-${Date.now()}`,
+        });
+      } else if (waterproofingSystem === 'mortar') {
+        laborItems.push({
+          ...laborItemsMap.installMortarBed,
+          id: `lab-base-mortar-${Date.now()}`,
+        });
+      } else if (waterproofingSystem === 'wedi') {
+        laborItems.push({
+          ...laborItemsMap.installWediSystem,
+          id: `lab-base-wedi-${Date.now()}`,
+        });
+      } else if (waterproofingSystem === 'laticrete') {
+        laborItems.push({
+          ...laborItemsMap.installLaticreteSystem,
+          id: `lab-base-laticrete-${Date.now()}`,
         });
       }
     }
 
-    // General Construction
+    // ===== OPTIONAL STRUCTURAL (ANY BASE TYPE) =====
     if (subfloorRepair) {
       laborItems.push({
-        ...laborItemsMap.subfloorRepair,
+        ...laborItemsMap.repairSubfloor,
         id: `lab-base-subfloor-${Date.now()}`,
       });
     }
 
     if (joistModification) {
       laborItems.push({
-        ...laborItemsMap.joistModification,
+        ...laborItemsMap.modifyFloorJoists,
         id: `lab-base-joist-${Date.now()}`,
       });
     }
