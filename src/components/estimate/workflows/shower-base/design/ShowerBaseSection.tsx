@@ -112,11 +112,26 @@ export function ShowerBaseSection() {
     { value: 'right', label: 'Right' },
   ];
 
+  // Calculate total square footage (width and length are in inches)
+  const totalSqft = useMemo(() => {
+    const widthInches = parseFloat(localDesign.width) || 0;
+    const lengthInches = parseFloat(localDesign.length) || 0;
+    return (widthInches * lengthInches) / 144; // Convert sq inches to sq feet
+  }, [localDesign.width, localDesign.length]);
+
   return (
     <div className='space-y-6'>
       <h2 className='text-2xl font-bold text-slate-800'>Shower Base</h2>
       {/* Measurements Card */}
-      <CollapsibleSection title='Measurements' colorScheme='neutral'>
+      <CollapsibleSection
+        title='Measurements'
+        colorScheme='neutral'
+        summary={
+          <span className='text-blue-900 font-bold text-lg'>
+            {totalSqft.toFixed(2)} sq/ft
+          </span>
+        }
+      >
         <div className='grid grid-cols-2 gap-4'>
           <div>
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>
