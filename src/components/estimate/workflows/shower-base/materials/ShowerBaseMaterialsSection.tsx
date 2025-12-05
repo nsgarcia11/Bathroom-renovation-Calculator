@@ -434,7 +434,7 @@ export default function ShowerBaseMaterialsSection() {
           </div>
           <div className='grid grid-cols-2 gap-3'>
             <div>
-              <label className='text-xs text-slate-500'>Quantity</label>
+              <label className='text-xs text-slate-500'>Quantity{material.unit ? ` (${material.unit})` : ''}</label>
               <Input
                 type='number'
                 value={material.quantity}
@@ -446,18 +446,6 @@ export default function ShowerBaseMaterialsSection() {
               />
             </div>
             <div>
-              <label className='text-xs text-slate-500'>Unit</label>
-              <Input
-                type='text'
-                value={material.unit}
-                onChange={(e) =>
-                  handleMaterialChange(material.id, 'unit', e.target.value)
-                }
-                placeholder='sq/ft'
-                className={`text-center border-blue-300 focus:border-blue-500`}
-              />
-            </div>
-            <div className='col-span-2'>
               <label className='text-xs text-slate-500'>Price/Unit ($)</label>
               <Input
                 type='number'
