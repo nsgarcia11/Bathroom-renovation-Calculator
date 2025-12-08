@@ -287,7 +287,7 @@ export default function ShowerBaseMaterialsSection() {
     // Skip if base type not selected
     if (design.baseType === 'Select base type') return;
 
-    const choicesKey = `${design.baseType}-${design.drainType}-${design.waterproofingSystem}-${design.subfloorRepair}-${design.joistModification}-${design.clientSuppliesBase}-${design.entryType}-${design.width}-${design.length}`;
+    const choicesKey = `${design.baseType}-${design.drainType}-${design.waterproofingSystem}-${design.entryType}-${design.subfloorRepair}-${design.joistModification}-${design.clientSuppliesBase}-${design.installationBy}-${design.width}-${design.length}`;
 
     if (processedChoicesRef.current === choicesKey) return;
 

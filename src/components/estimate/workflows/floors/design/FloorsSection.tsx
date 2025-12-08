@@ -40,6 +40,7 @@ interface FloorsDesignData {
   // Construction
   selectedPrepTasks: string[];
   plywoodThickness: string;
+  joistCount: number; // Number of joists to repair
 
   // Notes
   designContractorNotes: string;
@@ -71,6 +72,7 @@ export function FloorsSection() {
         customHeatedFloorName: '',
         selectedPrepTasks: [],
         plywoodThickness: '3/4',
+        joistCount: 1,
         designContractorNotes: '',
         designClientNotes: '',
         constructionContractorNotes: '',
@@ -123,17 +125,23 @@ export function FloorsSection() {
     return totalArea;
   }, [localDesign.width, localDesign.length, localDesign.extraMeasurements]);
 
-  // Calculate waste factor based on pattern (used in materials calculation)
+  // Calculate waste percentage based on pattern (used in materials calculation)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const wasteFactor = useMemo(() => {
+  const wastePercentage = useMemo(() => {
     switch (localDesign.tilePattern) {
-      case 'herringbone':
-        return 1.25; // 25%
+      case 'stacked':
+        return 10; // 10%
       case '1/2_offset':
       case '1/3_offset':
-        return 1.2; // 20%
+      case 'diagonal':
+        return 12; // 12%
+      case 'hexagonal':
+        return 13; // 13%
+      case 'herringbone':
+      case 'checkerboard':
+        return 15; // 15%
       default:
-        return 1.1; // 10% for stacked
+        return 12; // 12% default for other/custom
     }
   }, [localDesign.tilePattern]);
 
@@ -151,10 +159,13 @@ export function FloorsSection() {
   // Tile pattern options
   const tilePatternOptions = [
     { value: 'select_option', label: 'Select a Pattern...' },
-    { value: 'stacked', label: 'Stacked' },
-    { value: '1/2_offset', label: '1/2 Offset' },
-    { value: '1/3_offset', label: '1/3 Offset' },
+    { value: 'stacked', label: 'Stacked (straight grid)' },
+    { value: '1/2_offset', label: 'Offset 1/2 (running bond)' },
+    { value: '1/3_offset', label: 'Offset 1/3 (running bond)' },
+    { value: 'diagonal', label: 'Diagonal grid 45°' },
+    { value: 'hexagonal', label: 'Hexagonal' },
     { value: 'herringbone', label: 'Herringbone' },
+    { value: 'checkerboard', label: 'Checkerboard' },
     { value: 'other', label: 'Other...' },
   ];
 
@@ -547,15 +558,23 @@ export function FloorsSection() {
           </div>
         )}
         {(localDesign.tilePattern === '1/2_offset' ||
-          localDesign.tilePattern === '1/3_offset') && (
+          localDesign.tilePattern === '1/3_offset' ||
+          localDesign.tilePattern === 'diagonal') && (
           <div className='mt-2 text-red-600 text-xs animate-fade-in'>
-            Note: A <strong>20% waste factor</strong> has been applied for this
+            Note: A <strong>12% waste factor</strong> has been applied for this
             pattern and added to the materials list.
           </div>
         )}
-        {localDesign.tilePattern === 'herringbone' && (
+        {localDesign.tilePattern === 'hexagonal' && (
           <div className='mt-2 text-red-600 text-xs animate-fade-in'>
-            Note: A <strong>25% waste factor</strong> has been applied for this
+            Note: A <strong>13% waste factor</strong> has been applied for this
+            pattern and added to the materials list.
+          </div>
+        )}
+        {(localDesign.tilePattern === 'herringbone' ||
+          localDesign.tilePattern === 'checkerboard') && (
+          <div className='mt-2 text-red-600 text-xs animate-fade-in'>
+            Note: A <strong>15% waste factor</strong> has been applied for this
             pattern and added to the materials list.
           </div>
         )}
@@ -735,6 +754,30 @@ export function FloorsSection() {
                           </svg>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                )}
+              {task.value === 'repair_joist' &&
+                localDesign.selectedPrepTasks?.includes('repair_joist') && (
+                  <div className='pt-3 pl-4 animate-fade-in'>
+                    <div>
+                      <Label className='text-sm font-medium text-gray-700 mb-3 block'>
+                        Number of joists to repair
+                      </Label>
+                      <Input
+                        type='number'
+                        value={(localDesign.joistCount || 1).toString()}
+                        onChange={(e) =>
+                          setDesign({
+                            joistCount: Math.max(1, parseInt(e.target.value) || 1),
+                          })
+                        }
+                        className='w-24 bg-slate-50 border border-blue-300 rounded-lg px-3 py-2 text-slate-800 text-center focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                      />
+                      <p className='text-xs text-slate-500 mt-2'>
+                        Labor: 4.5 hrs per joist | Materials: 2 pieces of lumber,
+                        1 box screws, 2 tubes adhesive per joist
+                      </p>
                     </div>
                   </div>
                 )}

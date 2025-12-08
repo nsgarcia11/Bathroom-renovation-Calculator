@@ -34,6 +34,7 @@ interface ShowerBaseDesignData {
   baseType: string;
   drainType: string;
   waterproofingSystem: string;
+  entryType: string;
   subfloorRepair: boolean;
   joistModification: boolean;
   clientSuppliesBase: string;
@@ -61,6 +62,7 @@ export default function ShowerBaseLaborSection() {
         baseType: 'Select base type',
         drainType: 'regular',
         waterproofingSystem: 'none',
+        entryType: 'curb',
         subfloorRepair: false,
         joistModification: false,
         clientSuppliesBase: 'No',
@@ -225,7 +227,7 @@ export default function ShowerBaseLaborSection() {
     // Skip if base type not selected
     if (design.baseType === 'Select base type') return;
 
-    const choicesKey = `${design.baseType}-${design.drainType}-${design.waterproofingSystem}-${design.subfloorRepair}-${design.joistModification}-${design.clientSuppliesBase}-${design.installationBy}`;
+    const choicesKey = `${design.baseType}-${design.drainType}-${design.waterproofingSystem}-${design.entryType}-${design.subfloorRepair}-${design.joistModification}-${design.clientSuppliesBase}-${design.installationBy}`;
 
     if (processedChoicesRef.current === choicesKey) return;
 

@@ -806,13 +806,101 @@ export const SHOWER_BASE_MATERIALS_ITEMS = {
   },
 };
 
+// Floors productivity and multiplier constants
+export const FLOORS_CONFIG = {
+  // Base productivity rates (sq ft per hour)
+  baseTileProductivitySqFtPerHr: 10,
+  baseGroutProductivitySqFtPerHr: 30,
+
+  // Tile Pattern Multipliers (for labor)
+  patternMultipliers: {
+    stacked: 1.0,
+    '1/2_offset': 1.15,
+    '1/3_offset': 1.15,
+    diagonal: 1.15,
+    hexagonal: 1.2,
+    herringbone: 1.3,
+    checkerboard: 1.3,
+    other: 1.15,
+  } as Record<string, number>,
+
+  // Tile Size Multipliers (for labor)
+  sizeMultipliers: {
+    '12x24': 1.0, // Standard Rectangle
+    '24x24': 1.15, // Large Format
+    '6x24': 1.15, // Plank / Wood-Look
+    '12x12': 1.05, // Square Tile
+    '6x6': 1.2, // Small format (treated like mosaic)
+    mosaic: 1.2, // Mosaic Sheets (≤ 2" x 2")
+    custom: 1.1, // Default for custom sizes
+  } as Record<string, number>,
+
+  // Tile Pattern Waste Percentages (for materials)
+  patternWastePct: {
+    stacked: 0.1, // 10%
+    '1/2_offset': 0.12, // 12%
+    '1/3_offset': 0.12, // 12%
+    diagonal: 0.12, // 12%
+    hexagonal: 0.13, // 13%
+    herringbone: 0.15, // 15%
+    checkerboard: 0.15, // 15%
+    other: 0.12, // 12% default
+  } as Record<string, number>,
+
+  // Tile Box Coverage (sq ft per box) by tile size
+  tileBoxCoverageSqFt: {
+    '12x24': 15,
+    '24x24': 16,
+    '6x24': 12,
+    '12x12': 12,
+    '6x6': 10,
+    mosaic: 10,
+    custom: 12, // Default
+  } as Record<string, number>,
+
+  // Grout Coverage (sq ft per unit) by tile size
+  groutCoverageSqFtPerUnit: {
+    '12x24': 125,
+    '24x24': 150,
+    '6x24': 100,
+    '12x12': 100,
+    '6x6': 75,
+    mosaic: 50,
+    custom: 100, // Default
+  } as Record<string, number>,
+
+  // Thinset Coverage (sq ft per bag)
+  thinsetCoverageSqFtPerBag: 45,
+
+  // Material Unit Prices (defaults)
+  unitPrices: {
+    floorTilePerBox: 45.0, // per box
+    floorTilePerSqFt: 5.0, // per sq ft
+    floorGrout: 30.0, // per bag
+    thinsetForTile: 30.0, // per bag
+  },
+
+  // Ditra labor hours by floor area (sq ft) bands
+  ditraLaborHoursBands: [
+    { maxSqFt: 30, hours: 2.25 },
+    { maxSqFt: 45, hours: 2.75 },
+    { maxSqFt: 65, hours: 3.25 },
+    { maxSqFt: 140, hours: 4.5 },
+    { maxSqFt: Infinity, hours: 7.5 },
+  ],
+
+  // Ditra material rates ($/sq ft)
+  ditraMaterialRateSqFt: 4.0,
+  ditraXLMaterialRateSqFt: 5.0,
+};
+
 // Floors labor items mapping
 export const FLOORS_LABOR_ITEMS = (contractorHourlyRate: number) => ({
-  // Core Tiling Labor
+  // Core Tiling Labor (Design)
   tileFloor: {
     id: 'lab-floor-tile',
     name: 'Tile Floor',
-    hours: '0', // Will be calculated as totalSqFt / 3
+    hours: '0', // Calculated: (totalSqFt / baseTileProductivitySqFtPerHr) * sizeMultiplier * patternMultiplier
     rate: contractorHourlyRate.toString(),
     scope: 'design' as const,
     source: 'auto' as const,
@@ -820,41 +908,41 @@ export const FLOORS_LABOR_ITEMS = (contractorHourlyRate: number) => ({
   groutFloor: {
     id: 'lab-floor-grout',
     name: 'Grout Floor',
-    hours: '0', // Will be calculated as totalSqFt / 30
+    hours: '0', // Calculated: (totalSqFt / baseGroutProductivitySqFtPerHr) * sizeMultiplier * patternMultiplier
     rate: contractorHourlyRate.toString(),
     scope: 'design' as const,
     source: 'auto' as const,
   },
 
-  // Prep Work Labor
+  // Prep Work Labor (Construction)
   selfLeveling: {
     id: 'lab-floor-leveling',
-    name: 'Self-Leveling',
-    hours: '0', // Will be calculated as totalSqFt / 75
+    name: 'Self-leveling underlayment',
+    hours: '2.25', // Flat 2.25 hr per bathroom
     rate: contractorHourlyRate.toString(),
     scope: 'construction' as const,
     source: 'auto' as const,
   },
   installDitra: {
     id: 'lab-floor-ditra',
-    name: 'Install Ditra Membrane',
-    hours: '0', // Will be calculated as totalSqFt / 100
+    name: 'Ditra membrane installation',
+    hours: '0', // Calculated by area bands
     rate: contractorHourlyRate.toString(),
     scope: 'construction' as const,
     source: 'auto' as const,
   },
   installDitraXL: {
     id: 'lab-floor-ditra-xl',
-    name: 'Install Ditra XL Membrane',
-    hours: '0', // Will be calculated as totalSqFt / 100
+    name: 'Ditra XL membrane installation',
+    hours: '0', // Calculated by area bands (same as Ditra)
     rate: contractorHourlyRate.toString(),
     scope: 'construction' as const,
     source: 'auto' as const,
   },
   installPlywood: {
     id: 'lab-floor-plywood',
-    name: 'Install Plywood Subfloor',
-    hours: '0', // Will be calculated as totalSqFt / 50
+    name: 'Add plywood for subfloor support',
+    hours: '2.75', // Flat 2.75 hr per bathroom
     rate: contractorHourlyRate.toString(),
     scope: 'construction' as const,
     source: 'auto' as const,
@@ -862,25 +950,25 @@ export const FLOORS_LABOR_ITEMS = (contractorHourlyRate: number) => ({
   installHeatedFloor: {
     id: 'lab-floor-heated',
     name: 'Install Heated Floor System',
-    hours: '0', // Will be calculated as 2 + (totalSqFt / 20)
+    hours: '0', // Calculated as 2 + (totalSqFt / 20)
     rate: contractorHourlyRate.toString(),
     scope: 'construction' as const,
     source: 'auto' as const,
   },
 
-  // Repair Work Labor
+  // Repair Work Labor (Construction)
   repairSubfloor: {
     id: 'lab-floor-repair-subfloor',
-    name: 'Repair Portion of Subfloor',
-    hours: '3',
+    name: 'Repair portion of subfloor',
+    hours: '3', // 3 hr per patch
     rate: contractorHourlyRate.toString(),
     scope: 'construction' as const,
     source: 'auto' as const,
   },
   repairJoist: {
     id: 'lab-floor-repair-joist',
-    name: 'Repair Floor Joist',
-    hours: '4',
+    name: 'Repair floor joist',
+    hours: '4.5', // 4.5 hr per joist (multiply by joistCount)
     rate: contractorHourlyRate.toString(),
     scope: 'construction' as const,
     source: 'auto' as const,
@@ -893,58 +981,56 @@ export const FLOORS_MATERIALS_ITEMS = {
   floorTile: {
     id: 'mat-floor-tile',
     name: 'Floor Tile',
-    quantity: '0', // Will be calculated as totalSqFt * wasteFactor
-    unit: 'sq/ft',
-    price: '5.00',
+    quantity: '0', // Calculated: CEILING(tileAreaWithWaste / tileBoxCoverage)
+    unit: 'box',
+    price: '45.00', // Price per box
     scope: 'design' as const,
-    source: 'auto' as const,
-  },
-
-  // Construction Materials
-  thinset: {
-    id: 'mat-floor-thinset',
-    name: 'Thinset Mortar (50lb bag)',
-    quantity: '0', // Will be calculated based on coverage
-    unit: 'bag',
-    price: '30.00',
-    scope: 'construction' as const,
     source: 'auto' as const,
   },
   grout: {
     id: 'mat-floor-grout',
     name: 'Sanded Grout (25lb bag)',
-    quantity: '0', // Will be calculated as ceil(totalSqFt / 125)
+    quantity: '0', // Calculated: CEILING(totalSqFt / groutCoverage)
     unit: 'bag',
     price: '30.00',
-    scope: 'construction' as const,
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+  thinset: {
+    id: 'mat-floor-thinset',
+    name: 'Thinset Mortar (50lb bag)',
+    quantity: '0', // Calculated: CEILING(tileAreaWithWaste / thinsetCoverage)
+    unit: 'bag',
+    price: '30.00',
+    scope: 'design' as const,
     source: 'auto' as const,
   },
 
-  // Membrane Materials
+  // Membrane Materials (Construction)
   ditra: {
     id: 'mat-floor-ditra',
-    name: 'Ditra Uncoupling Membrane',
-    quantity: '0', // Will be calculated as ceil(totalSqFt / 54)
-    unit: 'roll',
-    price: '165.00',
+    name: 'Schluter Ditra membrane + thinset (under membrane)',
+    quantity: '0', // Calculated: totalSqFt (priced per sq ft)
+    unit: 'sq ft',
+    price: '4.00', // $4.00/sq ft
     scope: 'construction' as const,
     source: 'auto' as const,
   },
   ditraXL: {
     id: 'mat-floor-ditra-xl',
-    name: 'Ditra XL Uncoupling Membrane',
-    quantity: '0', // Will be calculated as ceil(totalSqFt / 175)
-    unit: 'roll',
-    price: '462.00',
+    name: 'Schluter Ditra XL membrane + thinset (under membrane)',
+    quantity: '0', // Calculated: totalSqFt (priced per sq ft)
+    unit: 'sq ft',
+    price: '5.00', // $5.00/sq ft
     scope: 'construction' as const,
     source: 'auto' as const,
   },
 
-  // Heated Floor Materials
+  // Heated Floor Materials (Construction)
   heatedFloorKit: {
     id: 'mat-floor-heated-kit',
     name: 'Heated Floor Kit',
-    quantity: '0', // Will be calculated as ceil(totalSqFt / 40)
+    quantity: '0', // Calculated: ceil(totalSqFt / 40)
     unit: 'kit',
     price: '400.00',
     scope: 'construction' as const,
@@ -960,31 +1046,100 @@ export const FLOORS_MATERIALS_ITEMS = {
     source: 'auto' as const,
   },
 
-  // Structural Materials
+  // Self-Leveling Materials (Construction)
   selfLevelingCompound: {
     id: 'mat-floor-leveling',
-    name: 'Self-Leveling Compound (50lb bag)',
-    quantity: '0', // Will be calculated as ceil(totalSqFt / 50)
+    name: 'LevelQuik RS 50 lb Self-Leveling Underlayment',
+    quantity: '1', // Default 1 bag per bathroom (up to ~40 sq ft)
     unit: 'bag',
-    price: '45.00',
+    price: '39.98',
     scope: 'construction' as const,
     source: 'auto' as const,
   },
-  plywood: {
-    id: 'mat-floor-plywood',
-    name: 'Plywood Subfloor',
-    quantity: '0', // Will be calculated as ceil(totalSqFt / 32)
+  selfLevelingPrimer: {
+    id: 'mat-floor-leveling-primer',
+    name: 'LevelQuik 1 qt Acrylic Primer',
+    quantity: '1',
+    unit: 'qt',
+    price: '16.98',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Plywood Materials (Construction)
+  plywoodHalf: {
+    id: 'mat-floor-plywood-half',
+    name: '1/2" x 4\' x 8\' Standard Spruce Plywood Board',
+    quantity: '0', // Calculated: CEILING(totalSqFt / 32)
     unit: 'sheet',
-    price: '70.00',
+    price: '69.56',
     scope: 'construction' as const,
     source: 'auto' as const,
   },
-  floorScrews: {
+  plywoodThreeQuarter: {
+    id: 'mat-floor-plywood-3/4',
+    name: '3/4" x 4\' x 8\' Standard Spruce Plywood',
+    quantity: '0', // Calculated: CEILING(totalSqFt / 32)
+    unit: 'sheet',
+    price: '103.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  constructionScrews: {
     id: 'mat-floor-screws',
-    name: 'Floor Screws',
+    name: '#8 x 2-1/2" Construction Screws – 100 pcs box',
     quantity: '1',
     unit: 'box',
-    price: '18.00',
+    price: '18.75',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Subfloor Repair Materials (Construction)
+  patchPlywood: {
+    id: 'mat-floor-patch-plywood',
+    name: '3/4" x 4\' x 8\' Standard Spruce Plywood',
+    quantity: '1',
+    unit: 'sheet',
+    price: '103.00',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  constructionAdhesive: {
+    id: 'mat-floor-adhesive',
+    name: 'LePage PL 400 Subfloor & Deck Adhesive – 295 mL',
+    quantity: '1',
+    unit: 'tube',
+    price: '7.47',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Joist Repair Materials (Construction)
+  sisterJoistLumber: {
+    id: 'mat-floor-sister-joist',
+    name: '2" x 8" x 10\' SPF 2&Btr Builder Grade Lumber',
+    quantity: '2', // 2 pieces per joist (multiply by joistCount)
+    unit: 'piece',
+    price: '11.93',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  structuralScrews: {
+    id: 'mat-floor-structural-screws',
+    name: 'GRK #10 x 3-1/8" RSS Structural Screws – 50 pcs box',
+    quantity: '1', // 1 box per joist (multiply by joistCount)
+    unit: 'box',
+    price: '27.97',
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  joistAdhesive: {
+    id: 'mat-floor-joist-adhesive',
+    name: 'LePage PL 400 Subfloor & Deck Adhesive – 295 mL',
+    quantity: '2', // 2 tubes per joist (multiply by joistCount)
+    unit: 'tube',
+    price: '7.47',
     scope: 'construction' as const,
     source: 'auto' as const,
   },
