@@ -627,7 +627,21 @@ export function FloorsSection() {
         <ToggleSwitch
           label='Install Heated Floor System'
           enabled={localDesign.isHeatedFloor}
-          onToggle={(enabled) => setDesign({ isHeatedFloor: enabled })}
+          onToggle={(enabled) => {
+            // When heated floor is enabled, disable regular Ditra/Ditra XL toggles
+            if (enabled) {
+              const currentTasks = localDesign.selectedPrepTasks || [];
+              const filteredTasks = currentTasks.filter(
+                (task) => task !== 'ditra' && task !== 'ditra_xl'
+              );
+              setDesign({
+                isHeatedFloor: enabled,
+                selectedPrepTasks: filteredTasks
+              });
+            } else {
+              setDesign({ isHeatedFloor: enabled });
+            }
+          }}
         />
 
         {localDesign.isHeatedFloor && (
@@ -710,15 +724,29 @@ export function FloorsSection() {
 
       {/* Construction Card */}
       <CollapsibleSection title='Construction' colorScheme='construction'>
+        {/* Note about Ditra when heated floor is ON */}
+        {localDesign.isHeatedFloor && (
+          <div className='mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+            <p className='text-sm text-blue-800'>
+              <strong>Note:</strong> Regular Ditra / Ditra XL membrane options are disabled because the heated floor system includes its own membrane.
+            </p>
+          </div>
+        )}
         <div className='space-y-4'>
-          {prepAndStructuralOptions.map((task) => (
+          {prepAndStructuralOptions.map((task) => {
+            // Disable Ditra options when heated floor is enabled
+            const isDitraOption = task.value === 'ditra' || task.value === 'ditra_xl';
+            const isDisabled = isDitraOption && localDesign.isHeatedFloor;
+
+            return (
             <div key={task.value}>
               <ToggleSwitch
                 label={task.label}
                 enabled={
                   localDesign.selectedPrepTasks?.includes(task.value) || false
                 }
-                onToggle={() => handlePrepTaskToggle(task.value)}
+                onToggle={() => !isDisabled && handlePrepTaskToggle(task.value)}
+                disabled={isDisabled}
               />
               {task.value === 'add_plywood' &&
                 localDesign.selectedPrepTasks?.includes('add_plywood') && (
@@ -782,7 +810,8 @@ export function FloorsSection() {
                   </div>
                 )}
             </div>
-          ))}
+          );
+          })}
         </div>
 
         {/* Construction Notes */}

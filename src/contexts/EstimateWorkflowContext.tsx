@@ -417,8 +417,11 @@ export function EstimateWorkflowProvider({
         installationBy?: string;
       } | null;
 
-      // Skip if no base type selected or if it's the default placeholder
-      if (!designData?.baseType || designData.baseType === 'Select base type') {
+      // Check if construction options are enabled (these work independently of base type)
+      const hasConstructionOptions = designData?.subfloorRepair || designData?.joistModification;
+
+      // Skip if no base type selected AND no construction options enabled
+      if ((!designData?.baseType || designData.baseType === 'Select base type') && !hasConstructionOptions) {
         return;
       }
 
@@ -679,9 +682,15 @@ export function EstimateWorkflowProvider({
             ...laborItemsMap.repairSubfloor,
             id: 'sb-lab-subfloor',
           });
+          // Plywood/OSB Sheathing - Qty 1 - $70
           autoMaterialItems.push({
-            ...materialsMap.subfloorPlywood,
+            ...materialsMap.subfloorPlywoodOSB,
             id: 'sb-mat-subfloor-plywood',
+          });
+          // Lumber (2x4) - Qty 3 - $6
+          autoMaterialItems.push({
+            ...materialsMap.subfloorLumber2x4,
+            id: 'sb-mat-subfloor-lumber',
           });
         }
 
@@ -690,8 +699,9 @@ export function EstimateWorkflowProvider({
             ...laborItemsMap.modifyFloorJoists,
             id: 'sb-lab-joist',
           });
+          // Lumber (2x4) - Qty 5 - $6
           autoMaterialItems.push({
-            ...materialsMap.joistLumber,
+            ...materialsMap.joistLumber2x4,
             id: 'sb-mat-joist-lumber',
           });
         }
