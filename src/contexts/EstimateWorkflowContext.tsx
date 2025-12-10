@@ -425,8 +425,20 @@ export function EstimateWorkflowProvider({
         return;
       }
 
-      const currentWorkflow = showerBaseData.workflow;
-      if (currentWorkflow) {
+      const currentWorkflow = showerBaseData.workflow || {
+        labor: { hourlyItems: [], flatFeeItems: [] },
+        materials: { items: [] },
+        notes: { contractorNotes: '', clientNotes: '' },
+        estimate: {
+          laborTotal: 0,
+          materialsTotal: 0,
+          grandTotal: 0,
+          lastUpdated: new Date().toISOString(),
+        },
+      };
+
+      // Always process if we have construction options or a valid base type
+      {
         const contractorHourlyRate = contractor?.hourly_rate || 85;
         const laborItemsMap = SHOWER_BASE_LABOR_ITEMS(contractorHourlyRate);
         const materialsMap = SHOWER_BASE_MATERIALS_ITEMS;

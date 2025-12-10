@@ -786,7 +786,7 @@ export const SHOWER_BASE_MATERIALS_ITEMS = {
   // General Construction Materials - Repair Subfloor
   subfloorPlywoodOSB: {
     id: 'mat-base-subfloor-plywood',
-    name: 'Plywood/OSB Sheathing',
+    name: 'Plywood/OSB Sheathing (Subfloor Repair)',
     quantity: '1',
     unit: 'sheet',
     price: '70.00',
@@ -796,7 +796,7 @@ export const SHOWER_BASE_MATERIALS_ITEMS = {
   },
   subfloorLumber2x4: {
     id: 'mat-base-subfloor-lumber',
-    name: 'Lumber (2x4)',
+    name: 'Lumber 2x4 (Subfloor Repair)',
     quantity: '3',
     unit: 'pieces',
     price: '6.00',
@@ -808,7 +808,7 @@ export const SHOWER_BASE_MATERIALS_ITEMS = {
   // General Construction Materials - Modify Floor Joists
   joistLumber2x4: {
     id: 'mat-base-joist-lumber',
-    name: 'Lumber (2x4)',
+    name: 'Lumber 2x4 (Joist Modification)',
     quantity: '5',
     unit: 'pieces',
     price: '6.00',
