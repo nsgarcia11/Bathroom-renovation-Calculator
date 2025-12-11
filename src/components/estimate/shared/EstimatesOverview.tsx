@@ -1194,6 +1194,208 @@ export default function EstimatesOverview({
                   );
                 })()}
 
+              {/* Design Options for Floors */}
+              {workflow.id === 'floors' &&
+                (() => {
+                  const design = getDesignData('floors') as {
+                    width?: string;
+                    length?: string;
+                    extraMeasurements?: Array<{
+                      id: number;
+                      label: string;
+                      width: string;
+                      length: string;
+                    }>;
+                    clientSuppliesTiles?: boolean;
+                    selectedTileSizeOption?: string;
+                    tileSize?: {
+                      width: string;
+                      length: string;
+                    };
+                    tilePattern?: string;
+                    customPattern?: string;
+                    isHeatedFloor?: boolean;
+                    heatedFloorType?: string;
+                    customHeatedFloorName?: string;
+                    selectedPrepTasks?: string[];
+                    plywoodThickness?: string;
+                    joistCount?: number;
+                  } | null;
+
+                  if (!design || (!design.width && !design.length)) return null;
+
+                  // Calculate total square footage
+                  let totalSqFt = 0;
+                  const mainWidth = parseFloat(design.width || '0') || 0;
+                  const mainLength = parseFloat(design.length || '0') || 0;
+                  if (mainWidth > 0 && mainLength > 0) {
+                    totalSqFt += (mainWidth * mainLength) / 144;
+                  }
+                  if (design.extraMeasurements && Array.isArray(design.extraMeasurements)) {
+                    design.extraMeasurements.forEach((m) => {
+                      const sideWidth = parseFloat(m.width) || 0;
+                      const sideLength = parseFloat(m.length) || 0;
+                      if (sideWidth > 0 && sideLength > 0) {
+                        totalSqFt += (sideWidth * sideLength) / 144;
+                      }
+                    });
+                  }
+
+                  // Get tile size display
+                  const getTileSizeDisplay = () => {
+                    if (design.selectedTileSizeOption === 'custom' && design.tileSize) {
+                      return `${design.tileSize.width}" × ${design.tileSize.length}"`;
+                    }
+                    if (design.selectedTileSizeOption && design.selectedTileSizeOption !== 'select_option') {
+                      const [w, l] = design.selectedTileSizeOption.split('x');
+                      return `${w}" × ${l}"`;
+                    }
+                    return null;
+                  };
+
+                  // Get tile pattern display
+                  const getTilePatternDisplay = () => {
+                    const patterns: Record<string, string> = {
+                      'stacked': 'Stacked (straight grid)',
+                      '1/2_offset': 'Offset 1/2 (running bond)',
+                      '1/3_offset': 'Offset 1/3 (running bond)',
+                      'diagonal': 'Diagonal grid 45°',
+                      'hexagonal': 'Hexagonal',
+                      'herringbone': 'Herringbone',
+                      'checkerboard': 'Checkerboard',
+                      'other': design.customPattern || 'Custom',
+                    };
+                    return patterns[design.tilePattern || ''] || null;
+                  };
+
+                  // Get heated floor display
+                  const getHeatedFloorDisplay = () => {
+                    if (!design.isHeatedFloor) return null;
+                    const types: Record<string, string> = {
+                      'schluter': 'Schluter-DITRA-HEAT',
+                      'nuheat': 'Nuheat Cable System',
+                      'custom': design.customHeatedFloorName || 'Custom System',
+                    };
+                    return types[design.heatedFloorType || ''] || design.heatedFloorType;
+                  };
+
+                  // Get construction tasks display
+                  const getConstructionTasksDisplay = () => {
+                    if (!design.selectedPrepTasks || design.selectedPrepTasks.length === 0) return null;
+                    const taskLabels: Record<string, string> = {
+                      'self_leveling': 'Self-Leveling',
+                      'ditra': 'Ditra Membrane',
+                      'ditra_xl': 'Ditra XL Membrane',
+                      'add_plywood': `Add Plywood (${design.plywoodThickness || '3/4'}")`,
+                      'repair_subfloor': 'Repair Subfloor',
+                      'repair_joist': `Repair Joists (${design.joistCount || 1})`,
+                    };
+                    return design.selectedPrepTasks.map(task => taskLabels[task] || task);
+                  };
+
+                  const tileSizeDisplay = getTileSizeDisplay();
+                  const tilePatternDisplay = getTilePatternDisplay();
+                  const heatedFloorDisplay = getHeatedFloorDisplay();
+                  const constructionTasks = getConstructionTasksDisplay();
+
+                  return (
+                    <div className='mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200'>
+                      <h4 className='font-semibold text-blue-900 mb-2'>
+                        Design Specifications
+                      </h4>
+                      <div className='grid grid-cols-2 gap-2 text-sm'>
+                        {/* Total Area */}
+                        <div>
+                          <span className='font-medium text-gray-700'>
+                            Total Area:
+                          </span>
+                          <div className='text-gray-600'>
+                            {totalSqFt.toFixed(2)} sq/ft
+                          </div>
+                        </div>
+
+                        {/* Main Dimensions */}
+                        <div>
+                          <span className='font-medium text-gray-700'>
+                            Main Dimensions:
+                          </span>
+                          <div className='text-gray-600'>
+                            {design.width}&quot; × {design.length}&quot;
+                          </div>
+                        </div>
+
+                        {/* Extra Measurements */}
+                        {design.extraMeasurements && design.extraMeasurements.length > 0 && (
+                          <div className='col-span-2'>
+                            <span className='font-medium text-gray-700'>
+                              Additional Areas:
+                            </span>
+                            <div className='text-gray-600'>
+                              {design.extraMeasurements.map((m, index) => (
+                                <div key={index} className='text-xs'>
+                                  {m.label || `Area ${index + 1}`}: {m.width}&quot; × {m.length}&quot;
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Tile Size */}
+                        {tileSizeDisplay && (
+                          <div>
+                            <span className='font-medium text-gray-700'>
+                              Tile Size:
+                            </span>
+                            <div className='text-gray-600'>{tileSizeDisplay}</div>
+                          </div>
+                        )}
+
+                        {/* Tile Pattern */}
+                        {tilePatternDisplay && (
+                          <div>
+                            <span className='font-medium text-gray-700'>
+                              Tile Pattern:
+                            </span>
+                            <div className='text-gray-600'>{tilePatternDisplay}</div>
+                          </div>
+                        )}
+
+                        {/* Client Supplies Tiles */}
+                        {design.clientSuppliesTiles && (
+                          <div>
+                            <span className='font-medium text-gray-700'>
+                              Client Supplies:
+                            </span>
+                            <div className='text-gray-600'>Tiles</div>
+                          </div>
+                        )}
+
+                        {/* Heated Floor */}
+                        {heatedFloorDisplay && (
+                          <div>
+                            <span className='font-medium text-gray-700'>
+                              Heated Floor:
+                            </span>
+                            <div className='text-gray-600'>{heatedFloorDisplay}</div>
+                          </div>
+                        )}
+
+                        {/* Construction Tasks */}
+                        {constructionTasks && constructionTasks.length > 0 && (
+                          <div className='col-span-2'>
+                            <span className='font-medium text-gray-700'>
+                              Construction:
+                            </span>
+                            <div className='text-gray-600'>
+                              {constructionTasks.join(', ')}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
               {/* Design Options for Shower Base */}
               {workflow.id === 'showerBase' &&
                 (() => {
@@ -1362,13 +1564,13 @@ export default function EstimatesOverview({
                   );
                 })()}
 
-              {/* Demolition, Shower Walls & Shower Base Detailed Breakdown */}
-              {workflow.id === 'demolition' || workflow.id === 'showerWalls' || workflow.id === 'showerBase' ? (
+              {/* Demolition, Shower Walls, Shower Base & Floors Detailed Breakdown */}
+              {workflow.id === 'demolition' || workflow.id === 'showerWalls' || workflow.id === 'showerBase' || workflow.id === 'floors' ? (
                 <>
                   {/* Labor Items */}
                   {(() => {
-                    const laborItems = getLaborItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase');
-                    const flatFeeItems = getFlatFeeItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase');
+                    const laborItems = getLaborItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors');
+                    const flatFeeItems = getFlatFeeItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors');
                     const designData = workflow.id === 'demolition'
                       ? (getDesignData('demolition') as {
                           isDemolitionFlatFee?: 'yes' | 'no';
@@ -1491,7 +1693,7 @@ export default function EstimatesOverview({
 
                   {/* Material Items */}
                   {(() => {
-                    const materialItems = getMaterialItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase');
+                    const materialItems = getMaterialItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors');
 
                     if (materialItems.length === 0) return null;
 
