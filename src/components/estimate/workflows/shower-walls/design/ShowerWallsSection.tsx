@@ -10,6 +10,7 @@ import { CollapsibleSection } from '@/components/estimate/shared/CollapsibleSect
 import { WorkflowNotesSection } from '@/components/estimate/shared/WorkflowNotesSection';
 import { EditDimensionsModal } from '@/components/estimate/shared/EditDimensionsModal';
 import { WallRow } from '@/components/estimate/shared/WallRow';
+import WarningNote from '@/components/estimate/shared/WarningNote';
 import { AlertTriangle, X } from 'lucide-react';
 import { useShowerWallsCalculations } from '@/hooks/use-shower-walls-calculations';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
@@ -588,10 +589,10 @@ export function ShowerWallsSection() {
                     placeholder='Enter custom system name'
                     className='w-full p-2 border border-slate-300 rounded-md'
                   />
-                  <p className='text-sm text-amber-800 bg-amber-50 p-3 rounded-md border border-amber-200'>
+                  <WarningNote variant='warning'>
                     <b>Note:</b> Ensure you update the Materials and Labor
                     screens for custom systems.
-                  </p>
+                  </WarningNote>
                 </div>
               )}
             </div>

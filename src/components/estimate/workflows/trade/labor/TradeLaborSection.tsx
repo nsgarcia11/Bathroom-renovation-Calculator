@@ -445,7 +445,7 @@ export default function TradeLaborSection() {
     }, 0);
   }, [localLaborItems]);
 
-  /* const totalHours = useMemo(() => {
+  const totalHours = useMemo(() => {
     return localLaborItems.reduce((total, item) => {
       if (item.pricingModel === 'hourly') {
         const hours = parseFloat(item.hours) || 0;
@@ -454,7 +454,7 @@ export default function TradeLaborSection() {
       }
       return total;
     }, 0);
-  }, [localLaborItems]); */
+  }, [localLaborItems]);
 
   // Group items by category
   const plumbingItems = localLaborItems.filter((item) => item.color === 'blue');
@@ -605,8 +605,17 @@ export default function TradeLaborSection() {
       <div className='pt-2'>
         <div className='flex justify-between items-baseline'>
           <h2 className='text-2xl font-bold text-slate-800'>Labor</h2>
-          <div className='text-xl font-bold text-blue-600'>
-            ${laborTotal.toFixed(2)}
+          {totalHours > 0 && (
+            <div className='flex items-center gap-2 text-sm text-slate-600'>
+              <span className='font-semibold text-xl text-slate-800'>
+                {totalHours.toFixed(1)} hrs
+              </span>
+            </div>
+          )}
+          <div className='flex items-center gap-2 text-sm text-slate-600'>
+            <span className='font-semibold text-xl text-blue-600'>
+              ${laborTotal.toFixed(2)}
+            </span>
           </div>
         </div>
         <div className='mt-4'>

@@ -1086,13 +1086,22 @@ export const FLOORS_MATERIALS_ITEMS = {
     scope: 'design' as const,
     source: 'auto' as const,
   },
+  transition: {
+    id: 'mat-floor-transition',
+    name: 'Transition',
+    quantity: '1', // Always 1 transition
+    unit: 'each',
+    price: '40.00',
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
   thinset: {
     id: 'mat-floor-thinset',
     name: 'Thinset Mortar (50lb bag)',
     quantity: '0', // Calculated: CEILING(tileAreaWithWaste / thinsetCoverage)
     unit: 'bag',
     price: '30.00',
-    scope: 'design' as const,
+    scope: 'construction' as const,
     source: 'auto' as const,
   },
 

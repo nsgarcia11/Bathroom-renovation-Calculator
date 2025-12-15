@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { ToggleSwitch } from '@/components/estimate/shared/ToggleSwitch';
 import { WorkflowNotesSection } from '@/components/estimate/shared/WorkflowNotesSection';
 import { CollapsibleSection } from '@/components/estimate/shared/CollapsibleSection';
+import WarningNote from '@/components/estimate/shared/WarningNote';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import { Plus, Trash2 } from 'lucide-react';
 
@@ -439,13 +440,11 @@ export function FinishingsSection() {
             </div>
           </div>
           {localDesign.plumbingPerformedBy === 'trade' && (
-            <div className='mb-4 p-3 bg-amber-100 rounded-lg'>
-              <p className='text-xs text-amber-800'>
-                <strong>Note:</strong> When &apos;Trade&apos; is selected,
-                plumbing labor isn&apos;t included here. Manage it on the
-                &apos;Trade&apos; screen.
-              </p>
-            </div>
+            <WarningNote variant='warning'>
+              <strong>Note:</strong> When &apos;Trade&apos; is selected,
+              plumbing labor isn&apos;t included here. Manage it on the
+              &apos;Trade&apos; screen.
+            </WarningNote>
           )}
           <div className='space-y-4 pl-4'>
             <div className='space-y-2'>
@@ -523,13 +522,11 @@ export function FinishingsSection() {
             </div>
           </div>
           {localDesign.electricalPerformedBy === 'trade' && (
-            <div className='mb-4 p-3 bg-amber-100 rounded-lg'>
-              <p className='text-xs text-amber-800'>
-                <strong>Note:</strong> When &apos;Trade&apos; is selected,
-                electrical labor isn&apos;t included here. Manage it on the
-                &apos;Trade&apos; screen.
-              </p>
-            </div>
+            <WarningNote variant='warning'>
+              <strong>Note:</strong> When &apos;Trade&apos; is selected,
+              electrical labor isn&apos;t included here. Manage it on the
+              &apos;Trade&apos; screen.
+            </WarningNote>
           )}
           <div className='space-y-4 pl-4'>
             <div className='space-y-2'>

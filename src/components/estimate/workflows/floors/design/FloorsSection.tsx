@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/select';
 import { ToggleSwitch } from '@/components/estimate/shared/ToggleSwitch';
 import { WorkflowNotesSection } from '@/components/estimate/shared/WorkflowNotesSection';
 import { CollapsibleSection } from '@/components/estimate/shared/CollapsibleSection';
+import WarningNote from '@/components/estimate/shared/WarningNote';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import { Trash2 } from 'lucide-react';
 
@@ -718,11 +719,9 @@ export function FloorsSection() {
       <CollapsibleSection title='Construction' colorScheme='construction'>
         {/* Note about Ditra when heated floor is ON */}
         {localDesign.isHeatedFloor && (
-          <div className='mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
-            <p className='text-sm text-blue-800'>
-              <strong>Note:</strong> Regular Ditra / Ditra XL membrane options are disabled because the heated floor system includes its own membrane.
-            </p>
-          </div>
+          <WarningNote variant='info'>
+            <strong>Note:</strong> Regular Ditra / Ditra XL membrane options are disabled because the heated floor system includes its own membrane.
+          </WarningNote>
         )}
         <div className='space-y-4'>
           {prepAndStructuralOptions.map((task) => {
@@ -731,11 +730,15 @@ export function FloorsSection() {
             const isHeatedFloorDisabled = isDitraOption && localDesign.isHeatedFloor;
 
             // Disable unselected Ditra option when the other is selected (mutual exclusion)
+            // Only disable if the current option is NOT selected (allow turning off a selected option)
             const isDitraSelected = localDesign.selectedPrepTasks?.includes('ditra') || false;
             const isDitraXLSelected = localDesign.selectedPrepTasks?.includes('ditra_xl') || false;
+            const isCurrentOptionSelected = localDesign.selectedPrepTasks?.includes(task.value) || false;
             const isMutualExclusionDisabled =
-              (task.value === 'ditra' && isDitraXLSelected) ||
-              (task.value === 'ditra_xl' && isDitraSelected);
+              !isCurrentOptionSelected && (
+                (task.value === 'ditra' && isDitraXLSelected) ||
+                (task.value === 'ditra_xl' && isDitraSelected)
+              );
 
             const isDisabled = isHeatedFloorDisabled || isMutualExclusionDisabled;
 
