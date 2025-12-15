@@ -895,12 +895,10 @@ export const FLOORS_CONFIG = {
   // Tile Pattern Waste Percentages (for materials)
   patternWastePct: {
     stacked: 0.1, // 10%
-    '1/2_offset': 0.12, // 12%
-    '1/3_offset': 0.12, // 12%
+    offset: 0.12, // 12% (running bond 1/2 or 1/3)
     diagonal: 0.12, // 12%
     hexagonal: 0.13, // 13%
-    herringbone: 0.15, // 15%
-    checkerboard: 0.15, // 15%
+    herringbone: 0.15, // 15% (includes checkerboard)
     other: 0.12, // 12% default
   } as Record<string, number>,
 
@@ -910,8 +908,7 @@ export const FLOORS_CONFIG = {
     '24x24': 16,
     '6x24': 12,
     '12x12': 12,
-    '6x6': 10,
-    mosaic: 10,
+    '2x2': 10, // Mosaic sheets
     custom: 12, // Default
   } as Record<string, number>,
 
@@ -921,8 +918,7 @@ export const FLOORS_CONFIG = {
     '24x24': 150,
     '6x24': 100,
     '12x12': 100,
-    '6x6': 75,
-    mosaic: 50,
+    '2x2': 50, // Mosaic sheets (more grout lines)
     custom: 100, // Default
   } as Record<string, number>,
 
@@ -1103,7 +1099,7 @@ export const FLOORS_MATERIALS_ITEMS = {
   // Membrane Materials (Construction)
   ditra: {
     id: 'mat-floor-ditra',
-    name: 'Schluter Ditra membrane + thinset (under membrane)',
+    name: 'Schluter Ditra Membrane',
     quantity: '0', // Calculated: totalSqFt (priced per sq ft)
     unit: 'sq ft',
     price: '4.00', // $4.00/sq ft
@@ -1112,10 +1108,19 @@ export const FLOORS_MATERIALS_ITEMS = {
   },
   ditraXL: {
     id: 'mat-floor-ditra-xl',
-    name: 'Schluter Ditra XL membrane + thinset (under membrane)',
+    name: 'Schluter Ditra XL Membrane',
     quantity: '0', // Calculated: totalSqFt (priced per sq ft)
     unit: 'sq ft',
     price: '5.00', // $5.00/sq ft
+    scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+  ditraThinset: {
+    id: 'mat-floor-ditra-thinset',
+    name: 'Thinset for Ditra/Ditra XL (under membrane)',
+    quantity: '0', // Calculated: CEILING(totalSqFt / thinsetCoverage)
+    unit: 'bag',
+    price: '30.00',
     scope: 'construction' as const,
     source: 'auto' as const,
   },

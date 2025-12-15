@@ -131,14 +131,12 @@ export function FloorsSection() {
     switch (localDesign.tilePattern) {
       case 'stacked':
         return 10; // 10%
-      case '1/2_offset':
-      case '1/3_offset':
+      case 'offset':
       case 'diagonal':
         return 12; // 12%
       case 'hexagonal':
         return 13; // 13%
       case 'herringbone':
-      case 'checkerboard':
         return 15; // 15%
       default:
         return 12; // 12% default for other/custom
@@ -148,25 +146,21 @@ export function FloorsSection() {
   // Tile size options
   const tileSizeOptions = [
     { value: 'select_option', label: 'Select a Tile Size...' },
-    { value: '12x24', label: '12" x 24"' },
-    { value: '12x12', label: '12" x 12"' },
-    { value: '6x24', label: '6" x 24"' },
-    { value: '24x24', label: '24" x 24"' },
-    { value: '6x6', label: '6" x 6"' },
-    { value: 'custom', label: 'Custom Size...' },
+    { value: '12x24', label: '12" x 24" (Standard Rectangle)' },
+    { value: '24x24', label: '24" x 24"+ (Large Format)' },
+    { value: '6x24', label: '6" x 24"+ (Plank / Wood-Look)' },
+    { value: '12x12', label: '12" x 12" (Square Tile)' },
+    { value: '2x2', label: '≤ 2" x 2" (Mosaic Sheets)' },
   ];
 
   // Tile pattern options
   const tilePatternOptions = [
     { value: 'select_option', label: 'Select a Pattern...' },
     { value: 'stacked', label: 'Stacked (straight grid)' },
-    { value: '1/2_offset', label: 'Offset 1/2 (running bond)' },
-    { value: '1/3_offset', label: 'Offset 1/3 (running bond)' },
+    { value: 'offset', label: 'Offset 1/2 or 1/3 (running bond)' },
     { value: 'diagonal', label: 'Diagonal grid 45°' },
     { value: 'hexagonal', label: 'Hexagonal' },
-    { value: 'herringbone', label: 'Herringbone' },
-    { value: 'checkerboard', label: 'Checkerboard' },
-    { value: 'other', label: 'Other...' },
+    { value: 'herringbone', label: 'Herringbone / Checkerboard' },
   ];
 
   // Heated floor options
@@ -261,11 +255,24 @@ export function FloorsSection() {
 
   const handlePrepTaskToggle = (task: string) => {
     const currentTasks = localDesign.selectedPrepTasks || [];
-    setDesign({
-      selectedPrepTasks: currentTasks.includes(task)
-        ? currentTasks.filter((item) => item !== task)
-        : [...currentTasks, task],
-    });
+
+    // If task is already selected, remove it
+    if (currentTasks.includes(task)) {
+      setDesign({
+        selectedPrepTasks: currentTasks.filter((item) => item !== task),
+      });
+    } else {
+      // When selecting Ditra, remove DitraXL and vice versa (mutual exclusion)
+      let updatedTasks = [...currentTasks, task];
+      if (task === 'ditra') {
+        updatedTasks = updatedTasks.filter((item) => item !== 'ditra_xl');
+      } else if (task === 'ditra_xl') {
+        updatedTasks = updatedTasks.filter((item) => item !== 'ditra');
+      }
+      setDesign({
+        selectedPrepTasks: updatedTasks,
+      });
+    }
   };
 
   return (
@@ -557,8 +564,7 @@ export function FloorsSection() {
             pattern and added to the materials list.
           </div>
         )}
-        {(localDesign.tilePattern === '1/2_offset' ||
-          localDesign.tilePattern === '1/3_offset' ||
+        {(localDesign.tilePattern === 'offset' ||
           localDesign.tilePattern === 'diagonal') && (
           <div className='mt-2 text-red-600 text-xs animate-fade-in'>
             Note: A <strong>12% waste factor</strong> has been applied for this
@@ -571,24 +577,10 @@ export function FloorsSection() {
             pattern and added to the materials list.
           </div>
         )}
-        {(localDesign.tilePattern === 'herringbone' ||
-          localDesign.tilePattern === 'checkerboard') && (
+        {localDesign.tilePattern === 'herringbone' && (
           <div className='mt-2 text-red-600 text-xs animate-fade-in'>
             Note: A <strong>15% waste factor</strong> has been applied for this
             pattern and added to the materials list.
-          </div>
-        )}
-
-        {/* Custom Pattern Input */}
-        {localDesign.tilePattern === 'other' && (
-          <div className='pt-2 animate-fade-in'>
-            <Input
-              type='text'
-              value={localDesign.customPattern}
-              onChange={(e) => setDesign({ customPattern: e.target.value })}
-              placeholder='Specify custom pattern...'
-              className='w-full p-2.5 bg-slate-50 border border-blue-300 rounded-lg focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500'
-            />
           </div>
         )}
 
@@ -736,7 +728,16 @@ export function FloorsSection() {
           {prepAndStructuralOptions.map((task) => {
             // Disable Ditra options when heated floor is enabled
             const isDitraOption = task.value === 'ditra' || task.value === 'ditra_xl';
-            const isDisabled = isDitraOption && localDesign.isHeatedFloor;
+            const isHeatedFloorDisabled = isDitraOption && localDesign.isHeatedFloor;
+
+            // Disable unselected Ditra option when the other is selected (mutual exclusion)
+            const isDitraSelected = localDesign.selectedPrepTasks?.includes('ditra') || false;
+            const isDitraXLSelected = localDesign.selectedPrepTasks?.includes('ditra_xl') || false;
+            const isMutualExclusionDisabled =
+              (task.value === 'ditra' && isDitraXLSelected) ||
+              (task.value === 'ditra_xl' && isDitraSelected);
+
+            const isDisabled = isHeatedFloorDisabled || isMutualExclusionDisabled;
 
             return (
             <div key={task.value}>
