@@ -1257,11 +1257,12 @@ export default function EstimatesOverview({
                   const getTilePatternDisplay = () => {
                     const patterns: Record<string, string> = {
                       'stacked': 'Stacked (straight grid)',
+                      'offset': 'Offset 1/2 or 1/3 (running bond)',
                       '1/2_offset': 'Offset 1/2 (running bond)',
                       '1/3_offset': 'Offset 1/3 (running bond)',
                       'diagonal': 'Diagonal grid 45°',
                       'hexagonal': 'Hexagonal',
-                      'herringbone': 'Herringbone',
+                      'herringbone': 'Herringbone / Checkerboard',
                       'checkerboard': 'Checkerboard',
                       'other': design.customPattern || 'Custom',
                     };

@@ -888,7 +888,7 @@ export const FLOORS_CONFIG = {
     '6x24': 1.15, // Plank / Wood-Look
     '12x12': 1.05, // Square Tile
     '6x6': 1.2, // Small format (treated like mosaic)
-    mosaic: 1.2, // Mosaic Sheets (≤ 2" x 2")
+    '2x2': 1.2, // Mosaic Sheets (≤ 2" x 2")
     custom: 1.1, // Default for custom sizes
   } as Record<string, number>,
 

@@ -560,28 +560,36 @@ export function FloorsSection() {
 
         {/* Waste Factor Notifications */}
         {localDesign.tilePattern === 'stacked' && (
-          <div className='mt-2 text-red-600 text-xs animate-fade-in'>
-            Note: A <strong>10% waste factor</strong> has been applied for this
-            pattern and added to the materials list.
+          <div className='text-orange-500 text-xs flex items-start space-x-2 mt-2 animate-fade-in'>
+            <svg xmlns="http://www.w3.org/2000/svg" className='w-4 h-4 flex-shrink-0 mt-0.5' fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Note: A <strong>10% waste factor</strong> has been applied for this pattern and added to the materials list.</span>
           </div>
         )}
         {(localDesign.tilePattern === 'offset' ||
           localDesign.tilePattern === 'diagonal') && (
-          <div className='mt-2 text-red-600 text-xs animate-fade-in'>
-            Note: A <strong>12% waste factor</strong> has been applied for this
-            pattern and added to the materials list.
+          <div className='text-orange-500 text-xs flex items-start space-x-2 mt-2 animate-fade-in'>
+            <svg xmlns="http://www.w3.org/2000/svg" className='w-4 h-4 flex-shrink-0 mt-0.5' fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Note: A <strong>12% waste factor</strong> has been applied for this pattern and added to the materials list.</span>
           </div>
         )}
         {localDesign.tilePattern === 'hexagonal' && (
-          <div className='mt-2 text-red-600 text-xs animate-fade-in'>
-            Note: A <strong>13% waste factor</strong> has been applied for this
-            pattern and added to the materials list.
+          <div className='text-orange-500 text-xs flex items-start space-x-2 mt-2 animate-fade-in'>
+            <svg xmlns="http://www.w3.org/2000/svg" className='w-4 h-4 flex-shrink-0 mt-0.5' fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Note: A <strong>13% waste factor</strong> has been applied for this pattern and added to the materials list.</span>
           </div>
         )}
         {localDesign.tilePattern === 'herringbone' && (
-          <div className='mt-2 text-red-600 text-xs animate-fade-in'>
-            Note: A <strong>15% waste factor</strong> has been applied for this
-            pattern and added to the materials list.
+          <div className='text-orange-500 text-xs flex items-start space-x-2 mt-2 animate-fade-in'>
+            <svg xmlns="http://www.w3.org/2000/svg" className='w-4 h-4 flex-shrink-0 mt-0.5' fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Note: A <strong>15% waste factor</strong> has been applied for this pattern and added to the materials list.</span>
           </div>
         )}
 
@@ -752,6 +760,15 @@ export function FloorsSection() {
                 onToggle={() => !isDisabled && handlePrepTaskToggle(task.value)}
                 disabled={isDisabled}
               />
+              {(task.value === 'ditra' || task.value === 'ditra_xl') &&
+                localDesign.selectedPrepTasks?.includes(task.value) && (
+                  <div className='text-orange-500 text-xs flex items-start space-x-2 mt-2 ml-4'>
+                    <svg xmlns="http://www.w3.org/2000/svg" className='w-4 h-4 flex-shrink-0 mt-0.5' fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Labour for Ditra / Ditra XL is calculated using a flat rate by default. You can switch to hourly and adjust the hours if needed.</span>
+                  </div>
+                )}
               {task.value === 'add_plywood' &&
                 localDesign.selectedPrepTasks?.includes('add_plywood') && (
                   <div className='pt-3 pl-4 animate-fade-in'>
