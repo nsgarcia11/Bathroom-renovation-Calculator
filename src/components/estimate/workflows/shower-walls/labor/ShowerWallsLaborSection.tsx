@@ -313,7 +313,7 @@ export default function ShowerWallsLaborSection() {
     const newItem: LaborItem = {
       id: `custom-design-${Date.now()}-${Math.random()
         .toString(36)
-        .substr(2, 9)}`,
+        .substring(2, 11)}`,
       name: 'Custom Design Labor',
       hours: '1',
       rate: contractorHourlyRate.toString(),
@@ -322,19 +322,23 @@ export default function ShowerWallsLaborSection() {
     };
 
     isUserActionRef.current = true;
-    setLocalLaborItems((prev) => [...prev, newItem]);
+    setLocalLaborItems((prev) => {
+      const updatedItems = [...prev, newItem];
 
-    setTimeout(() => {
-      setLaborItems('showerWalls', [...localLaborItems, newItem]);
-      isUserActionRef.current = false;
-    }, 100);
-  }, [localLaborItems, setLaborItems, contractorHourlyRate]);
+      setTimeout(() => {
+        setLaborItems('showerWalls', updatedItems);
+        isUserActionRef.current = false;
+      }, 100);
+
+      return updatedItems;
+    });
+  }, [setLaborItems, contractorHourlyRate]);
 
   const handleAddConstructionLaborItem = useCallback(() => {
     const newItem: LaborItem = {
       id: `custom-construction-${Date.now()}-${Math.random()
         .toString(36)
-        .substr(2, 9)}`,
+        .substring(2, 11)}`,
       name: 'Custom Construction Labor',
       hours: '1',
       rate: contractorHourlyRate.toString(),
@@ -343,48 +347,57 @@ export default function ShowerWallsLaborSection() {
     };
 
     isUserActionRef.current = true;
-    setLocalLaborItems((prev) => [...prev, newItem]);
+    setLocalLaborItems((prev) => {
+      const updatedItems = [...prev, newItem];
 
-    setTimeout(() => {
-      setLaborItems('showerWalls', [...localLaborItems, newItem]);
-      isUserActionRef.current = false;
-    }, 100);
-  }, [localLaborItems, setLaborItems, contractorHourlyRate]);
+      setTimeout(() => {
+        setLaborItems('showerWalls', updatedItems);
+        isUserActionRef.current = false;
+      }, 100);
+
+      return updatedItems;
+    });
+  }, [setLaborItems, contractorHourlyRate]);
 
   const handleLaborItemChange = useCallback(
     (id: string, field: keyof LaborItem, value: string) => {
       isUserActionRef.current = true;
 
-      setLocalLaborItems((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, [field]: value } : item
-        )
-      );
-
-      setTimeout(() => {
-        const updatedItems = localLaborItems.map((item) =>
-          item.id === id ? { ...item, [field]: value } : item
+      // Update local state immediately - also mark as custom to preserve edits
+      setLocalLaborItems((prev) => {
+        const updatedItems = prev.map((item) =>
+          item.id === id
+            ? { ...item, [field]: value, source: 'custom' }
+            : item
         );
-        setLaborItems('showerWalls', updatedItems);
-        isUserActionRef.current = false;
-      }, 100);
+
+        setTimeout(() => {
+          setLaborItems('showerWalls', updatedItems);
+          isUserActionRef.current = false;
+        }, 100);
+
+        return updatedItems;
+      });
     },
-    [localLaborItems, setLaborItems]
+    [setLaborItems]
   );
 
   const handleDeleteLaborItem = useCallback(
     (id: string) => {
       isUserActionRef.current = true;
 
-      setLocalLaborItems((prev) => prev.filter((item) => item.id !== id));
+      setLocalLaborItems((prev) => {
+        const updatedItems = prev.filter((item) => item.id !== id);
 
-      setTimeout(() => {
-        const updatedItems = localLaborItems.filter((item) => item.id !== id);
-        setLaborItems('showerWalls', updatedItems);
-        isUserActionRef.current = false;
-      }, 100);
+        setTimeout(() => {
+          setLaborItems('showerWalls', updatedItems);
+          isUserActionRef.current = false;
+        }, 100);
+
+        return updatedItems;
+      });
     },
-    [localLaborItems, setLaborItems]
+    [setLaborItems]
   );
 
   const handleAddFlatFeeItem = useCallback(() => {

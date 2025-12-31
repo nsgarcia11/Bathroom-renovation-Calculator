@@ -1071,9 +1071,9 @@ export const FLOORS_MATERIALS_ITEMS = {
   floorTile: {
     id: 'mat-floor-tile',
     name: 'Floor Tile',
-    quantity: '0', // Calculated: CEILING(tileAreaWithWaste / tileBoxCoverage)
-    unit: 'box',
-    price: '45.00', // Price per box
+    quantity: '0', // Calculated: tileAreaWithWaste (sq ft)
+    unit: 'sq/ft',
+    price: '5.00', // Price per sq ft
     scope: 'design' as const,
     source: 'auto' as const,
   },

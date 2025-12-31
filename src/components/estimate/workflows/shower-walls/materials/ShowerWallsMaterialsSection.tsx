@@ -378,7 +378,7 @@ export default function ShowerWallsMaterialsSection() {
     const newItem: MaterialItem = {
       id: `custom-design-${Date.now()}-${Math.random()
         .toString(36)
-        .substr(2, 9)}`,
+        .substring(2, 11)}`,
       name: 'Custom Design Material',
       quantity: '1',
       unit: 'piece',
@@ -388,19 +388,23 @@ export default function ShowerWallsMaterialsSection() {
     };
 
     isUserActionRef.current = true;
-    setLocalMaterials((prev) => [...prev, newItem]);
+    setLocalMaterials((prev) => {
+      const updatedMaterials = [...prev, newItem];
 
-    setTimeout(() => {
-      setMaterialItems('showerWalls', [...localMaterials, newItem]);
-      isUserActionRef.current = false;
-    }, 100);
-  }, [localMaterials, setMaterialItems]);
+      setTimeout(() => {
+        setMaterialItems('showerWalls', updatedMaterials);
+        isUserActionRef.current = false;
+      }, 100);
+
+      return updatedMaterials;
+    });
+  }, [setMaterialItems]);
 
   const handleAddConstructionMaterial = useCallback(() => {
     const newItem: MaterialItem = {
       id: `custom-construction-${Date.now()}-${Math.random()
         .toString(36)
-        .substr(2, 9)}`,
+        .substring(2, 11)}`,
       name: 'Custom Construction Material',
       quantity: '1',
       unit: 'piece',
@@ -410,48 +414,57 @@ export default function ShowerWallsMaterialsSection() {
     };
 
     isUserActionRef.current = true;
-    setLocalMaterials((prev) => [...prev, newItem]);
+    setLocalMaterials((prev) => {
+      const updatedMaterials = [...prev, newItem];
 
-    setTimeout(() => {
-      setMaterialItems('showerWalls', [...localMaterials, newItem]);
-      isUserActionRef.current = false;
-    }, 100);
-  }, [localMaterials, setMaterialItems]);
+      setTimeout(() => {
+        setMaterialItems('showerWalls', updatedMaterials);
+        isUserActionRef.current = false;
+      }, 100);
+
+      return updatedMaterials;
+    });
+  }, [setMaterialItems]);
 
   const handleMaterialChange = useCallback(
     (id: string, field: keyof MaterialItem, value: string) => {
       isUserActionRef.current = true;
 
-      setLocalMaterials((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, [field]: value } : item
-        )
-      );
-
-      setTimeout(() => {
-        const updatedItems = localMaterials.map((item) =>
-          item.id === id ? { ...item, [field]: value } : item
+      // Update local state immediately - also mark as no longer auto-generated to preserve edits
+      setLocalMaterials((prev) => {
+        const updatedItems = prev.map((item) =>
+          item.id === id
+            ? { ...item, [field]: value, source: 'custom' }
+            : item
         );
-        setMaterialItems('showerWalls', updatedItems);
-        isUserActionRef.current = false;
-      }, 100);
+
+        setTimeout(() => {
+          setMaterialItems('showerWalls', updatedItems);
+          isUserActionRef.current = false;
+        }, 100);
+
+        return updatedItems;
+      });
     },
-    [localMaterials, setMaterialItems]
+    [setMaterialItems]
   );
 
   const handleDeleteMaterial = useCallback(
     (id: string) => {
       isUserActionRef.current = true;
 
-      setLocalMaterials((prev) => prev.filter((item) => item.id !== id));
+      setLocalMaterials((prev) => {
+        const updatedItems = prev.filter((item) => item.id !== id);
 
-      setTimeout(() => {
-        const updatedItems = localMaterials.filter((item) => item.id !== id);
-        setMaterialItems('showerWalls', updatedItems);
-        isUserActionRef.current = false;
-      }, 100);
+        setTimeout(() => {
+          setMaterialItems('showerWalls', updatedItems);
+          isUserActionRef.current = false;
+        }, 100);
+
+        return updatedItems;
+      });
     },
-    [localMaterials, setMaterialItems]
+    [setMaterialItems]
   );
 
   const materials = localMaterials;
