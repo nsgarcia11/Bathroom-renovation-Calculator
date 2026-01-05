@@ -10,6 +10,7 @@ import { WorkflowNotesSection } from '@/components/estimate/shared/WorkflowNotes
 import { CollapsibleSection } from '@/components/estimate/shared/CollapsibleSection';
 import WarningNote from '@/components/estimate/shared/WarningNote';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
+import { getTileWastePercent } from '@/lib/constants';
 import { Trash2 } from 'lucide-react';
 
 interface FloorsDesignData {
@@ -126,23 +127,13 @@ export function FloorsSection() {
     return totalArea;
   }, [localDesign.width, localDesign.length, localDesign.extraMeasurements]);
 
-  // Calculate waste percentage based on pattern (used in materials calculation)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // Calculate waste percentage using the matrix (based on both tile size and pattern)
   const wastePercentage = useMemo(() => {
-    switch (localDesign.tilePattern) {
-      case 'stacked':
-        return 10; // 10%
-      case 'offset':
-      case 'diagonal':
-        return 12; // 12%
-      case 'hexagonal':
-        return 13; // 13%
-      case 'herringbone':
-        return 15; // 15%
-      default:
-        return 12; // 12% default for other/custom
-    }
-  }, [localDesign.tilePattern]);
+    const tileSize = localDesign.selectedTileSizeOption || 'custom';
+    const tilePattern = localDesign.tilePattern || 'other';
+    const wastePct = getTileWastePercent(tileSize, tilePattern);
+    return Math.round(wastePct * 100); // Convert to percentage (e.g., 0.15 -> 15)
+  }, [localDesign.selectedTileSizeOption, localDesign.tilePattern]);
 
   // Tile size options
   const tileSizeOptions = [
@@ -558,38 +549,13 @@ export function FloorsSection() {
           </div>
         </div>
 
-        {/* Waste Factor Notifications */}
-        {localDesign.tilePattern === 'stacked' && (
+        {/* Waste Factor Notification - Dynamic based on tile size + pattern matrix */}
+        {localDesign.tilePattern && localDesign.tilePattern !== 'select_option' && (
           <div className='text-orange-500 text-xs flex items-start space-x-2 mt-2 animate-fade-in'>
             <svg xmlns="http://www.w3.org/2000/svg" className='w-4 h-4 flex-shrink-0 mt-0.5' fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>Note: A <strong>10% waste factor</strong> has been applied for this pattern and added to the materials list.</span>
-          </div>
-        )}
-        {(localDesign.tilePattern === 'offset' ||
-          localDesign.tilePattern === 'diagonal') && (
-          <div className='text-orange-500 text-xs flex items-start space-x-2 mt-2 animate-fade-in'>
-            <svg xmlns="http://www.w3.org/2000/svg" className='w-4 h-4 flex-shrink-0 mt-0.5' fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Note: A <strong>12% waste factor</strong> has been applied for this pattern and added to the materials list.</span>
-          </div>
-        )}
-        {localDesign.tilePattern === 'hexagonal' && (
-          <div className='text-orange-500 text-xs flex items-start space-x-2 mt-2 animate-fade-in'>
-            <svg xmlns="http://www.w3.org/2000/svg" className='w-4 h-4 flex-shrink-0 mt-0.5' fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Note: A <strong>13% waste factor</strong> has been applied for this pattern and added to the materials list.</span>
-          </div>
-        )}
-        {localDesign.tilePattern === 'herringbone' && (
-          <div className='text-orange-500 text-xs flex items-start space-x-2 mt-2 animate-fade-in'>
-            <svg xmlns="http://www.w3.org/2000/svg" className='w-4 h-4 flex-shrink-0 mt-0.5' fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Note: A <strong>15% waste factor</strong> has been applied for this pattern and added to the materials list.</span>
+            <span>Note: A <strong>{wastePercentage}% waste factor</strong> has been applied for this tile size and pattern combination and added to the materials list.</span>
           </div>
         )}
 

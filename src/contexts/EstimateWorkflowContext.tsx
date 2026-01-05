@@ -22,6 +22,7 @@ import {
   FLOORS_MATERIALS_ITEMS,
   FLOORS_CONFIG,
   HEATED_FLOOR_CONFIG,
+  getTileWastePercent,
 } from '@/lib/constants';
 import {
   EstimateData,
@@ -856,7 +857,7 @@ export function EstimateWorkflowProvider({
       // Get design values
       const tileSize = designData.selectedTileSizeOption || 'custom';
       const tilePattern = designData.tilePattern || 'other';
-      const tileWastePct = FLOORS_CONFIG.patternWastePct[tilePattern] || FLOORS_CONFIG.patternWastePct.other;
+      const tileWastePct = getTileWastePercent(tileSize, tilePattern);
       const selectedPrepTasks = designData.selectedPrepTasks || [];
 
       // ===== DESIGN MATERIALS =====

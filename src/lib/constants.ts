@@ -892,15 +892,83 @@ export const FLOORS_CONFIG = {
     custom: 1.1, // Default for custom sizes
   } as Record<string, number>,
 
-  // Tile Pattern Waste Percentages (for materials)
-  patternWastePct: {
-    stacked: 0.1, // 10%
-    offset: 0.12, // 12% (running bond 1/2 or 1/3)
-    diagonal: 0.12, // 12%
-    hexagonal: 0.13, // 13%
-    herringbone: 0.15, // 15% (includes checkerboard)
-    other: 0.12, // 12% default
-  } as Record<string, number>,
+  // Tile Waste % Matrix - combines base waste by pattern and size
+  // Pattern keys match UI values: stacked, offset, diagonal, hexagonal, herringbone
+  // Minimum 15% for mosaics to avoid under-ordering small tile layouts
+  tileWasteMatrix: {
+    // 12" × 24" (Standard Rectangle)
+    '12x24': {
+      stacked: 0.10,        // 10%
+      offset: 0.12,         // 12% (running bond 1/2 or 1/3)
+      diagonal: 0.17,       // 17%
+      hexagonal: 0.18,      // 18%
+      herringbone: 0.20,    // 20% (includes checkerboard)
+      other: 0.12,          // 12% default
+    },
+    // 12" × 12" (Square Tile)
+    '12x12': {
+      stacked: 0.10,
+      offset: 0.12,
+      diagonal: 0.17,
+      hexagonal: 0.18,
+      herringbone: 0.20,
+      other: 0.12,
+    },
+    // 24" × 24"+ (Large Format)
+    '24x24': {
+      stacked: 0.15,
+      offset: 0.17,
+      diagonal: 0.22,
+      hexagonal: 0.23,
+      herringbone: 0.25,
+      other: 0.17,
+    },
+    // 6" × 24"+ (Plank / Wood-Look)
+    '6x24': {
+      stacked: 0.13,
+      offset: 0.15,
+      diagonal: 0.20,
+      hexagonal: 0.21,
+      herringbone: 0.23,
+      other: 0.15,
+    },
+    // ≤ 2" × 2" (Mosaic Sheets) - 15% minimum
+    '2x2': {
+      stacked: 0.15,
+      offset: 0.15,
+      diagonal: 0.20,
+      hexagonal: 0.21,
+      herringbone: 0.23,
+      other: 0.15,
+    },
+    // 6" × 6" (Small format - treated like mosaic)
+    '6x6': {
+      stacked: 0.15,
+      offset: 0.15,
+      diagonal: 0.20,
+      hexagonal: 0.21,
+      herringbone: 0.23,
+      other: 0.15,
+    },
+    // Custom sizes - use standard rectangle as default
+    custom: {
+      stacked: 0.10,
+      offset: 0.12,
+      diagonal: 0.17,
+      hexagonal: 0.18,
+      herringbone: 0.20,
+      other: 0.12,
+    },
+    // Fallback for 'select_option' or unknown sizes
+    select_option: {
+      stacked: 0.10,
+      offset: 0.12,
+      diagonal: 0.17,
+      hexagonal: 0.18,
+      herringbone: 0.20,
+      other: 0.12,
+    },
+  } as Record<string, Record<string, number>>,
 
   // Tile Box Coverage (sq ft per box) by tile size
   tileBoxCoverageSqFt: {
@@ -945,6 +1013,13 @@ export const FLOORS_CONFIG = {
   // Ditra material rates ($/sq ft)
   ditraMaterialRateSqFt: 4.0,
   ditraXLMaterialRateSqFt: 5.0,
+};
+
+// Helper function to get tile waste percentage from matrix
+export const getTileWastePercent = (tileSize: string, tilePattern: string): number => {
+  const sizeConfig = FLOORS_CONFIG.tileWasteMatrix[tileSize] || FLOORS_CONFIG.tileWasteMatrix.custom;
+  const wastePct = sizeConfig[tilePattern] ?? sizeConfig.other ?? 0.12;
+  return wastePct;
 };
 
 // Floors labor items mapping
