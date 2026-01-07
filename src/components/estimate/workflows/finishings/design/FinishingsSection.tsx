@@ -37,6 +37,20 @@ interface FinishingsDesignData {
   lightingQuantity: number;
   installToilet: boolean;
 
+  // Accessory options
+  installTowelBar: boolean;
+  towelBarQuantity: number;
+  installTPHolder: boolean;
+  tpHolderQuantity: number;
+  installRobeHook: boolean;
+  robeHookQuantity: number;
+  installTowelRing: boolean;
+  towelRingQuantity: number;
+  installShowerRod: boolean;
+  showerRodQuantity: number;
+  installWallShelf: boolean;
+  wallShelfQuantity: number;
+
   // Trade options
   plumbingPerformedBy: 'me' | 'trade';
   electricalPerformedBy: 'me' | 'trade';
@@ -85,6 +99,18 @@ export function FinishingsSection() {
         installLighting: true,
         lightingQuantity: 2,
         installToilet: true,
+        installTowelBar: false,
+        towelBarQuantity: 1,
+        installTPHolder: false,
+        tpHolderQuantity: 1,
+        installRobeHook: false,
+        robeHookQuantity: 1,
+        installTowelRing: false,
+        towelRingQuantity: 1,
+        installShowerRod: false,
+        showerRodQuantity: 1,
+        installWallShelf: false,
+        wallShelfQuantity: 1,
         plumbingPerformedBy: 'me' as const,
         electricalPerformedBy: 'me' as const,
         accentWalls: [],
@@ -643,6 +669,160 @@ export function FinishingsSection() {
               onToggle={(enabled) => setDesign({ installMirror: enabled })}
               className='pb-3'
             />
+          </div>
+        </div>
+
+        {/* Accessories Section */}
+        <div className='pt-4 border-t border-slate-200'>
+          <Label className='text-sm font-semibold text-slate-600 mb-4 block'>
+            Accessories
+          </Label>
+          <div className='space-y-4 pl-4'>
+            <div className='space-y-2'>
+              <ToggleSwitch
+                label='Install Towel Bar'
+                enabled={localDesign.installTowelBar}
+                onToggle={(enabled) => setDesign({ installTowelBar: enabled })}
+              />
+              {localDesign.installTowelBar && (
+                <div className='pl-6 pt-2'>
+                  <Label className='text-sm text-slate-600 mb-2 block'>
+                    Quantity
+                  </Label>
+                  <Input
+                    type='number'
+                    value={localDesign.towelBarQuantity?.toString() || '1'}
+                    onChange={(e) =>
+                      setDesign({
+                        towelBarQuantity: parseInt(e.target.value) || 1,
+                      })
+                    }
+                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
+                  />
+                </div>
+              )}
+            </div>
+            <div className='space-y-2'>
+              <ToggleSwitch
+                label='Install Toilet Paper Holder'
+                enabled={localDesign.installTPHolder}
+                onToggle={(enabled) => setDesign({ installTPHolder: enabled })}
+              />
+              {localDesign.installTPHolder && (
+                <div className='pl-6 pt-2'>
+                  <Label className='text-sm text-slate-600 mb-2 block'>
+                    Quantity
+                  </Label>
+                  <Input
+                    type='number'
+                    value={localDesign.tpHolderQuantity?.toString() || '1'}
+                    onChange={(e) =>
+                      setDesign({
+                        tpHolderQuantity: parseInt(e.target.value) || 1,
+                      })
+                    }
+                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
+                  />
+                </div>
+              )}
+            </div>
+            <div className='space-y-2'>
+              <ToggleSwitch
+                label='Install Robe Hook'
+                enabled={localDesign.installRobeHook}
+                onToggle={(enabled) => setDesign({ installRobeHook: enabled })}
+              />
+              {localDesign.installRobeHook && (
+                <div className='pl-6 pt-2'>
+                  <Label className='text-sm text-slate-600 mb-2 block'>
+                    Quantity
+                  </Label>
+                  <Input
+                    type='number'
+                    value={localDesign.robeHookQuantity?.toString() || '1'}
+                    onChange={(e) =>
+                      setDesign({
+                        robeHookQuantity: parseInt(e.target.value) || 1,
+                      })
+                    }
+                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
+                  />
+                </div>
+              )}
+            </div>
+            <div className='space-y-2'>
+              <ToggleSwitch
+                label='Install Towel Ring'
+                enabled={localDesign.installTowelRing}
+                onToggle={(enabled) => setDesign({ installTowelRing: enabled })}
+              />
+              {localDesign.installTowelRing && (
+                <div className='pl-6 pt-2'>
+                  <Label className='text-sm text-slate-600 mb-2 block'>
+                    Quantity
+                  </Label>
+                  <Input
+                    type='number'
+                    value={localDesign.towelRingQuantity?.toString() || '1'}
+                    onChange={(e) =>
+                      setDesign({
+                        towelRingQuantity: parseInt(e.target.value) || 1,
+                      })
+                    }
+                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
+                  />
+                </div>
+              )}
+            </div>
+            <div className='space-y-2'>
+              <ToggleSwitch
+                label='Install Shower Rod'
+                enabled={localDesign.installShowerRod}
+                onToggle={(enabled) => setDesign({ installShowerRod: enabled })}
+              />
+              {localDesign.installShowerRod && (
+                <div className='pl-6 pt-2'>
+                  <Label className='text-sm text-slate-600 mb-2 block'>
+                    Quantity
+                  </Label>
+                  <Input
+                    type='number'
+                    value={localDesign.showerRodQuantity?.toString() || '1'}
+                    onChange={(e) =>
+                      setDesign({
+                        showerRodQuantity: parseInt(e.target.value) || 1,
+                      })
+                    }
+                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
+                  />
+                </div>
+              )}
+            </div>
+            <div className='space-y-2'>
+              <ToggleSwitch
+                label='Install Wall Shelf'
+                enabled={localDesign.installWallShelf}
+                onToggle={(enabled) => setDesign({ installWallShelf: enabled })}
+                className='pb-3'
+              />
+              {localDesign.installWallShelf && (
+                <div className='pl-6 pt-2 pb-3'>
+                  <Label className='text-sm text-slate-600 mb-2 block'>
+                    Quantity
+                  </Label>
+                  <Input
+                    type='number'
+                    value={localDesign.wallShelfQuantity?.toString() || '1'}
+                    onChange={(e) =>
+                      setDesign({
+                        wallShelfQuantity: parseInt(e.target.value) || 1,
+                      })
+                    }
+                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

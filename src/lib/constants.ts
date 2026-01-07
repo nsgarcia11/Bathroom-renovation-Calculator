@@ -1535,9 +1535,9 @@ export const FINISHINGS_LABOR_ITEMS = (contractorHourlyRate: number) => ({
   installMirror: {
     id: 'lab-finish-mirror',
     name: 'Install Mirror',
-    hours: '2',
+    hours: '1', // 60 min = 1.00 hr
     rate: contractorHourlyRate.toString(),
-    scope: 'construction' as const,
+    scope: 'installation' as const,
     source: 'auto' as const,
   },
   installLighting: {
@@ -1562,6 +1562,56 @@ export const FINISHINGS_LABOR_ITEMS = (contractorHourlyRate: number) => ({
     hours: '0', // Will be calculated based on perimeter
     rate: contractorHourlyRate.toString(),
     scope: 'construction' as const,
+    source: 'auto' as const,
+  },
+
+  // Accessory Labor
+  installTowelBar: {
+    id: 'lab-finish-towel-bar',
+    name: 'Install Towel Bar',
+    hours: '0.75', // 45 min = 0.75 hr
+    rate: contractorHourlyRate.toString(),
+    scope: 'installation' as const,
+    source: 'auto' as const,
+  },
+  installTPHolder: {
+    id: 'lab-finish-tp-holder',
+    name: 'Install Toilet Paper Holder',
+    hours: '0.50', // 30 min = 0.50 hr
+    rate: contractorHourlyRate.toString(),
+    scope: 'installation' as const,
+    source: 'auto' as const,
+  },
+  installRobeHook: {
+    id: 'lab-finish-robe-hook',
+    name: 'Install Robe Hook',
+    hours: '0.25', // 15 min = 0.25 hr
+    rate: contractorHourlyRate.toString(),
+    scope: 'installation' as const,
+    source: 'auto' as const,
+  },
+  installTowelRing: {
+    id: 'lab-finish-towel-ring',
+    name: 'Install Towel Ring',
+    hours: '0.33', // 20 min = 0.33 hr
+    rate: contractorHourlyRate.toString(),
+    scope: 'installation' as const,
+    source: 'auto' as const,
+  },
+  installShowerRod: {
+    id: 'lab-finish-shower-rod',
+    name: 'Install Shower Rod',
+    hours: '0.33', // 20 min = 0.33 hr
+    rate: contractorHourlyRate.toString(),
+    scope: 'installation' as const,
+    source: 'auto' as const,
+  },
+  installWallShelf: {
+    id: 'lab-finish-wall-shelf',
+    name: 'Install Accessory Shelf',
+    hours: '1.00', // 60 min = 1.00 hr
+    rate: contractorHourlyRate.toString(),
+    scope: 'installation' as const,
     source: 'auto' as const,
   },
 
@@ -1674,9 +1724,65 @@ export const FINISHINGS_MATERIALS_ITEMS = {
     name: 'Mirror',
     quantity: '1',
     unit: 'each',
-    price: '0.00', // User will set price
-    scope: 'design' as const,
-    source: 'custom' as const,
+    price: '150.00',
+    scope: 'installation' as const,
+    source: 'auto' as const,
+  },
+
+  // Accessory Materials
+  towelBar: {
+    id: 'mat-finish-towel-bar',
+    name: 'Towel Bar',
+    quantity: '1',
+    unit: 'each',
+    price: '38.00',
+    scope: 'installation' as const,
+    source: 'auto' as const,
+  },
+  tpHolder: {
+    id: 'mat-finish-tp-holder',
+    name: 'Toilet Paper Holder',
+    quantity: '1',
+    unit: 'each',
+    price: '40.00',
+    scope: 'installation' as const,
+    source: 'auto' as const,
+  },
+  robeHook: {
+    id: 'mat-finish-robe-hook',
+    name: 'Robe Hook',
+    quantity: '1',
+    unit: 'each',
+    price: '20.00',
+    scope: 'installation' as const,
+    source: 'auto' as const,
+  },
+  towelRing: {
+    id: 'mat-finish-towel-ring',
+    name: 'Towel Ring',
+    quantity: '1',
+    unit: 'each',
+    price: '45.00',
+    scope: 'installation' as const,
+    source: 'auto' as const,
+  },
+  showerRod: {
+    id: 'mat-finish-shower-rod',
+    name: 'Shower Rod',
+    quantity: '1',
+    unit: 'each',
+    price: '40.00',
+    scope: 'installation' as const,
+    source: 'auto' as const,
+  },
+  wallShelf: {
+    id: 'mat-finish-wall-shelf',
+    name: 'Accessory Shelf',
+    quantity: '1',
+    unit: 'each',
+    price: '65.00',
+    scope: 'installation' as const,
+    source: 'auto' as const,
   },
   lighting: {
     id: 'mat-finish-lighting',
