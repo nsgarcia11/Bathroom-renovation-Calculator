@@ -13,7 +13,11 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import { useContractorContext } from '@/contexts/ContractorContext';
-import { FINISHINGS_LABOR_ITEMS } from '@/lib/constants';
+import {
+  FINISHINGS_LABOR_ITEMS,
+  PAINTING_CONFIG,
+  DRYWALL_REPAIR_LEVELS,
+} from '@/lib/constants';
 import {
   LaborItem as ContextLaborItem,
   FlatFeeItem as ContextFlatFeeItem,
@@ -33,11 +37,14 @@ interface FinishingsDesignData {
   length: string;
   height: string;
   fixWalls: boolean;
+  drywallRepairsLevel: 'LIGHT' | 'MEDIUM' | 'HEAVY';
   priming: boolean;
   paintWalls: boolean;
   paintCeiling: boolean;
   paintTrim: boolean;
   paintDoor: boolean;
+  numDoors: string;
+  nonPaintWallAreaSqFt: string;
   installBaseboard: boolean;
   installVanity: boolean;
   vanitySinks: number;
@@ -56,6 +63,18 @@ interface FinishingsDesignData {
   [key: string]: unknown;
 }
 
+// Helper function to clamp a value between min and max
+const clamp = (value: number, min: number, max: number): number => {
+  return Math.max(min, Math.min(max, value));
+};
+
+// Helper function to parse number with default
+const parseNum = (value: string | number | undefined, defaultVal = 0): number => {
+  if (value === undefined || value === null || value === '') return defaultVal;
+  const parsed = parseFloat(String(value));
+  return isNaN(parsed) ? defaultVal : Math.max(0, parsed);
+};
+
 export default function FinishingsLaborSection() {
   const {
     getDesignData,
@@ -73,11 +92,14 @@ export default function FinishingsLaborSection() {
         length: '96',
         height: '96',
         fixWalls: true,
+        drywallRepairsLevel: 'LIGHT' as const,
         priming: true,
         paintWalls: true,
         paintCeiling: true,
         paintTrim: false,
         paintDoor: false,
+        numDoors: '1',
+        nonPaintWallAreaSqFt: '0',
         installBaseboard: false,
         installVanity: true,
         vanitySinks: 1,
@@ -111,111 +133,270 @@ export default function FinishingsLaborSection() {
     setLocalFlatFeeItems(contextFlatFeeItems);
   }, [contextLaborItems, contextFlatFeeItems]);
 
-  // Calculate areas
-  const wallArea = useMemo(() => {
-    const w = parseFloat(design.width) || 0;
-    const l = parseFloat(design.length) || 0;
-    const h = parseFloat(design.height) || 0;
-    if (w > 0 && l > 0 && h > 0) {
-      return (2 * (w + l) * h) / 144;
-    }
-    return 0;
-  }, [design.width, design.length, design.height]);
+  // ============================================================================
+  // DERIVED GEOMETRY CALCULATIONS (per spec Section 2)
+  // ============================================================================
+  const geometry = useMemo(() => {
+    // Parse dimensions (inches to feet)
+    const widthIn = parseNum(design.width);
+    const lengthIn = parseNum(design.length);
+    const heightIn = parseNum(design.height);
 
-  const ceilingArea = useMemo(() => {
-    const w = parseFloat(design.width) || 0;
-    const l = parseFloat(design.length) || 0;
-    if (w > 0 && l > 0) {
-      return (w * l) / 144;
-    }
-    return 0;
-  }, [design.width, design.length]);
+    const widthFt = widthIn / 12;
+    const lengthFt = lengthIn / 12;
+    const heightFt = heightIn / 12;
 
-  const perimeter = useMemo(() => {
-    const w = parseFloat(design.width) || 0;
-    const l = parseFloat(design.length) || 0;
-    if (w > 0 && l > 0) {
-      return (2 * (w + l)) / 12;
-    }
-    return 0;
-  }, [design.width, design.length]);
+    // Compute areas
+    const floorAreaSqFt = widthFt * lengthFt;
+    const ceilingAreaSqFt = floorAreaSqFt;
+    const perimeterFt = 2 * (widthFt + lengthFt);
+    const wallAreaSqFt = perimeterFt * heightFt;
 
+    // Non-paint wall area (clamped >= 0)
+    const nonPaintWallAreaSqFt = parseNum(design.nonPaintWallAreaSqFt);
+
+    // Paintable wall area
+    const paintableWallArea = Math.max(0, wallAreaSqFt - nonPaintWallAreaSqFt);
+
+    // Paint surface = paintable walls + ceiling
+    const paintSurfaceSqFt = paintableWallArea + ceilingAreaSqFt;
+
+    // Baseboard paint LF calculation
+    const coveredBaseboardLfRaw = perimeterFt * PAINTING_CONFIG.BASEBOARD.COVERED_RATIO;
+    const coveredBaseboardLf = clamp(
+      coveredBaseboardLfRaw,
+      PAINTING_CONFIG.BASEBOARD.COVERED_MIN,
+      PAINTING_CONFIG.BASEBOARD.COVERED_MAX
+    );
+    const baseboardPaintLf = Math.max(0, perimeterFt - coveredBaseboardLf);
+
+    // Number of doors (default 1 if blank/NaN, clamped >= 0)
+    let numDoors = parseNum(design.numDoors, 1);
+    if (design.numDoors === '' || isNaN(parseFloat(design.numDoors))) {
+      numDoors = 1;
+    }
+    numDoors = Math.max(0, numDoors);
+
+    return {
+      widthFt,
+      lengthFt,
+      heightFt,
+      floorAreaSqFt,
+      ceilingAreaSqFt,
+      perimeterFt,
+      wallAreaSqFt,
+      nonPaintWallAreaSqFt,
+      paintableWallArea,
+      paintSurfaceSqFt,
+      coveredBaseboardLf,
+      baseboardPaintLf,
+      numDoors,
+    };
+  }, [design.width, design.length, design.height, design.nonPaintWallAreaSqFt, design.numDoors]);
+
+  // ============================================================================
+  // HIDDEN PREP/CLEANUP HOURS (per spec Section 4)
+  // ============================================================================
+  const prepCleanupHours = useMemo(() => {
+    const { priming, paintWalls, paintCeiling, paintTrim } = design;
+    const hasPaintingTask = priming || paintWalls || paintCeiling || paintTrim;
+
+    if (!hasPaintingTask) {
+      return { total: 0, priming: 0, walls: 0, ceiling: 0, trim: 0 };
+    }
+
+    // Calculate raw hours
+    const rawHours =
+      PAINTING_CONFIG.PREP_CLEANUP.BASE +
+      PAINTING_CONFIG.PREP_CLEANUP.RATE_PER_SQFT * geometry.paintSurfaceSqFt;
+
+    // Clamp between min and max
+    const totalHours = clamp(
+      rawHours,
+      PAINTING_CONFIG.PREP_CLEANUP.MIN,
+      PAINTING_CONFIG.PREP_CLEANUP.MAX
+    );
+
+    // Calculate weights for enabled tasks
+    const weights = {
+      priming: priming ? PAINTING_CONFIG.PREP_WEIGHTS.PRIMING : 0,
+      walls: paintWalls ? PAINTING_CONFIG.PREP_WEIGHTS.WALLS : 0,
+      ceiling: paintCeiling ? PAINTING_CONFIG.PREP_WEIGHTS.CEILING : 0,
+      trim: paintTrim ? PAINTING_CONFIG.PREP_WEIGHTS.TRIM : 0,
+    };
+    const totalWeight = weights.priming + weights.walls + weights.ceiling + weights.trim;
+
+    if (totalWeight === 0) {
+      return { total: 0, priming: 0, walls: 0, ceiling: 0, trim: 0 };
+    }
+
+    // Distribute prep hours by weight
+    return {
+      total: totalHours,
+      priming: totalHours * (weights.priming / totalWeight),
+      walls: totalHours * (weights.walls / totalWeight),
+      ceiling: totalHours * (weights.ceiling / totalWeight),
+      trim: totalHours * (weights.trim / totalWeight),
+    };
+  }, [design.priming, design.paintWalls, design.paintCeiling, design.paintTrim, geometry.paintSurfaceSqFt]);
+
+  // ============================================================================
+  // LABOR GENERATION (per spec Section 5)
+  // ============================================================================
   const generateLaborItems = useCallback(() => {
     const laborItems: LaborItem[] = [];
     const flatFeeItems: FlatFeeItem[] = [];
     const laborItemsMap = FINISHINGS_LABOR_ITEMS(contractorHourlyRate);
+    const P = PAINTING_CONFIG.PRODUCTIVITY;
+    const C = PAINTING_CONFIG.COATS;
 
-    // Paint Labor
+    // -------------------------------------------------------------------------
+    // A) Drywall Repairs (per spec Section 5A)
+    // -------------------------------------------------------------------------
     if (design.fixWalls) {
+      const level = DRYWALL_REPAIR_LEVELS[design.drywallRepairsLevel || 'LIGHT'];
+
+      // Spot prime allowance only if Priming is OFF
+      const spotPrimeAllowance = design.priming ? 0 : level.spotPrimeAllowance;
+
+      // Calculate hours
+      const rawHours = level.base + level.rate * geometry.paintSurfaceSqFt + spotPrimeAllowance;
+      const drywallHours = clamp(rawHours, 0, level.cap);
+
       laborItems.push({
         ...laborItemsMap.paintWalls,
-        id: `lab-finish-fix-walls-${Date.now()}`,
-        name: 'Drywall Repairs',
-        hours: '4',
+        id: `lab-finish-drywall-repairs-${Date.now()}`,
+        name: `Drywall Repairs (${design.drywallRepairsLevel})`,
+        hours: drywallHours.toFixed(2),
+        scope: 'painting',
         isAutoGenerated: true,
       });
     }
 
-    if (design.priming && wallArea > 0) {
-      const primingHours = Math.max(1, (wallArea + ceilingArea) / 200).toFixed(
-        2
-      );
-      laborItems.push({
-        ...laborItemsMap.paintWalls,
-        id: `lab-finish-priming-${Date.now()}`,
-        name: 'Priming',
-        hours: primingHours,
-        isAutoGenerated: true,
-      });
+    // -------------------------------------------------------------------------
+    // B) Priming (per spec Section 5B)
+    // -------------------------------------------------------------------------
+    if (design.priming) {
+      // Prime area based on selected surfaces
+      const primeAreaSqFt =
+        (design.paintWalls ? geometry.paintableWallArea : 0) +
+        (design.paintCeiling ? geometry.ceilingAreaSqFt : 0);
+
+      if (primeAreaSqFt > 0) {
+        // Labor: (area * coats) / productivity + prep share
+        const primeHours =
+          (primeAreaSqFt * C.PRIMER) / P.PRIME + prepCleanupHours.priming;
+
+        laborItems.push({
+          ...laborItemsMap.paintWalls,
+          id: `lab-finish-priming-${Date.now()}`,
+          name: 'Priming',
+          hours: primeHours.toFixed(2),
+          scope: 'painting',
+          isAutoGenerated: true,
+        });
+      }
     }
 
-    if (design.paintWalls && wallArea > 0) {
-      const paintHours = Math.max(1, wallArea / 200).toFixed(2);
+    // -------------------------------------------------------------------------
+    // C) Paint Walls (per spec Section 5C)
+    // -------------------------------------------------------------------------
+    if (design.paintWalls && geometry.paintableWallArea > 0) {
+      // Roll hours
+      const wallRollHrs = (geometry.paintableWallArea * C.WALLS) / P.WALL_ROLL;
+
+      // Cut-in LF calculation
+      const cutLf =
+        geometry.perimeterFt +
+        geometry.baseboardPaintLf +
+        4 * geometry.heightFt +
+        P.EXTRA_CUT_LF_PER_COAT;
+      const wallCutHrs = (cutLf * C.WALLS) / P.WALL_CUT_IN;
+
+      // Total hours with prep share
+      const wallHours = wallRollHrs + wallCutHrs + prepCleanupHours.walls;
+
       laborItems.push({
         ...laborItemsMap.paintWalls,
         id: `lab-finish-paint-walls-${Date.now()}`,
-        hours: paintHours,
+        name: 'Paint Walls',
+        hours: wallHours.toFixed(2),
+        scope: 'painting',
         isAutoGenerated: true,
       });
     }
 
-    if (design.paintCeiling && ceilingArea > 0) {
-      const ceilingHours = Math.max(1, ceilingArea / 200).toFixed(2);
+    // -------------------------------------------------------------------------
+    // D) Paint Ceiling (per spec Section 5D)
+    // -------------------------------------------------------------------------
+    if (design.paintCeiling && geometry.ceilingAreaSqFt > 0) {
+      // Cut-in hours
+      const ceilCutHrs = (geometry.perimeterFt * C.CEILING) / P.CEILING_CUT_IN;
+      // Roll hours
+      const ceilRollHrs = (geometry.ceilingAreaSqFt * C.CEILING) / P.CEILING_ROLL;
+
+      // Total hours with prep share
+      const ceilingHours = ceilCutHrs + ceilRollHrs + prepCleanupHours.ceiling;
+
       laborItems.push({
         ...laborItemsMap.paintCeiling,
         id: `lab-finish-paint-ceiling-${Date.now()}`,
-        hours: ceilingHours,
+        name: 'Paint Ceiling',
+        hours: ceilingHours.toFixed(2),
+        scope: 'painting',
         isAutoGenerated: true,
       });
     }
 
+    // -------------------------------------------------------------------------
+    // E) Paint Trim (per spec Section 5E)
+    // -------------------------------------------------------------------------
     if (design.paintTrim) {
-      const trimHours = Math.max(1, perimeter / 50).toFixed(2);
+      // Baseboard paint hours
+      const baseboardHrs = (geometry.baseboardPaintLf * C.TRIM) / P.TRIM_BASEBOARD;
+      // Casing allowance
+      const casingAllowance = geometry.numDoors * P.CASING_ALLOWANCE_PER_DOOR;
+
+      // Total hours with prep share
+      const trimHours = baseboardHrs + casingAllowance + prepCleanupHours.trim;
+
       laborItems.push({
         ...laborItemsMap.paintTrim,
         id: `lab-finish-paint-trim-${Date.now()}`,
-        hours: trimHours,
+        name: 'Paint Trim & Baseboards',
+        hours: trimHours.toFixed(2),
+        scope: 'painting',
         isAutoGenerated: true,
       });
     }
 
-    if (design.paintDoor) {
+    // -------------------------------------------------------------------------
+    // F) Paint Door (per spec Section 5F)
+    // -------------------------------------------------------------------------
+    if (design.paintDoor && geometry.numDoors > 0) {
+      // Labor: numDoors * 1.0 hr/door (no prep share for doors)
+      const doorHours = geometry.numDoors * P.DOOR_PAINT_LABOR;
+
       laborItems.push({
         ...laborItemsMap.paintTrim,
         id: `lab-finish-paint-door-${Date.now()}`,
-        name: 'Paint Door',
-        hours: '1',
+        name: 'Paint Door(s)',
+        hours: doorHours.toFixed(2),
+        scope: 'painting',
         isAutoGenerated: true,
       });
     }
 
-    // Installation Labor
+    // -------------------------------------------------------------------------
+    // Installation Labor (existing logic)
+    // -------------------------------------------------------------------------
     if (design.installVanity && design.plumbingPerformedBy === 'me') {
       const vanityHours = 4 + (design.vanitySinks - 1) * 1;
       laborItems.push({
         ...laborItemsMap.installVanity,
         id: `lab-finish-vanity-${Date.now()}`,
         hours: vanityHours.toString(),
+        scope: 'installation',
         isAutoGenerated: true,
       });
     }
@@ -224,6 +405,7 @@ export default function FinishingsLaborSection() {
       laborItems.push({
         ...laborItemsMap.installMirror,
         id: `lab-finish-mirror-${Date.now()}`,
+        scope: 'installation',
         isAutoGenerated: true,
       });
     }
@@ -234,6 +416,7 @@ export default function FinishingsLaborSection() {
         ...laborItemsMap.installLighting,
         id: `lab-finish-lighting-${Date.now()}`,
         hours: lightingHours.toString(),
+        scope: 'installation',
         isAutoGenerated: true,
       });
     }
@@ -242,21 +425,25 @@ export default function FinishingsLaborSection() {
       laborItems.push({
         ...laborItemsMap.installToilet,
         id: `lab-finish-toilet-${Date.now()}`,
+        scope: 'installation',
         isAutoGenerated: true,
       });
     }
 
-    if (design.installBaseboard && perimeter > 0) {
-      const baseboardHours = Math.max(1, perimeter / 20).toFixed(2);
+    if (design.installBaseboard && geometry.perimeterFt > 0) {
+      const baseboardHours = Math.max(1, geometry.perimeterFt / 20).toFixed(2);
       laborItems.push({
         ...laborItemsMap.installBaseboards,
         id: `lab-finish-baseboards-${Date.now()}`,
         hours: baseboardHours,
+        scope: 'installation',
         isAutoGenerated: true,
       });
     }
 
-    // Accent Wall Labor
+    // -------------------------------------------------------------------------
+    // Accent Wall Labor (existing logic)
+    // -------------------------------------------------------------------------
     (design.accentWalls && Array.isArray(design.accentWalls)
       ? design.accentWalls
       : []
@@ -275,6 +462,7 @@ export default function FinishingsLaborSection() {
               id: `lab-finish-tile-accent-${wall.id}-${Date.now()}`,
               name: `Tile Accent Wall ${index + 1}`,
               hours: tileHours,
+              scope: 'accent_walls',
               isAutoGenerated: true,
             };
             break;
@@ -285,6 +473,7 @@ export default function FinishingsLaborSection() {
               id: `lab-finish-wainscot-accent-${wall.id}-${Date.now()}`,
               name: `Wainscot Accent Wall ${index + 1}`,
               hours: wainscotHours,
+              scope: 'accent_walls',
               isAutoGenerated: true,
             };
             break;
@@ -295,6 +484,7 @@ export default function FinishingsLaborSection() {
               id: `lab-finish-paint-accent-${wall.id}-${Date.now()}`,
               name: `Paint Accent Wall ${index + 1}`,
               hours: paintHours,
+              scope: 'accent_walls',
               isAutoGenerated: true,
             };
             break;
@@ -307,15 +497,20 @@ export default function FinishingsLaborSection() {
     });
 
     return { laborItems, flatFeeItems };
-  }, [design, wallArea, ceilingArea, perimeter, contractorHourlyRate]);
+  }, [
+    design,
+    geometry,
+    prepCleanupHours,
+    contractorHourlyRate,
+  ]);
 
   useEffect(() => {
     if (isUserActionRef.current || isReloading) return;
     const choicesKey = `${design.width}-${design.length}-${design.height}-${
       design.fixWalls
-    }-${design.priming}-${design.paintWalls}-${design.paintCeiling}-${
+    }-${design.drywallRepairsLevel}-${design.priming}-${design.paintWalls}-${design.paintCeiling}-${
       design.paintTrim
-    }-${design.paintDoor}-${design.installBaseboard}-${design.installVanity}-${
+    }-${design.paintDoor}-${design.numDoors}-${design.nonPaintWallAreaSqFt}-${design.installBaseboard}-${design.installVanity}-${
       design.vanitySinks
     }-${design.installMirror}-${design.installLighting}-${
       design.lightingQuantity
@@ -505,9 +700,11 @@ export default function FinishingsLaborSection() {
         item.scope === 'painting' ||
         item.name.toLowerCase().includes('paint') ||
         item.name.toLowerCase().includes('primer') ||
+        item.name.toLowerCase().includes('priming') ||
+        item.name.toLowerCase().includes('drywall') ||
         item.name.toLowerCase().includes('ceiling') ||
         item.name.toLowerCase().includes('trim') ||
-        item.name.toLowerCase().includes('baseboard')
+        item.name.toLowerCase().includes('door')
     );
   }, [localLaborItems]);
 

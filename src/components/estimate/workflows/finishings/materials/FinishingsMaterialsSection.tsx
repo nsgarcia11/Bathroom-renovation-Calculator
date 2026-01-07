@@ -12,7 +12,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
-import { FINISHINGS_MATERIALS_ITEMS } from '@/lib/constants';
+import {
+  FINISHINGS_MATERIALS_ITEMS,
+  PAINTING_CONFIG,
+} from '@/lib/constants';
 import { MaterialItem as ContextMaterialItem } from '@/types/estimate';
 
 type MaterialItem = ContextMaterialItem & {
@@ -25,11 +28,14 @@ interface FinishingsDesignData {
   length: string;
   height: string;
   fixWalls: boolean;
+  drywallRepairsLevel: 'LIGHT' | 'MEDIUM' | 'HEAVY';
   priming: boolean;
   paintWalls: boolean;
   paintCeiling: boolean;
   paintTrim: boolean;
   paintDoor: boolean;
+  numDoors: string;
+  nonPaintWallAreaSqFt: string;
   installBaseboard: boolean;
   installVanity: boolean;
   vanitySinks: number;
@@ -48,6 +54,18 @@ interface FinishingsDesignData {
   [key: string]: unknown;
 }
 
+// Helper function to clamp a value between min and max
+const clamp = (value: number, min: number, max: number): number => {
+  return Math.max(min, Math.min(max, value));
+};
+
+// Helper function to parse number with default
+const parseNum = (value: string | number | undefined, defaultVal = 0): number => {
+  if (value === undefined || value === null || value === '') return defaultVal;
+  const parsed = parseFloat(String(value));
+  return isNaN(parsed) ? defaultVal : Math.max(0, parsed);
+};
+
 export default function FinishingsMaterialsSection() {
   const { getDesignData, getMaterialItems, setMaterialItems, isReloading } =
     useEstimateWorkflowContext();
@@ -60,11 +78,14 @@ export default function FinishingsMaterialsSection() {
         length: '96',
         height: '96',
         fixWalls: true,
+        drywallRepairsLevel: 'LIGHT' as const,
         priming: true,
         paintWalls: true,
         paintCeiling: true,
         paintTrim: false,
         paintDoor: false,
+        numDoors: '1',
+        nonPaintWallAreaSqFt: '0',
         installBaseboard: false,
         installVanity: true,
         vanitySinks: 1,
@@ -93,110 +114,243 @@ export default function FinishingsMaterialsSection() {
     setLocalMaterials(contextMaterials);
   }, [contextMaterials]);
 
-  // Calculate areas
-  const wallArea = useMemo(() => {
-    const w = parseFloat(design.width) || 0;
-    const l = parseFloat(design.length) || 0;
-    const h = parseFloat(design.height) || 0;
-    if (w > 0 && l > 0 && h > 0) {
-      return (2 * (w + l) * h) / 144;
-    }
-    return 0;
-  }, [design.width, design.length, design.height]);
+  // ============================================================================
+  // DERIVED GEOMETRY CALCULATIONS (per spec Section 2)
+  // ============================================================================
+  const geometry = useMemo(() => {
+    // Parse dimensions (inches to feet)
+    const widthIn = parseNum(design.width);
+    const lengthIn = parseNum(design.length);
+    const heightIn = parseNum(design.height);
 
-  const ceilingArea = useMemo(() => {
-    const w = parseFloat(design.width) || 0;
-    const l = parseFloat(design.length) || 0;
-    if (w > 0 && l > 0) {
-      return (w * l) / 144;
-    }
-    return 0;
-  }, [design.width, design.length]);
+    const widthFt = widthIn / 12;
+    const lengthFt = lengthIn / 12;
+    const heightFt = heightIn / 12;
 
-  const perimeter = useMemo(() => {
-    const w = parseFloat(design.width) || 0;
-    const l = parseFloat(design.length) || 0;
-    if (w > 0 && l > 0) {
-      return (2 * (w + l)) / 12;
-    }
-    return 0;
-  }, [design.width, design.length]);
+    // Compute areas
+    const floorAreaSqFt = widthFt * lengthFt;
+    const ceilingAreaSqFt = floorAreaSqFt;
+    const perimeterFt = 2 * (widthFt + lengthFt);
+    const wallAreaSqFt = perimeterFt * heightFt;
 
+    // Non-paint wall area (clamped >= 0)
+    const nonPaintWallAreaSqFt = parseNum(design.nonPaintWallAreaSqFt);
+
+    // Paintable wall area
+    const paintableWallArea = Math.max(0, wallAreaSqFt - nonPaintWallAreaSqFt);
+
+    // Paint surface = paintable walls + ceiling
+    const paintSurfaceSqFt = paintableWallArea + ceilingAreaSqFt;
+
+    // Baseboard paint LF calculation
+    const coveredBaseboardLfRaw = perimeterFt * PAINTING_CONFIG.BASEBOARD.COVERED_RATIO;
+    const coveredBaseboardLf = clamp(
+      coveredBaseboardLfRaw,
+      PAINTING_CONFIG.BASEBOARD.COVERED_MIN,
+      PAINTING_CONFIG.BASEBOARD.COVERED_MAX
+    );
+    const baseboardPaintLf = Math.max(0, perimeterFt - coveredBaseboardLf);
+
+    // Number of doors (default 1 if blank/NaN, clamped >= 0)
+    let numDoors = parseNum(design.numDoors, 1);
+    if (design.numDoors === '' || isNaN(parseFloat(design.numDoors))) {
+      numDoors = 1;
+    }
+    numDoors = Math.max(0, numDoors);
+
+    return {
+      widthFt,
+      lengthFt,
+      heightFt,
+      floorAreaSqFt,
+      ceilingAreaSqFt,
+      perimeterFt,
+      wallAreaSqFt,
+      nonPaintWallAreaSqFt,
+      paintableWallArea,
+      paintSurfaceSqFt,
+      coveredBaseboardLf,
+      baseboardPaintLf,
+      numDoors,
+    };
+  }, [design.width, design.length, design.height, design.nonPaintWallAreaSqFt, design.numDoors]);
+
+  // ============================================================================
+  // MATERIALS GENERATION (per spec Section 5)
+  // ============================================================================
   const generateMaterials = useCallback(() => {
     const materials: MaterialItem[] = [];
     const materialsMap = FINISHINGS_MATERIALS_ITEMS;
+    const C = PAINTING_CONFIG.COATS;
+    const COV = PAINTING_CONFIG.COVERAGE;
+    const W = PAINTING_CONFIG.WASTE_PCT;
+    const P = PAINTING_CONFIG.PRICES;
 
-    // Paint Materials
+    // Track if any painting toggle is selected for supplies calculation
+    const hasPaintingTask =
+      design.priming || design.paintWalls || design.paintCeiling || design.paintTrim;
+
+    // -------------------------------------------------------------------------
+    // A) Drywall Repairs Materials (per spec Section 5A)
+    // -------------------------------------------------------------------------
     if (design.fixWalls) {
+      // Drywall Patching Supplies = qty 1 allowance @ $30
       materials.push({
-        ...materialsMap.jointCompound,
-        id: `mat-finish-joint-compound-${Date.now()}`,
-        isAutoGenerated: true,
-      });
-      materials.push({
-        ...materialsMap.drywallTape,
-        id: `mat-finish-drywall-tape-${Date.now()}`,
-        isAutoGenerated: true,
-      });
-    }
-
-    if (design.priming && wallArea > 0) {
-      const primerGallons = Math.ceil((wallArea + ceilingArea) / 400);
-      materials.push({
-        ...materialsMap.primer,
-        id: `mat-finish-primer-${Date.now()}`,
-        quantity: primerGallons.toString(),
+        ...materialsMap.drywallPatchingSupplies,
+        id: `mat-finish-drywall-patch-${Date.now()}`,
+        quantity: '1',
+        price: P.DRYWALL_PATCH_ALLOWANCE.toFixed(2),
+        scope: 'painting',
         isAutoGenerated: true,
       });
     }
 
-    if (design.paintWalls && wallArea > 0) {
-      const wallPaintGallons = Math.ceil(wallArea / 400);
+    // -------------------------------------------------------------------------
+    // B) Priming Materials (per spec Section 5B)
+    // -------------------------------------------------------------------------
+    if (design.priming) {
+      // Prime area based on selected surfaces
+      const primeAreaSqFt =
+        (design.paintWalls ? geometry.paintableWallArea : 0) +
+        (design.paintCeiling ? geometry.ceilingAreaSqFt : 0);
+
+      if (primeAreaSqFt > 0) {
+        // Materials (gallons): max(1, ceil((area * coats * (1+waste)) / coverage))
+        const primerQty = Math.max(
+          1,
+          Math.ceil((primeAreaSqFt * C.PRIMER * (1 + W)) / COV.PRIMER)
+        );
+
+        materials.push({
+          ...materialsMap.primer,
+          id: `mat-finish-primer-${Date.now()}`,
+          quantity: primerQty.toString(),
+          price: P.PRIMER.toFixed(2),
+          scope: 'painting',
+          isAutoGenerated: true,
+        });
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // C) Paint Walls Materials (per spec Section 5C)
+    // -------------------------------------------------------------------------
+    if (design.paintWalls && geometry.paintableWallArea > 0) {
+      // Materials (gallons): max(1, ceil((area * coats * (1+waste)) / coverage))
+      const wallPaintQty = Math.max(
+        1,
+        Math.ceil(
+          (geometry.paintableWallArea * C.WALLS * (1 + W)) / COV.WALL_PAINT
+        )
+      );
+
       materials.push({
         ...materialsMap.wallPaint,
         id: `mat-finish-wall-paint-${Date.now()}`,
-        quantity: wallPaintGallons.toString(),
+        quantity: wallPaintQty.toString(),
+        price: P.WALL_PAINT.toFixed(2),
+        scope: 'painting',
         isAutoGenerated: true,
       });
     }
 
-    if (design.paintCeiling && ceilingArea > 0) {
-      const ceilingPaintGallons = Math.ceil(ceilingArea / 400);
+    // -------------------------------------------------------------------------
+    // D) Paint Ceiling Materials (per spec Section 5D)
+    // -------------------------------------------------------------------------
+    if (design.paintCeiling && geometry.ceilingAreaSqFt > 0) {
+      // Materials (gallons): max(1, ceil((area * coats * (1+waste)) / coverage))
+      const ceilingPaintQty = Math.max(
+        1,
+        Math.ceil(
+          (geometry.ceilingAreaSqFt * C.CEILING * (1 + W)) / COV.CEILING_PAINT
+        )
+      );
+
       materials.push({
         ...materialsMap.ceilingPaint,
         id: `mat-finish-ceiling-paint-${Date.now()}`,
-        quantity: ceilingPaintGallons.toString(),
+        quantity: ceilingPaintQty.toString(),
+        price: P.CEILING_PAINT.toFixed(2),
+        scope: 'painting',
         isAutoGenerated: true,
       });
     }
 
+    // -------------------------------------------------------------------------
+    // E) Paint Trim Materials (per spec Section 5E)
+    // -------------------------------------------------------------------------
     if (design.paintTrim) {
+      // Materials (quarts): max(1, ceil((LF * coats * (1+waste)) / coverage))
+      const trimPaintQty = Math.max(
+        1,
+        Math.ceil(
+          (geometry.baseboardPaintLf * C.TRIM * (1 + W)) / COV.TRIM_PAINT
+        )
+      );
+
       materials.push({
         ...materialsMap.trimPaint,
         id: `mat-finish-trim-paint-${Date.now()}`,
+        quantity: trimPaintQty.toString(),
+        price: P.TRIM_PAINT.toFixed(2),
+        scope: 'painting',
         isAutoGenerated: true,
       });
     }
 
-    if (design.paintDoor) {
+    // -------------------------------------------------------------------------
+    // F) Paint Door Materials (per spec Section 5F)
+    // -------------------------------------------------------------------------
+    if (design.paintDoor && geometry.numDoors > 0) {
+      // Door area: numDoors * 21 sq ft/side * 2 sides * 2 coats * (1+waste)
+      const doorAreaSqFt =
+        geometry.numDoors * COV.DOOR_AREA * 2 * C.DOOR * (1 + W);
+
+      // Convert to quarts: (area / 350) * 4 quarts/gallon
+      const doorPaintQty = Math.max(1, Math.ceil((doorAreaSqFt / 350) * 4));
+
       materials.push({
-        ...materialsMap.trimPaint,
+        ...materialsMap.doorPaint,
         id: `mat-finish-door-paint-${Date.now()}`,
-        name: 'Door Paint',
-        quantity: '1',
-        unit: 'quart',
-        price: '25.00',
+        quantity: doorPaintQty.toString(),
+        price: P.DOOR_PAINT.toFixed(2),
+        scope: 'painting',
         isAutoGenerated: true,
       });
     }
 
-    // Installation Materials
-    if (design.installBaseboard && perimeter > 0) {
-      const baseboardLength = Math.ceil(perimeter * 1.1); // 10% waste
+    // -------------------------------------------------------------------------
+    // G) Painting Supplies (per spec Section 5G)
+    // -------------------------------------------------------------------------
+    if (hasPaintingTask) {
+      // Calculate selected area for supplies
+      const selectedAreaSqFt =
+        ((design.priming || design.paintWalls) ? geometry.paintableWallArea : 0) +
+        ((design.priming || design.paintCeiling) ? geometry.ceilingAreaSqFt : 0);
+
+      // Supplies cost: $25 base + $0.08/sqft
+      const suppliesCost = P.SUPPLIES_BASE + P.SUPPLIES_PER_SQFT * selectedAreaSqFt;
+
+      materials.push({
+        ...materialsMap.paintingSupplies,
+        id: `mat-finish-painting-supplies-${Date.now()}`,
+        quantity: '1',
+        price: suppliesCost.toFixed(2),
+        scope: 'painting',
+        isAutoGenerated: true,
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // Installation Materials (existing logic)
+    // -------------------------------------------------------------------------
+    if (design.installBaseboard && geometry.perimeterFt > 0) {
+      const baseboardLength = Math.ceil(geometry.perimeterFt * 1.1); // 10% waste
       materials.push({
         ...materialsMap.baseboards,
         id: `mat-finish-baseboards-${Date.now()}`,
         quantity: baseboardLength.toString(),
+        scope: 'installation',
         isAutoGenerated: true,
       });
     }
@@ -205,6 +359,7 @@ export default function FinishingsMaterialsSection() {
       materials.push({
         ...materialsMap.vanity,
         id: `mat-finish-vanity-${Date.now()}`,
+        scope: 'installation',
         isAutoGenerated: true,
       });
     }
@@ -213,6 +368,7 @@ export default function FinishingsMaterialsSection() {
       materials.push({
         ...materialsMap.mirror,
         id: `mat-finish-mirror-${Date.now()}`,
+        scope: 'installation',
         isAutoGenerated: true,
       });
     }
@@ -223,6 +379,7 @@ export default function FinishingsMaterialsSection() {
           ...materialsMap.lighting,
           id: `mat-finish-lighting-${i}-${Date.now()}`,
           name: `Lighting Fixture ${i + 1}`,
+          scope: 'installation',
           isAutoGenerated: true,
         });
       }
@@ -232,11 +389,14 @@ export default function FinishingsMaterialsSection() {
       materials.push({
         ...materialsMap.toilet,
         id: `mat-finish-toilet-${Date.now()}`,
+        scope: 'installation',
         isAutoGenerated: true,
       });
     }
 
-    // Accent Wall Materials
+    // -------------------------------------------------------------------------
+    // Accent Wall Materials (existing logic)
+    // -------------------------------------------------------------------------
     (design.accentWalls && Array.isArray(design.accentWalls)
       ? design.accentWalls
       : []
@@ -255,6 +415,7 @@ export default function FinishingsMaterialsSection() {
               id: `mat-finish-accent-tile-${wall.id}-${Date.now()}`,
               name: `Accent Wall Tile ${index + 1}`,
               quantity: tileSqFt.toString(),
+              scope: 'accent_walls',
               isAutoGenerated: true,
             };
             // Add thinset and grout for tiling
@@ -263,6 +424,7 @@ export default function FinishingsMaterialsSection() {
               id: `mat-finish-thinset-${wall.id}-${Date.now()}`,
               name: `Thinset for Accent Wall ${index + 1}`,
               quantity: Math.ceil(area / 80).toString(),
+              scope: 'accent_walls',
               isAutoGenerated: true,
             });
             materials.push({
@@ -270,6 +432,7 @@ export default function FinishingsMaterialsSection() {
               id: `mat-finish-grout-${wall.id}-${Date.now()}`,
               name: `Grout for Accent Wall ${index + 1}`,
               quantity: Math.ceil(area / 90).toString(),
+              scope: 'accent_walls',
               isAutoGenerated: true,
             });
             break;
@@ -279,16 +442,21 @@ export default function FinishingsMaterialsSection() {
               id: `mat-finish-accent-wainscot-${wall.id}-${Date.now()}`,
               name: `Wainscot Panels ${index + 1}`,
               quantity: Math.ceil(area).toString(),
+              scope: 'accent_walls',
               isAutoGenerated: true,
             };
             break;
           case 'paint':
-            const paintGallons = Math.ceil(area / 400);
+            const paintGallons = Math.max(
+              1,
+              Math.ceil((area * C.WALLS * (1 + W)) / COV.WALL_PAINT)
+            );
             accentMaterial = {
               ...materialsMap.accentPaint,
               id: `mat-finish-accent-paint-${wall.id}-${Date.now()}`,
               name: `Accent Wall Paint ${index + 1}`,
               quantity: paintGallons.toString(),
+              scope: 'accent_walls',
               isAutoGenerated: true,
             };
             break;
@@ -301,15 +469,15 @@ export default function FinishingsMaterialsSection() {
     });
 
     return materials;
-  }, [design, wallArea, ceilingArea, perimeter]);
+  }, [design, geometry]);
 
   useEffect(() => {
     if (isUserActionRef.current || isReloading) return;
     const choicesKey = `${design.width}-${design.length}-${design.height}-${
       design.fixWalls
-    }-${design.priming}-${design.paintWalls}-${design.paintCeiling}-${
+    }-${design.drywallRepairsLevel}-${design.priming}-${design.paintWalls}-${design.paintCeiling}-${
       design.paintTrim
-    }-${design.paintDoor}-${design.installBaseboard}-${design.installVanity}-${
+    }-${design.paintDoor}-${design.numDoors}-${design.nonPaintWallAreaSqFt}-${design.installBaseboard}-${design.installVanity}-${
       design.vanitySinks
     }-${design.installMirror}-${design.installLighting}-${
       design.lightingQuantity
@@ -441,9 +609,8 @@ export default function FinishingsMaterialsSection() {
         item.scope === 'painting' ||
         item.name.toLowerCase().includes('paint') ||
         item.name.toLowerCase().includes('primer') ||
-        item.name.toLowerCase().includes('ceiling') ||
-        item.name.toLowerCase().includes('trim') ||
-        item.name.toLowerCase().includes('baseboard')
+        item.name.toLowerCase().includes('drywall') ||
+        item.name.toLowerCase().includes('supplies')
     );
   }, [materials]);
 
@@ -467,6 +634,8 @@ export default function FinishingsMaterialsSection() {
         item.name.toLowerCase().includes('accent') ||
         item.name.toLowerCase().includes('tile') ||
         item.name.toLowerCase().includes('wainscot') ||
+        item.name.toLowerCase().includes('thinset') ||
+        item.name.toLowerCase().includes('grout') ||
         item.name.toLowerCase().includes('wallpaper')
     );
   }, [materials]);

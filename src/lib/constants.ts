@@ -1395,6 +1395,106 @@ export const FLOORS_MATERIALS_ITEMS = {
   },
 };
 
+// ============================================================================
+// PAINTING BUSINESS LOGIC CONSTANTS
+// ============================================================================
+
+// Drywall Repair Levels
+export const DRYWALL_REPAIR_LEVELS = {
+  LIGHT: {
+    base: 0.75,
+    rate: 0.002,
+    cap: 2.0,
+    spotPrimeAllowance: 0.2,
+  },
+  MEDIUM: {
+    base: 1.5,
+    rate: 0.004,
+    cap: 4.0,
+    spotPrimeAllowance: 0.35,
+  },
+  HEAVY: {
+    base: 3.0,
+    rate: 0.01,
+    cap: 8.0,
+    spotPrimeAllowance: 0.6,
+  },
+} as const;
+
+// Painting constants
+export const PAINTING_CONFIG = {
+  // Waste percentage
+  WASTE_PCT: 0.1,
+
+  // Coats
+  COATS: {
+    WALLS: 2,
+    CEILING: 1,
+    PRIMER: 1,
+    TRIM: 2,
+    DOOR: 2,
+  },
+
+  // Coverage (sq ft / gallon or LF / quart)
+  COVERAGE: {
+    WALL_PAINT: 350, // sq ft / gallon
+    CEILING_PAINT: 350, // sq ft / gallon
+    PRIMER: 300, // sq ft / gallon
+    TRIM_PAINT: 120, // LF / quart
+    DOOR_AREA: 21, // sq ft per side
+  },
+
+  // Productivity (units per hour)
+  PRODUCTIVITY: {
+    PRIME: 200, // sq ft/hr
+    WALL_ROLL: 240, // sq ft/hr
+    WALL_CUT_IN: 85, // LF/hr
+    EXTRA_CUT_LF_PER_COAT: 15, // LF
+    CEILING_ROLL: 250, // sq ft/hr
+    CEILING_CUT_IN: 50, // LF/hr
+    TRIM_BASEBOARD: 90, // LF/hr
+    CASING_ALLOWANCE_PER_DOOR: 0.25, // hr/door
+    DOOR_PAINT_LABOR: 1.0, // hr/door
+  },
+
+  // Material prices (CAD)
+  PRICES: {
+    PRIMER: 48, // per gallon
+    WALL_PAINT: 68, // per gallon
+    CEILING_PAINT: 55, // per gallon
+    TRIM_PAINT: 32, // per quart
+    DOOR_PAINT: 32, // per quart
+    DRYWALL_PATCH_ALLOWANCE: 30,
+    SUPPLIES_BASE: 25,
+    SUPPLIES_PER_SQFT: 0.08,
+  },
+
+  // Prep/cleanup weights for splitting hidden hours
+  PREP_WEIGHTS: {
+    PRIMING: 1,
+    WALLS: 3,
+    CEILING: 2,
+    TRIM: 1,
+  },
+
+  // Hidden prep/cleanup hour bounds
+  PREP_CLEANUP: {
+    BASE: 1.0,
+    RATE_PER_SQFT: 0.0012,
+    MIN: 1.0,
+    MAX: 2.0,
+  },
+
+  // Baseboard paint calculation
+  BASEBOARD: {
+    COVERED_RATIO: 0.3, // 30% of perimeter typically covered
+    COVERED_MIN: 6, // min LF covered
+    COVERED_MAX: 12, // max LF covered
+  },
+} as const;
+
+export type DrywallRepairLevel = keyof typeof DRYWALL_REPAIR_LEVELS;
+
 // Finishings labor items mapping
 export const FINISHINGS_LABOR_ITEMS = (contractorHourlyRate: number) => ({
   // Paint Labor
@@ -1494,13 +1594,13 @@ export const FINISHINGS_LABOR_ITEMS = (contractorHourlyRate: number) => ({
 
 // Finishings materials items mapping
 export const FINISHINGS_MATERIALS_ITEMS = {
-  // Paint Materials
+  // Paint Materials (prices from PAINTING_CONFIG)
   wallPaint: {
     id: 'mat-finish-wall-paint',
     name: 'Wall Paint',
     quantity: '0', // Will be calculated based on wall area
     unit: 'gallon',
-    price: '45.00',
+    price: '68.00', // PAINTING_CONFIG.PRICES.WALL_PAINT
     scope: 'design' as const,
     source: 'auto' as const,
   },
@@ -1509,7 +1609,7 @@ export const FINISHINGS_MATERIALS_ITEMS = {
     name: 'Ceiling Paint',
     quantity: '0', // Will be calculated based on ceiling area
     unit: 'gallon',
-    price: '35.00',
+    price: '55.00', // PAINTING_CONFIG.PRICES.CEILING_PAINT
     scope: 'design' as const,
     source: 'auto' as const,
   },
@@ -1517,8 +1617,17 @@ export const FINISHINGS_MATERIALS_ITEMS = {
     id: 'mat-finish-trim-paint',
     name: 'Trim Paint',
     quantity: '1',
-    unit: 'gallon',
-    price: '50.00',
+    unit: 'quart',
+    price: '32.00', // PAINTING_CONFIG.PRICES.TRIM_PAINT
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+  doorPaint: {
+    id: 'mat-finish-door-paint',
+    name: 'Door Paint',
+    quantity: '1',
+    unit: 'quart',
+    price: '32.00', // PAINTING_CONFIG.PRICES.DOOR_PAINT
     scope: 'design' as const,
     source: 'auto' as const,
   },
@@ -1527,8 +1636,26 @@ export const FINISHINGS_MATERIALS_ITEMS = {
     name: 'Primer',
     quantity: '0', // Will be calculated based on total area
     unit: 'gallon',
-    price: '30.00',
-    scope: 'construction' as const,
+    price: '48.00', // PAINTING_CONFIG.PRICES.PRIMER
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+  drywallPatchingSupplies: {
+    id: 'mat-finish-drywall-patch',
+    name: 'Drywall Patching Supplies',
+    quantity: '1',
+    unit: 'allowance',
+    price: '30.00', // PAINTING_CONFIG.PRICES.DRYWALL_PATCH_ALLOWANCE
+    scope: 'design' as const,
+    source: 'auto' as const,
+  },
+  paintingSupplies: {
+    id: 'mat-finish-painting-supplies',
+    name: 'Painting Supplies',
+    quantity: '1',
+    unit: 'allowance',
+    price: '25.00', // Base price, will be adjusted based on area
+    scope: 'design' as const,
     source: 'auto' as const,
   },
 

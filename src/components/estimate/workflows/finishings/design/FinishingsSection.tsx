@@ -19,11 +19,14 @@ interface FinishingsDesignData {
 
   // Painting options
   fixWalls: boolean;
+  drywallRepairsLevel: 'LIGHT' | 'MEDIUM' | 'HEAVY';
   priming: boolean;
   paintWalls: boolean;
   paintCeiling: boolean;
   paintTrim: boolean;
   paintDoor: boolean;
+  numDoors: string;
+  nonPaintWallAreaSqFt: string;
 
   // Installation options
   installBaseboard: boolean;
@@ -67,11 +70,14 @@ export function FinishingsSection() {
         length: '96',
         height: '96',
         fixWalls: true,
+        drywallRepairsLevel: 'LIGHT' as const,
         priming: true,
         paintWalls: true,
         paintCeiling: true,
         paintTrim: false,
         paintDoor: false,
+        numDoors: '1',
+        nonPaintWallAreaSqFt: '0',
         installBaseboard: false,
         installVanity: true,
         vanitySinks: 1,
@@ -327,12 +333,76 @@ export function FinishingsSection() {
 
       {/* Painting Card */}
       <CollapsibleSection title='Painting' colorScheme='design'>
+        {/* Non-Paint Wall Area Input */}
+        <div className='mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200'>
+          <div className='grid grid-cols-2 gap-4'>
+            <div>
+              <Label className='text-sm font-medium text-gray-700 mb-1.5 block'>
+                Doors
+              </Label>
+              <Input
+                type='number'
+                value={localDesign.numDoors}
+                onChange={(e) => setDesign({ numDoors: e.target.value })}
+                placeholder='1'
+                className='w-full p-2.5 bg-white border border-blue-300 rounded-lg focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center'
+              />
+            </div>
+            <div>
+              <Label className='text-sm font-medium text-gray-700 mb-1.5 block'>
+                Non-Paint Area (sq ft)
+              </Label>
+              <Input
+                type='number'
+                value={localDesign.nonPaintWallAreaSqFt}
+                onChange={(e) =>
+                  setDesign({ nonPaintWallAreaSqFt: e.target.value })
+                }
+                placeholder='0'
+                className='w-full p-2.5 bg-white border border-blue-300 rounded-lg focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center'
+              />
+            </div>
+          </div>
+          <p className='text-xs text-slate-500 mt-2'>
+            Non-paint area includes tile backsplash, shower walls, or other
+            surfaces not being painted.
+          </p>
+        </div>
+
         <ToggleSwitch
           label='Drywall Repairs'
           enabled={localDesign.fixWalls}
           onToggle={(enabled) => setDesign({ fixWalls: enabled })}
           className='pb-3'
         />
+        {localDesign.fixWalls && (
+          <div className='pl-6 pb-3'>
+            <Label className='text-sm text-slate-600 mb-2 block'>
+              Repair Level
+            </Label>
+            <div className='flex space-x-2'>
+              {(['LIGHT', 'MEDIUM', 'HEAVY'] as const).map((level) => (
+                <Button
+                  key={level}
+                  onClick={() => setDesign({ drywallRepairsLevel: level })}
+                  variant={
+                    localDesign.drywallRepairsLevel === level
+                      ? 'default'
+                      : 'outline'
+                  }
+                  size='sm'
+                  className={
+                    localDesign.drywallRepairsLevel === level
+                      ? 'bg-blue-600 text-white'
+                      : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                  }
+                >
+                  {level.charAt(0) + level.slice(1).toLowerCase()}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
         <ToggleSwitch
           label='Priming'
           enabled={localDesign.priming}
