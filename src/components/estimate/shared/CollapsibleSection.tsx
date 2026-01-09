@@ -5,6 +5,7 @@ import { ChevronDown } from 'lucide-react';
 
 interface CollapsibleSectionProps {
   title: string;
+  subtitle?: string;
   children: React.ReactNode;
   colorScheme?: 'design' | 'construction' | 'general' | 'neutral';
   summary?: React.ReactNode;
@@ -13,6 +14,7 @@ interface CollapsibleSectionProps {
 
 export function CollapsibleSection({
   title,
+  subtitle,
   children,
   colorScheme = 'neutral',
   summary,
@@ -35,7 +37,12 @@ export function CollapsibleSection({
         className='p-4 cursor-pointer flex justify-between items-center'
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <h3 className={`font-bold text-lg ${colors.text}`}>{title}</h3>
+        <div>
+          <h3 className={`font-bold text-lg ${colors.text}`}>{title}</h3>
+          {subtitle && (
+            <p className='text-sm text-slate-500'>{subtitle}</p>
+          )}
+        </div>
         <div className='flex items-center space-x-4'>
           {headerAccessory && (
             <div onClick={(e) => e.stopPropagation()}>{headerAccessory}</div>

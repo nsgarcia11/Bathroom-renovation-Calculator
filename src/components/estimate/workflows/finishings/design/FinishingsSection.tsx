@@ -1,15 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ToggleSwitch } from '@/components/estimate/shared/ToggleSwitch';
 import { WorkflowNotesSection } from '@/components/estimate/shared/WorkflowNotesSection';
 import { CollapsibleSection } from '@/components/estimate/shared/CollapsibleSection';
-import WarningNote from '@/components/estimate/shared/WarningNote';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
-import { Plus, Trash2 } from 'lucide-react';
 
 interface FinishingsDesignData {
   // Dimensions
@@ -25,19 +23,15 @@ interface FinishingsDesignData {
   paintCeiling: boolean;
   paintTrim: boolean;
   paintDoor: boolean;
-  numDoors: string;
-  nonPaintWallAreaSqFt: string;
 
-  // Installation options
+  // Carpentry options
   installBaseboard: boolean;
-  installVanity: boolean;
-  vanitySinks: number;
-  installMirror: boolean;
-  installLighting: boolean;
-  lightingQuantity: number;
-  installToilet: boolean;
+  installDoorCasing: boolean;
+  installShoeQuarterRound: boolean;
+  installDoorHardware: boolean;
 
   // Accessory options
+  installMirror: boolean;
   installTowelBar: boolean;
   towelBarQuantity: number;
   installTPHolder: boolean;
@@ -54,14 +48,6 @@ interface FinishingsDesignData {
   // Trade options
   plumbingPerformedBy: 'me' | 'trade';
   electricalPerformedBy: 'me' | 'trade';
-
-  // Accent walls
-  accentWalls: Array<{
-    id: string;
-    width: string;
-    height: string;
-    finishType: 'tile' | 'wainscot' | 'paint';
-  }>;
 
   // Notes
   designContractorNotes: string;
@@ -90,9 +76,10 @@ export function FinishingsSection() {
         paintCeiling: true,
         paintTrim: false,
         paintDoor: false,
-        numDoors: '1',
-        nonPaintWallAreaSqFt: '0',
         installBaseboard: false,
+        installDoorCasing: false,
+        installShoeQuarterRound: false,
+        installDoorHardware: false,
         installVanity: true,
         vanitySinks: 1,
         installMirror: true,
@@ -113,7 +100,6 @@ export function FinishingsSection() {
         wallShelfQuantity: 1,
         plumbingPerformedBy: 'me' as const,
         electricalPerformedBy: 'me' as const,
-        accentWalls: [],
         designContractorNotes: '',
         designClientNotes: '',
         constructionContractorNotes: '',
@@ -145,52 +131,6 @@ export function FinishingsSection() {
       setDesign({ [field]: value });
     },
     [setDesign]
-  );
-
-  const handleAccentWallAdd = useCallback(() => {
-    const newWall = {
-      id: `aw-${Date.now()}`,
-      width: '',
-      height: '',
-      finishType: 'tile' as const,
-    };
-
-    // Ensure accentWalls is an array
-    const currentWalls = Array.isArray(localDesign.accentWalls)
-      ? localDesign.accentWalls
-      : [];
-
-    setDesign({
-      accentWalls: [...currentWalls, newWall],
-    });
-  }, [localDesign.accentWalls, setDesign]);
-
-  const handleAccentWallChange = useCallback(
-    (id: string, field: string, value: string) => {
-      const currentWalls = Array.isArray(localDesign.accentWalls)
-        ? localDesign.accentWalls
-        : [];
-
-      setDesign({
-        accentWalls: currentWalls.map((wall) =>
-          wall.id === id ? { ...wall, [field]: value } : wall
-        ),
-      });
-    },
-    [localDesign.accentWalls, setDesign]
-  );
-
-  const handleAccentWallDelete = useCallback(
-    (id: string) => {
-      const currentWalls = Array.isArray(localDesign.accentWalls)
-        ? localDesign.accentWalls
-        : [];
-
-      setDesign({
-        accentWalls: currentWalls.filter((wall) => wall.id !== id),
-      });
-    },
-    [localDesign.accentWalls, setDesign]
   );
 
   // Calculate total square footage
@@ -358,43 +298,11 @@ export function FinishingsSection() {
       </CollapsibleSection>
 
       {/* Painting Card */}
-      <CollapsibleSection title='Painting' colorScheme='design'>
-        {/* Non-Paint Wall Area Input */}
-        <div className='mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200'>
-          <div className='grid grid-cols-2 gap-4'>
-            <div>
-              <Label className='text-sm font-medium text-gray-700 mb-1.5 block'>
-                Doors
-              </Label>
-              <Input
-                type='number'
-                value={localDesign.numDoors}
-                onChange={(e) => setDesign({ numDoors: e.target.value })}
-                placeholder='1'
-                className='w-full p-2.5 bg-white border border-blue-300 rounded-lg focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center'
-              />
-            </div>
-            <div>
-              <Label className='text-sm font-medium text-gray-700 mb-1.5 block'>
-                Non-Paint Area (sq ft)
-              </Label>
-              <Input
-                type='number'
-                value={localDesign.nonPaintWallAreaSqFt}
-                onChange={(e) =>
-                  setDesign({ nonPaintWallAreaSqFt: e.target.value })
-                }
-                placeholder='0'
-                className='w-full p-2.5 bg-white border border-blue-300 rounded-lg focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center'
-              />
-            </div>
-          </div>
-          <p className='text-xs text-slate-500 mt-2'>
-            Non-paint area includes tile backsplash, shower walls, or other
-            surfaces not being painted.
-          </p>
-        </div>
-
+      <CollapsibleSection
+        title='Painting'
+        subtitle='Sanding, Priming and Painting'
+        colorScheme='design'
+      >
         <ToggleSwitch
           label='Drywall Repairs'
           enabled={localDesign.fixWalls}
@@ -492,474 +400,86 @@ export function FinishingsSection() {
         </div>
       </CollapsibleSection>
 
-      {/* Installation Card */}
-      <CollapsibleSection title='Installation' colorScheme='construction'>
-        {/* Plumbing Section */}
-        <div>
-          <div className='flex justify-between items-center mb-4'>
-            <Label className='text-sm font-semibold text-slate-600'>
-              Plumbing
-            </Label>
-            <div className='flex space-x-2'>
-              <Button
-                onClick={() => setDesign({ plumbingPerformedBy: 'me' })}
-                variant={
-                  localDesign.plumbingPerformedBy === 'me'
-                    ? 'default'
-                    : 'outline'
-                }
-                size='sm'
-                className={
-                  localDesign.plumbingPerformedBy === 'me'
-                    ? 'bg-blue-600 text-white'
-                    : 'border-blue-200 text-blue-600 hover:bg-blue-50'
-                }
-              >
-                Me
-              </Button>
-              <Button
-                onClick={() => setDesign({ plumbingPerformedBy: 'trade' })}
-                variant={
-                  localDesign.plumbingPerformedBy === 'trade'
-                    ? 'default'
-                    : 'outline'
-                }
-                size='sm'
-                className={
-                  localDesign.plumbingPerformedBy === 'trade'
-                    ? 'bg-blue-600 text-white'
-                    : 'border-blue-200 text-blue-600 hover:bg-blue-50'
-                }
-              >
-                Trade
-              </Button>
-            </div>
-          </div>
-          {localDesign.plumbingPerformedBy === 'trade' && (
-            <WarningNote variant='warning'>
-              <strong>Note:</strong> When &apos;Trade&apos; is selected,
-              plumbing labor isn&apos;t included here. Manage it on the
-              &apos;Trade&apos; screen.
-            </WarningNote>
-          )}
-          <div className='space-y-4 pl-4'>
-            <div className='space-y-2'>
-              <ToggleSwitch
-                label='Install Vanity'
-                enabled={localDesign.installVanity}
-                onToggle={(enabled) => setDesign({ installVanity: enabled })}
-              />
-              {localDesign.installVanity && (
-                <div className='pl-6 pt-2'>
-                  <Label className='text-sm text-slate-600 mb-2 block'>
-                    Number of Sinks
-                  </Label>
-                  <Input
-                    type='number'
-                    value={localDesign.vanitySinks.toString()}
-                    onChange={(e) =>
-                      setDesign({
-                        vanitySinks: parseInt(e.target.value) || 1,
-                      })
-                    }
-                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
-                  />
-                </div>
-              )}
-            </div>
-            <ToggleSwitch
-              label='Install Toilet'
-              enabled={localDesign.installToilet}
-              onToggle={(enabled) => setDesign({ installToilet: enabled })}
-              className='pb-3'
-            />
-          </div>
-        </div>
-
-        {/* Electrical Section */}
-        <div className='pt-4 border-t border-slate-200'>
-          <div className='flex justify-between items-center mb-4'>
-            <Label className='text-sm font-semibold text-slate-600'>
-              Electrical
-            </Label>
-            <div className='flex space-x-2'>
-              <Button
-                onClick={() => setDesign({ electricalPerformedBy: 'me' })}
-                variant={
-                  localDesign.electricalPerformedBy === 'me'
-                    ? 'default'
-                    : 'outline'
-                }
-                size='sm'
-                className={
-                  localDesign.electricalPerformedBy === 'me'
-                    ? 'bg-blue-600 text-white'
-                    : 'border-blue-200 text-blue-600 hover:bg-blue-50'
-                }
-              >
-                Me
-              </Button>
-              <Button
-                onClick={() => setDesign({ electricalPerformedBy: 'trade' })}
-                variant={
-                  localDesign.electricalPerformedBy === 'trade'
-                    ? 'default'
-                    : 'outline'
-                }
-                size='sm'
-                className={
-                  localDesign.electricalPerformedBy === 'trade'
-                    ? 'bg-blue-600 text-white'
-                    : 'border-blue-200 text-blue-600 hover:bg-blue-50'
-                }
-              >
-                Trade
-              </Button>
-            </div>
-          </div>
-          {localDesign.electricalPerformedBy === 'trade' && (
-            <WarningNote variant='warning'>
-              <strong>Note:</strong> When &apos;Trade&apos; is selected,
-              electrical labor isn&apos;t included here. Manage it on the
-              &apos;Trade&apos; screen.
-            </WarningNote>
-          )}
-          <div className='space-y-4 pl-4'>
-            <div className='space-y-2'>
-              <ToggleSwitch
-                label='Install Lighting'
-                enabled={localDesign.installLighting}
-                onToggle={(enabled) => setDesign({ installLighting: enabled })}
-              />
-              {localDesign.installLighting && (
-                <div className='pl-6 pt-2 pb-3'>
-                  <Label className='text-sm text-slate-600 mb-2 block'>
-                    Number of Fixtures
-                  </Label>
-                  <Input
-                    type='number'
-                    value={localDesign.lightingQuantity.toString()}
-                    onChange={(e) =>
-                      setDesign({
-                        lightingQuantity: parseInt(e.target.value) || 1,
-                      })
-                    }
-                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Carpentry Section */}
-        <div className='pt-4 border-t border-slate-200'>
-          <Label className='text-sm font-semibold text-slate-600 mb-4 block'>
-            Carpentry & Mounting
-          </Label>
-          <div className='space-y-4 pl-4'>
-            <ToggleSwitch
-              label='Install Baseboards'
-              enabled={localDesign.installBaseboard}
-              onToggle={(enabled) => setDesign({ installBaseboard: enabled })}
-            />
-            <ToggleSwitch
-              label='Install Mirror'
-              enabled={localDesign.installMirror}
-              onToggle={(enabled) => setDesign({ installMirror: enabled })}
-              className='pb-3'
-            />
-          </div>
-        </div>
-
-        {/* Accessories Section */}
-        <div className='pt-4 border-t border-slate-200'>
-          <Label className='text-sm font-semibold text-slate-600 mb-4 block'>
-            Accessories
-          </Label>
-          <div className='space-y-4 pl-4'>
-            <div className='space-y-2'>
-              <ToggleSwitch
-                label='Install Towel Bar'
-                enabled={localDesign.installTowelBar}
-                onToggle={(enabled) => setDesign({ installTowelBar: enabled })}
-              />
-              {localDesign.installTowelBar && (
-                <div className='pl-6 pt-2'>
-                  <Label className='text-sm text-slate-600 mb-2 block'>
-                    Quantity
-                  </Label>
-                  <Input
-                    type='number'
-                    value={localDesign.towelBarQuantity?.toString() || '1'}
-                    onChange={(e) =>
-                      setDesign({
-                        towelBarQuantity: parseInt(e.target.value) || 1,
-                      })
-                    }
-                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
-                  />
-                </div>
-              )}
-            </div>
-            <div className='space-y-2'>
-              <ToggleSwitch
-                label='Install Toilet Paper Holder'
-                enabled={localDesign.installTPHolder}
-                onToggle={(enabled) => setDesign({ installTPHolder: enabled })}
-              />
-              {localDesign.installTPHolder && (
-                <div className='pl-6 pt-2'>
-                  <Label className='text-sm text-slate-600 mb-2 block'>
-                    Quantity
-                  </Label>
-                  <Input
-                    type='number'
-                    value={localDesign.tpHolderQuantity?.toString() || '1'}
-                    onChange={(e) =>
-                      setDesign({
-                        tpHolderQuantity: parseInt(e.target.value) || 1,
-                      })
-                    }
-                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
-                  />
-                </div>
-              )}
-            </div>
-            <div className='space-y-2'>
-              <ToggleSwitch
-                label='Install Robe Hook'
-                enabled={localDesign.installRobeHook}
-                onToggle={(enabled) => setDesign({ installRobeHook: enabled })}
-              />
-              {localDesign.installRobeHook && (
-                <div className='pl-6 pt-2'>
-                  <Label className='text-sm text-slate-600 mb-2 block'>
-                    Quantity
-                  </Label>
-                  <Input
-                    type='number'
-                    value={localDesign.robeHookQuantity?.toString() || '1'}
-                    onChange={(e) =>
-                      setDesign({
-                        robeHookQuantity: parseInt(e.target.value) || 1,
-                      })
-                    }
-                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
-                  />
-                </div>
-              )}
-            </div>
-            <div className='space-y-2'>
-              <ToggleSwitch
-                label='Install Towel Ring'
-                enabled={localDesign.installTowelRing}
-                onToggle={(enabled) => setDesign({ installTowelRing: enabled })}
-              />
-              {localDesign.installTowelRing && (
-                <div className='pl-6 pt-2'>
-                  <Label className='text-sm text-slate-600 mb-2 block'>
-                    Quantity
-                  </Label>
-                  <Input
-                    type='number'
-                    value={localDesign.towelRingQuantity?.toString() || '1'}
-                    onChange={(e) =>
-                      setDesign({
-                        towelRingQuantity: parseInt(e.target.value) || 1,
-                      })
-                    }
-                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
-                  />
-                </div>
-              )}
-            </div>
-            <div className='space-y-2'>
-              <ToggleSwitch
-                label='Install Shower Rod'
-                enabled={localDesign.installShowerRod}
-                onToggle={(enabled) => setDesign({ installShowerRod: enabled })}
-              />
-              {localDesign.installShowerRod && (
-                <div className='pl-6 pt-2'>
-                  <Label className='text-sm text-slate-600 mb-2 block'>
-                    Quantity
-                  </Label>
-                  <Input
-                    type='number'
-                    value={localDesign.showerRodQuantity?.toString() || '1'}
-                    onChange={(e) =>
-                      setDesign({
-                        showerRodQuantity: parseInt(e.target.value) || 1,
-                      })
-                    }
-                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
-                  />
-                </div>
-              )}
-            </div>
-            <div className='space-y-2'>
-              <ToggleSwitch
-                label='Install Wall Shelf'
-                enabled={localDesign.installWallShelf}
-                onToggle={(enabled) => setDesign({ installWallShelf: enabled })}
-                className='pb-3'
-              />
-              {localDesign.installWallShelf && (
-                <div className='pl-6 pt-2 pb-3'>
-                  <Label className='text-sm text-slate-600 mb-2 block'>
-                    Quantity
-                  </Label>
-                  <Input
-                    type='number'
-                    value={localDesign.wallShelfQuantity?.toString() || '1'}
-                    onChange={(e) =>
-                      setDesign({
-                        wallShelfQuantity: parseInt(e.target.value) || 1,
-                      })
-                    }
-                    className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Construction Notes */}
-        <div className='pt-4 border-t border-gray-200'>
-          <WorkflowNotesSection
-            contractorNotes={localDesign.constructionContractorNotes || ''}
-            clientNotes={localDesign.constructionClientNotes || ''}
-            onContractorNotesChange={(notes) => {
-              setDesign({ constructionContractorNotes: notes });
-            }}
-            onClientNotesChange={(notes) => {
-              setDesign({ constructionClientNotes: notes });
-            }}
-            title='Construction Notes'
-            placeholder='Add construction-specific notes here...'
-            contractorTags={[
-              'Verify electrical and plumbing rough-ins',
-              'Wall blocking',
-              'Outlet or switch misalignment',
-              'Baseboard or trim needs replacement',
-              'Confirm spacing for vanity and toilet clearance',
-            ]}
-            clientTags={[
-              'Fixture and hardware finishes confirmed',
-              'Mirror and lighting placement approved',
-              'Vanity style and dimensions verified',
-              'Toilet model and seat type chosen',
-              'Accessories and towel bars confirmed',
-            ]}
-            useTabs={true}
-            alwaysExpanded={true}
-          />
-        </div>
+      {/* Carpentry Card */}
+      <CollapsibleSection
+        title='Carpentry'
+        subtitle='Trim & Doors'
+        colorScheme='design'
+      >
+        <ToggleSwitch
+          label='Baseboard'
+          enabled={localDesign.installBaseboard}
+          onToggle={(enabled) => setDesign({ installBaseboard: enabled })}
+          className='pb-3'
+        />
+        <ToggleSwitch
+          label='Door Casing'
+          enabled={localDesign.installDoorCasing}
+          onToggle={(enabled) => setDesign({ installDoorCasing: enabled })}
+          className='pb-3'
+        />
+        <ToggleSwitch
+          label='Shoe & Quarter Round'
+          enabled={localDesign.installShoeQuarterRound}
+          onToggle={(enabled) => setDesign({ installShoeQuarterRound: enabled })}
+          className='pb-3'
+        />
+        <ToggleSwitch
+          label='Door Hardware'
+          enabled={localDesign.installDoorHardware}
+          onToggle={(enabled) => setDesign({ installDoorHardware: enabled })}
+          className='pb-3'
+        />
       </CollapsibleSection>
 
-      {/* Accent Walls Card */}
-      <CollapsibleSection title='Accent Walls' colorScheme='design'>
-        <div className='space-y-3'>
-          {Array.isArray(localDesign.accentWalls) &&
-            localDesign.accentWalls.map((wall, index) => (
-              <div
-                key={wall.id}
-                className='p-4 bg-slate-50 rounded-lg border border-slate-200'
-              >
-                <div className='flex justify-between items-center mb-3'>
-                  <p className='font-semibold text-slate-700'>
-                    Accent Wall {index + 1}
-                  </p>
-                  <Button
-                    onClick={() => handleAccentWallDelete(wall.id)}
-                    variant='ghost'
-                    size='sm'
-                    className='p-1 text-red-500 hover:text-red-700 h-auto flex-shrink-0'
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
-                <div className='space-y-4'>
-                  <div className='grid grid-cols-2 gap-4'>
-                    <div>
-                      <Label className='text-xs font-medium text-slate-600 mb-1 block'>
-                        Wall Width (in)
-                      </Label>
-                      <Input
-                        type='number'
-                        value={wall.width}
-                        onChange={(e) =>
-                          handleAccentWallChange(
-                            wall.id,
-                            'width',
-                            e.target.value
-                          )
-                        }
-                        placeholder='e.g., 96'
-                        className='w-full p-2 border border-blue-300 rounded-lg focus:border-blue-500'
-                      />
-                    </div>
-                    <div>
-                      <Label className='text-xs font-medium text-slate-600 mb-1 block'>
-                        Wall Height (in)
-                      </Label>
-                      <Input
-                        type='number'
-                        value={wall.height}
-                        onChange={(e) =>
-                          handleAccentWallChange(
-                            wall.id,
-                            'height',
-                            e.target.value
-                          )
-                        }
-                        placeholder='e.g., 96'
-                        className='w-full p-2 border border-blue-300 rounded-lg focus:border-blue-500'
-                      />
-                    </div>
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label className='text-xs font-medium text-slate-600'>
-                      Finish Type
-                    </Label>
-                    <div className='flex space-x-2'>
-                      {['tile', 'wainscot', 'paint'].map((type) => (
-                        <Button
-                          key={type}
-                          onClick={() =>
-                            handleAccentWallChange(wall.id, 'finishType', type)
-                          }
-                          variant={
-                            wall.finishType === type ? 'default' : 'outline'
-                          }
-                          size='sm'
-                          className={
-                            wall.finishType === type
-                              ? 'bg-blue-600 text-white'
-                              : 'border-blue-200 text-blue-600 hover:bg-blue-50'
-                          }
-                        >
-                          {type.charAt(0).toUpperCase() + type.slice(1)}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          <div className='mt-4 flex justify-center'>
-            <Button
-              onClick={handleAccentWallAdd}
-              className='w-auto flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors border border-blue-600'
-            >
-              <Plus size={16} />
-              Add Accent Wall
-            </Button>
-          </div>
-        </div>
+      {/* Accessories Card */}
+      <CollapsibleSection
+        title='Accessories'
+        subtitle='Hardware Installation'
+        colorScheme='design'
+      >
+        <ToggleSwitch
+          label='Towel Bar'
+          enabled={localDesign.installTowelBar}
+          onToggle={(enabled) => setDesign({ installTowelBar: enabled })}
+          className='pb-3'
+        />
+        <ToggleSwitch
+          label='Toilet Paper Holder'
+          enabled={localDesign.installTPHolder}
+          onToggle={(enabled) => setDesign({ installTPHolder: enabled })}
+          className='pb-3'
+        />
+        <ToggleSwitch
+          label='Robe Hook'
+          enabled={localDesign.installRobeHook}
+          onToggle={(enabled) => setDesign({ installRobeHook: enabled })}
+          className='pb-3'
+        />
+        <ToggleSwitch
+          label='Towel Ring'
+          enabled={localDesign.installTowelRing}
+          onToggle={(enabled) => setDesign({ installTowelRing: enabled })}
+          className='pb-3'
+        />
+        <ToggleSwitch
+          label='Shower Rod'
+          enabled={localDesign.installShowerRod}
+          onToggle={(enabled) => setDesign({ installShowerRod: enabled })}
+          className='pb-3'
+        />
+        <ToggleSwitch
+          label='Wall Shelf'
+          enabled={localDesign.installWallShelf}
+          onToggle={(enabled) => setDesign({ installWallShelf: enabled })}
+          className='pb-3'
+        />
+        <ToggleSwitch
+          label='Mirror'
+          enabled={localDesign.installMirror}
+          onToggle={(enabled) => setDesign({ installMirror: enabled })}
+          className='pb-3'
+        />
       </CollapsibleSection>
     </div>
   );

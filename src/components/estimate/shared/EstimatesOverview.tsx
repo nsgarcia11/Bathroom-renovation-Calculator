@@ -633,9 +633,10 @@ export default function EstimatesOverview({
 
     if (!hasData) return null;
 
-    // Calculate scope-based totals
+    // Calculate scope-based totals for finishings (uses 'painting', 'carpentry', 'accessories' scopes)
+    // Painting is considered "design" work, Carpentry and Accessories are "construction" work
     const designLabor = laborItems
-      .filter((item) => item.scope === 'design')
+      .filter((item) => item.scope === 'painting')
       .reduce(
         (sum, item) =>
           sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
@@ -643,7 +644,7 @@ export default function EstimatesOverview({
       );
 
     const constructionLabor = laborItems
-      .filter((item) => item.scope === 'construction')
+      .filter((item) => item.scope === 'carpentry' || item.scope === 'accessories')
       .reduce(
         (sum, item) =>
           sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
@@ -651,7 +652,7 @@ export default function EstimatesOverview({
       );
 
     const designMaterials = materialItems
-      .filter((item) => item.scope === 'design')
+      .filter((item) => item.scope === 'painting')
       .reduce(
         (sum, item) =>
           sum +
@@ -660,7 +661,7 @@ export default function EstimatesOverview({
       );
 
     const constructionMaterials = materialItems
-      .filter((item) => item.scope === 'construction')
+      .filter((item) => item.scope === 'carpentry' || item.scope === 'accessories')
       .reduce(
         (sum, item) =>
           sum +
@@ -1565,13 +1566,163 @@ export default function EstimatesOverview({
                   );
                 })()}
 
-              {/* Demolition, Shower Walls, Shower Base & Floors Detailed Breakdown */}
-              {workflow.id === 'demolition' || workflow.id === 'showerWalls' || workflow.id === 'showerBase' || workflow.id === 'floors' ? (
+              {/* Design Options for Finishings */}
+              {workflow.id === 'finishings' &&
+                (() => {
+                  const design = getDesignData('finishings') as {
+                    width?: string;
+                    length?: string;
+                    height?: string;
+                    fixWalls?: boolean;
+                    drywallRepairsLevel?: 'LIGHT' | 'MEDIUM' | 'HEAVY';
+                    priming?: boolean;
+                    paintWalls?: boolean;
+                    paintCeiling?: boolean;
+                    paintTrim?: boolean;
+                    paintDoor?: boolean;
+                    installBaseboard?: boolean;
+                    installDoorCasing?: boolean;
+                    installShoeQuarterRound?: boolean;
+                    installDoorHardware?: boolean;
+                    installMirror?: boolean;
+                    installTowelBar?: boolean;
+                    installTPHolder?: boolean;
+                    installRobeHook?: boolean;
+                    installTowelRing?: boolean;
+                    installShowerRod?: boolean;
+                    installWallShelf?: boolean;
+                  } | null;
+
+                  if (!design) return null;
+
+                  // Calculate areas
+                  const width = parseFloat(design.width || '0') || 0;
+                  const length = parseFloat(design.length || '0') || 0;
+                  const height = parseFloat(design.height || '0') || 0;
+                  const floorArea = (width * length) / 144;
+                  const wallArea = (2 * (width + length) * height) / 144;
+                  const perimeter = (2 * (width + length)) / 12;
+
+                  // Collect painting options
+                  const paintingOptions: string[] = [];
+                  if (design.fixWalls) paintingOptions.push(`Drywall Repairs (${design.drywallRepairsLevel || 'LIGHT'})`);
+                  if (design.priming) paintingOptions.push('Priming');
+                  if (design.paintWalls) paintingOptions.push('Paint Walls');
+                  if (design.paintCeiling) paintingOptions.push('Paint Ceiling');
+                  if (design.paintTrim) paintingOptions.push('Paint Trim');
+                  if (design.paintDoor) paintingOptions.push('Paint Door');
+
+                  // Collect carpentry options
+                  const carpentryOptions: string[] = [];
+                  if (design.installBaseboard) carpentryOptions.push('Baseboard');
+                  if (design.installDoorCasing) carpentryOptions.push('Door Casing');
+                  if (design.installShoeQuarterRound) carpentryOptions.push('Shoe/Quarter Round');
+                  if (design.installDoorHardware) carpentryOptions.push('Door Hardware');
+
+                  // Collect accessory options
+                  const accessoryOptions: string[] = [];
+                  if (design.installTowelBar) accessoryOptions.push('Towel Bar');
+                  if (design.installTPHolder) accessoryOptions.push('TP Holder');
+                  if (design.installRobeHook) accessoryOptions.push('Robe Hook');
+                  if (design.installTowelRing) accessoryOptions.push('Towel Ring');
+                  if (design.installShowerRod) accessoryOptions.push('Shower Rod');
+                  if (design.installWallShelf) accessoryOptions.push('Wall Shelf');
+                  if (design.installMirror) accessoryOptions.push('Mirror');
+
+                  const hasAnyOption = paintingOptions.length > 0 || carpentryOptions.length > 0 || accessoryOptions.length > 0;
+                  if (!hasAnyOption && !design.width) return null;
+
+                  return (
+                    <div className='mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200'>
+                      <h4 className='font-semibold text-blue-900 mb-2'>
+                        Design Specifications
+                      </h4>
+                      <div className='grid grid-cols-2 gap-2 text-sm'>
+                        {/* Room Dimensions */}
+                        {design.width && design.length && (
+                          <>
+                            <div>
+                              <span className='font-medium text-gray-700'>
+                                Room Dimensions:
+                              </span>
+                              <div className='text-gray-600'>
+                                {design.width}&quot; × {design.length}&quot; × {design.height}&quot;
+                              </div>
+                            </div>
+                            <div>
+                              <span className='font-medium text-gray-700'>
+                                Floor Area:
+                              </span>
+                              <div className='text-gray-600'>
+                                {floorArea.toFixed(1)} sq/ft
+                              </div>
+                            </div>
+                            <div>
+                              <span className='font-medium text-gray-700'>
+                                Wall Area:
+                              </span>
+                              <div className='text-gray-600'>
+                                {wallArea.toFixed(1)} sq/ft
+                              </div>
+                            </div>
+                            <div>
+                              <span className='font-medium text-gray-700'>
+                                Perimeter:
+                              </span>
+                              <div className='text-gray-600'>
+                                {perimeter.toFixed(1)} ft
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {/* Painting Options */}
+                        {paintingOptions.length > 0 && (
+                          <div className='col-span-2'>
+                            <span className='font-medium text-gray-700'>
+                              Painting:
+                            </span>
+                            <div className='text-gray-600'>
+                              {paintingOptions.join(', ')}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Carpentry Options */}
+                        {carpentryOptions.length > 0 && (
+                          <div className='col-span-2'>
+                            <span className='font-medium text-gray-700'>
+                              Carpentry:
+                            </span>
+                            <div className='text-gray-600'>
+                              {carpentryOptions.join(', ')}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Accessory Options */}
+                        {accessoryOptions.length > 0 && (
+                          <div className='col-span-2'>
+                            <span className='font-medium text-gray-700'>
+                              Accessories:
+                            </span>
+                            <div className='text-gray-600'>
+                              {accessoryOptions.join(', ')}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+              {/* Demolition, Shower Walls, Shower Base, Floors & Finishings Detailed Breakdown */}
+              {workflow.id === 'demolition' || workflow.id === 'showerWalls' || workflow.id === 'showerBase' || workflow.id === 'floors' || workflow.id === 'finishings' ? (
                 <>
                   {/* Labor Items */}
                   {(() => {
-                    const laborItems = getLaborItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors');
-                    const flatFeeItems = getFlatFeeItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors');
+                    const laborItems = getLaborItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings');
+                    const flatFeeItems = getFlatFeeItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings');
                     const designData = workflow.id === 'demolition'
                       ? (getDesignData('demolition') as {
                           isDemolitionFlatFee?: 'yes' | 'no';
@@ -1694,7 +1845,7 @@ export default function EstimatesOverview({
 
                   {/* Material Items */}
                   {(() => {
-                    const materialItems = getMaterialItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors');
+                    const materialItems = getMaterialItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings');
 
                     if (materialItems.length === 0) return null;
 

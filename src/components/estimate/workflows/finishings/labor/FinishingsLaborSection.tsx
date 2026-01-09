@@ -43,16 +43,13 @@ interface FinishingsDesignData {
   paintCeiling: boolean;
   paintTrim: boolean;
   paintDoor: boolean;
-  numDoors: string;
-  nonPaintWallAreaSqFt: string;
+  // Carpentry options
   installBaseboard: boolean;
-  installVanity: boolean;
-  vanitySinks: number;
-  installMirror: boolean;
-  installLighting: boolean;
-  lightingQuantity: number;
-  installToilet: boolean;
+  installDoorCasing: boolean;
+  installShoeQuarterRound: boolean;
+  installDoorHardware: boolean;
   // Accessory options
+  installMirror: boolean;
   installTowelBar: boolean;
   towelBarQuantity: number;
   installTPHolder: boolean;
@@ -65,8 +62,6 @@ interface FinishingsDesignData {
   showerRodQuantity: number;
   installWallShelf: boolean;
   wallShelfQuantity: number;
-  plumbingPerformedBy: 'me' | 'trade';
-  electricalPerformedBy: 'me' | 'trade';
   accentWalls: Array<{
     id: string;
     width: string;
@@ -111,15 +106,11 @@ export default function FinishingsLaborSection() {
         paintCeiling: true,
         paintTrim: false,
         paintDoor: false,
-        numDoors: '1',
-        nonPaintWallAreaSqFt: '0',
         installBaseboard: false,
-        installVanity: true,
-        vanitySinks: 1,
-        installMirror: true,
-        installLighting: true,
-        lightingQuantity: 2,
-        installToilet: true,
+        installDoorCasing: false,
+        installShoeQuarterRound: false,
+        installDoorHardware: false,
+        installMirror: false,
         installTowelBar: false,
         towelBarQuantity: 1,
         installTPHolder: false,
@@ -132,8 +123,6 @@ export default function FinishingsLaborSection() {
         showerRodQuantity: 1,
         installWallShelf: false,
         wallShelfQuantity: 1,
-        plumbingPerformedBy: 'me',
-        electricalPerformedBy: 'me',
         accentWalls: [],
       },
     [designData]
@@ -147,8 +136,8 @@ export default function FinishingsLaborSection() {
   const [localLaborItems, setLocalLaborItems] = useState<LaborItem[]>([]);
   const [localFlatFeeItems, setLocalFlatFeeItems] = useState<FlatFeeItem[]>([]);
   const [isPaintingOpen, setIsPaintingOpen] = useState(true);
-  const [isInstallationOpen, setIsInstallationOpen] = useState(true);
-  const [isAccentWallsOpen, setIsAccentWallsOpen] = useState(true);
+  const [isCarpentryOpen, setIsCarpentryOpen] = useState(true);
+  const [isAccessoriesOpen, setIsAccessoriesOpen] = useState(true);
 
   const isUserActionRef = useRef(false);
   const processedChoicesRef = useRef<string>('');
@@ -177,11 +166,8 @@ export default function FinishingsLaborSection() {
     const perimeterFt = 2 * (widthFt + lengthFt);
     const wallAreaSqFt = perimeterFt * heightFt;
 
-    // Non-paint wall area (clamped >= 0)
-    const nonPaintWallAreaSqFt = parseNum(design.nonPaintWallAreaSqFt);
-
-    // Paintable wall area
-    const paintableWallArea = Math.max(0, wallAreaSqFt - nonPaintWallAreaSqFt);
+    // Paintable wall area (all wall area is paintable by default)
+    const paintableWallArea = wallAreaSqFt;
 
     // Paint surface = paintable walls + ceiling
     const paintSurfaceSqFt = paintableWallArea + ceilingAreaSqFt;
@@ -195,12 +181,8 @@ export default function FinishingsLaborSection() {
     );
     const baseboardPaintLf = Math.max(0, perimeterFt - coveredBaseboardLf);
 
-    // Number of doors (default 1 if blank/NaN, clamped >= 0)
-    let numDoors = parseNum(design.numDoors, 1);
-    if (design.numDoors === '' || isNaN(parseFloat(design.numDoors))) {
-      numDoors = 1;
-    }
-    numDoors = Math.max(0, numDoors);
+    // Number of doors (default 1)
+    const numDoors = 1;
 
     return {
       widthFt,
@@ -210,14 +192,13 @@ export default function FinishingsLaborSection() {
       ceilingAreaSqFt,
       perimeterFt,
       wallAreaSqFt,
-      nonPaintWallAreaSqFt,
       paintableWallArea,
       paintSurfaceSqFt,
       coveredBaseboardLf,
       baseboardPaintLf,
       numDoors,
     };
-  }, [design.width, design.length, design.height, design.nonPaintWallAreaSqFt, design.numDoors]);
+  }, [design.width, design.length, design.height]);
 
   // ============================================================================
   // HIDDEN PREP/CLEANUP HOURS (per spec Section 4)
@@ -413,55 +394,79 @@ export default function FinishingsLaborSection() {
     }
 
     // -------------------------------------------------------------------------
-    // Installation Labor (existing logic)
+    // Carpentry Labor (Trim & Doors per spec)
     // -------------------------------------------------------------------------
-    if (design.installVanity && design.plumbingPerformedBy === 'me') {
-      const vanityHours = 4 + (design.vanitySinks - 1) * 1;
+    const hasCarpentryTask =
+      design.installBaseboard ||
+      design.installDoorCasing ||
+      design.installShoeQuarterRound ||
+      design.installDoorHardware;
+
+    // One-time setup labor (if ANY carpentry toggle is ON)
+    if (hasCarpentryTask) {
+      const setupHours = (20 / 60).toFixed(2); // 20 minutes = 0.33 hrs
       laborItems.push({
-        ...laborItemsMap.installVanity,
-        id: `lab-finish-vanity-${Date.now()}`,
-        hours: vanityHours.toString(),
-        scope: 'installation',
+        id: `lab-finish-trim-setup-${Date.now()}`,
+        name: 'Trim & Door Setup/Layout',
+        hours: setupHours,
+        rate: contractorHourlyRate.toString(),
+        scope: 'carpentry',
         isAutoGenerated: true,
       });
     }
 
-    if (design.installMirror) {
-      laborItems.push({
-        ...laborItemsMap.installMirror,
-        id: `lab-finish-mirror-${Date.now()}`,
-        scope: 'installation',
-        isAutoGenerated: true,
-      });
-    }
-
-    if (design.installLighting && design.electricalPerformedBy === 'me') {
-      const lightingHours = design.lightingQuantity * 1.5;
-      laborItems.push({
-        ...laborItemsMap.installLighting,
-        id: `lab-finish-lighting-${Date.now()}`,
-        hours: lightingHours.toString(),
-        scope: 'installation',
-        isAutoGenerated: true,
-      });
-    }
-
-    if (design.installToilet && design.plumbingPerformedBy === 'me') {
-      laborItems.push({
-        ...laborItemsMap.installToilet,
-        id: `lab-finish-toilet-${Date.now()}`,
-        scope: 'installation',
-        isAutoGenerated: true,
-      });
-    }
-
+    // 1) Baseboard - Labor: (perimeterFt * 3.0 minutes) / 60
     if (design.installBaseboard && geometry.perimeterFt > 0) {
-      const baseboardHours = Math.max(1, geometry.perimeterFt / 20).toFixed(2);
+      const baseboardMinutes = geometry.perimeterFt * 3.0;
+      const baseboardHours = (baseboardMinutes / 60).toFixed(2);
       laborItems.push({
         ...laborItemsMap.installBaseboards,
         id: `lab-finish-baseboards-${Date.now()}`,
+        name: `Install Baseboard (${Math.round(geometry.perimeterFt)}lf)`,
         hours: baseboardHours,
-        scope: 'installation',
+        scope: 'carpentry',
+        isAutoGenerated: true,
+      });
+    }
+
+    // 2) Door Casing - Labor: (numDoors * 50 minutes) / 60
+    if (design.installDoorCasing && geometry.numDoors > 0) {
+      const casingMinutes = geometry.numDoors * 50;
+      const casingHours = (casingMinutes / 60).toFixed(2);
+      laborItems.push({
+        id: `lab-finish-door-casing-${Date.now()}`,
+        name: `Install Door Casing (${geometry.numDoors})`,
+        hours: casingHours,
+        rate: contractorHourlyRate.toString(),
+        scope: 'carpentry',
+        isAutoGenerated: true,
+      });
+    }
+
+    // 3) Shoe / Quarter Round - Labor: (perimeterFt * 1.5 minutes) / 60
+    if (design.installShoeQuarterRound && geometry.perimeterFt > 0) {
+      const shoeMinutes = geometry.perimeterFt * 1.5;
+      const shoeHours = (shoeMinutes / 60).toFixed(2);
+      laborItems.push({
+        id: `lab-finish-shoe-quarter-${Date.now()}`,
+        name: `Install Shoe/Quarter Round (${Math.round(geometry.perimeterFt)}lf)`,
+        hours: shoeHours,
+        rate: contractorHourlyRate.toString(),
+        scope: 'carpentry',
+        isAutoGenerated: true,
+      });
+    }
+
+    // 4) Door Hardware - Labor: (numDoors * 40 minutes) / 60
+    if (design.installDoorHardware && geometry.numDoors > 0) {
+      const hardwareMinutes = geometry.numDoors * 40;
+      const hardwareHours = (hardwareMinutes / 60).toFixed(2);
+      laborItems.push({
+        id: `lab-finish-door-hardware-${Date.now()}`,
+        name: `Door Hardware & Adjust (${geometry.numDoors})`,
+        hours: hardwareHours,
+        rate: contractorHourlyRate.toString(),
+        scope: 'carpentry',
         isAutoGenerated: true,
       });
     }
@@ -477,7 +482,7 @@ export default function FinishingsLaborSection() {
         id: `lab-finish-towel-bar-${Date.now()}`,
         name: qty > 1 ? `Install Towel Bar (x${qty})` : 'Install Towel Bar',
         hours: totalHours,
-        scope: 'installation',
+        scope: 'accessories',
         isAutoGenerated: true,
       });
     }
@@ -490,7 +495,7 @@ export default function FinishingsLaborSection() {
         id: `lab-finish-tp-holder-${Date.now()}`,
         name: qty > 1 ? `Install Toilet Paper Holder (x${qty})` : 'Install Toilet Paper Holder',
         hours: totalHours,
-        scope: 'installation',
+        scope: 'accessories',
         isAutoGenerated: true,
       });
     }
@@ -503,7 +508,7 @@ export default function FinishingsLaborSection() {
         id: `lab-finish-robe-hook-${Date.now()}`,
         name: qty > 1 ? `Install Robe Hook (x${qty})` : 'Install Robe Hook',
         hours: totalHours,
-        scope: 'installation',
+        scope: 'accessories',
         isAutoGenerated: true,
       });
     }
@@ -516,7 +521,7 @@ export default function FinishingsLaborSection() {
         id: `lab-finish-towel-ring-${Date.now()}`,
         name: qty > 1 ? `Install Towel Ring (x${qty})` : 'Install Towel Ring',
         hours: totalHours,
-        scope: 'installation',
+        scope: 'accessories',
         isAutoGenerated: true,
       });
     }
@@ -529,7 +534,7 @@ export default function FinishingsLaborSection() {
         id: `lab-finish-shower-rod-${Date.now()}`,
         name: qty > 1 ? `Install Shower Rod (x${qty})` : 'Install Shower Rod',
         hours: totalHours,
-        scope: 'installation',
+        scope: 'accessories',
         isAutoGenerated: true,
       });
     }
@@ -542,65 +547,23 @@ export default function FinishingsLaborSection() {
         id: `lab-finish-wall-shelf-${Date.now()}`,
         name: qty > 1 ? `Install Accessory Shelf (x${qty})` : 'Install Accessory Shelf',
         hours: totalHours,
-        scope: 'installation',
+        scope: 'accessories',
         isAutoGenerated: true,
       });
     }
 
-    // -------------------------------------------------------------------------
-    // Accent Wall Labor (existing logic)
-    // -------------------------------------------------------------------------
-    (design.accentWalls && Array.isArray(design.accentWalls)
-      ? design.accentWalls
-      : []
-    ).forEach((wall, index) => {
-      const wallW = parseFloat(wall.width) || 0;
-      const wallH = parseFloat(wall.height) || 0;
-      if (wallW > 0 && wallH > 0) {
-        const area = (wallW * wallH) / 144;
-        let accentItem: LaborItem | null = null;
-
-        switch (wall.finishType) {
-          case 'tile':
-            const tileHours = (area / 10).toFixed(2);
-            accentItem = {
-              ...laborItemsMap.tileAccentWall,
-              id: `lab-finish-tile-accent-${wall.id}-${Date.now()}`,
-              name: `Tile Accent Wall ${index + 1}`,
-              hours: tileHours,
-              scope: 'accent_walls',
-              isAutoGenerated: true,
-            };
-            break;
-          case 'wainscot':
-            const wainscotHours = (area / 15).toFixed(2);
-            accentItem = {
-              ...laborItemsMap.wainscotAccentWall,
-              id: `lab-finish-wainscot-accent-${wall.id}-${Date.now()}`,
-              name: `Wainscot Accent Wall ${index + 1}`,
-              hours: wainscotHours,
-              scope: 'accent_walls',
-              isAutoGenerated: true,
-            };
-            break;
-          case 'paint':
-            const paintHours = (area / 150).toFixed(2);
-            accentItem = {
-              ...laborItemsMap.paintAccentWall,
-              id: `lab-finish-paint-accent-${wall.id}-${Date.now()}`,
-              name: `Paint Accent Wall ${index + 1}`,
-              hours: paintHours,
-              scope: 'accent_walls',
-              isAutoGenerated: true,
-            };
-            break;
-        }
-
-        if (accentItem) {
-          laborItems.push(accentItem);
-        }
-      }
-    });
+    // 7) Mirror - Labor: 60 min = 1.00 hrs
+    if (design.installMirror) {
+      const mirrorHours = (60 / 60).toFixed(2); // 60 min per item
+      laborItems.push({
+        ...laborItemsMap.installMirror,
+        id: `lab-finish-mirror-${Date.now()}`,
+        name: 'Install Mirror',
+        hours: mirrorHours,
+        scope: 'accessories',
+        isAutoGenerated: true,
+      });
+    }
 
     return { laborItems, flatFeeItems };
   }, [
@@ -616,34 +579,34 @@ export default function FinishingsLaborSection() {
       design.fixWalls
     }-${design.drywallRepairsLevel}-${design.priming}-${design.paintWalls}-${design.paintCeiling}-${
       design.paintTrim
-    }-${design.paintDoor}-${design.numDoors}-${design.nonPaintWallAreaSqFt}-${design.installBaseboard}-${design.installVanity}-${
-      design.vanitySinks
-    }-${design.installMirror}-${design.installLighting}-${
-      design.lightingQuantity
-    }-${design.installToilet}-${design.installTowelBar}-${design.towelBarQuantity}-${
+    }-${design.paintDoor}-${design.installBaseboard}-${design.installDoorCasing}-${
+      design.installShoeQuarterRound
+    }-${design.installDoorHardware}-${design.installMirror}-${design.installTowelBar}-${design.towelBarQuantity}-${
       design.installTPHolder
     }-${design.tpHolderQuantity}-${design.installRobeHook}-${design.robeHookQuantity}-${
       design.installTowelRing
     }-${design.towelRingQuantity}-${design.installShowerRod}-${design.showerRodQuantity}-${
       design.installWallShelf
-    }-${design.wallShelfQuantity}-${design.plumbingPerformedBy}-${
-      design.electricalPerformedBy
-    }-${JSON.stringify(design.accentWalls)}`;
+    }-${design.wallShelfQuantity}`;
     if (processedChoicesRef.current === choicesKey) return;
-    if (contextLaborItems && contextLaborItems.length > 0) return;
+
+    // Preserve custom items, regenerate auto items
     const currentLabor = localLaborItems || [];
-    const existingAutoItems = currentLabor.filter(
-      (item) => (item as LaborItem).source === 'auto'
+    const customItems = currentLabor.filter(
+      (item) => item.source === 'custom' || item.isAutoGenerated === false
     );
-    if (existingAutoItems.length > 0) return;
-    const { laborItems } = generateLaborItems();
-    if (laborItems.length > 0) setLaborItems('finishings', laborItems);
+
+    const { laborItems: newAutoItems } = generateLaborItems();
+    const mergedItems = [...customItems, ...newAutoItems];
+
+    if (mergedItems.length > 0 || currentLabor.length > 0) {
+      setLaborItems('finishings', mergedItems);
+    }
     processedChoicesRef.current = choicesKey;
   }, [
     design,
     generateLaborItems,
     setLaborItems,
-    contextLaborItems,
     localLaborItems,
     isReloading,
   ]);
@@ -668,15 +631,15 @@ export default function FinishingsLaborSection() {
     }, 100);
   }, [localLaborItems, setLaborItems, contractorHourlyRate]);
 
-  const handleAddInstallationLaborItem = useCallback(() => {
+  const handleAddAccessoriesLaborItem = useCallback(() => {
     const newItem: LaborItem = {
-      id: `labor-installation-${Date.now()}-${Math.random()
+      id: `labor-accessories-${Date.now()}-${Math.random()
         .toString(36)
-        .substr(2, 9)}`,
+        .substring(2, 11)}`,
       name: '',
       hours: '1',
       rate: contractorHourlyRate.toString(),
-      scope: 'installation',
+      scope: 'accessories',
       source: 'custom',
       isAutoGenerated: false,
     };
@@ -688,15 +651,15 @@ export default function FinishingsLaborSection() {
     }, 100);
   }, [localLaborItems, setLaborItems, contractorHourlyRate]);
 
-  const handleAddAccentWallsLaborItem = useCallback(() => {
+  const handleAddCarpentryLaborItem = useCallback(() => {
     const newItem: LaborItem = {
-      id: `labor-accent-walls-${Date.now()}-${Math.random()
+      id: `labor-carpentry-${Date.now()}-${Math.random()
         .toString(36)
-        .substr(2, 9)}`,
+        .substring(2, 11)}`,
       name: '',
       hours: '1',
       rate: contractorHourlyRate.toString(),
-      scope: 'accent_walls',
+      scope: 'carpentry',
       source: 'custom',
       isAutoGenerated: false,
     };
@@ -814,33 +777,32 @@ export default function FinishingsLaborSection() {
         item.name.toLowerCase().includes('primer') ||
         item.name.toLowerCase().includes('priming') ||
         item.name.toLowerCase().includes('drywall') ||
-        item.name.toLowerCase().includes('ceiling') ||
-        item.name.toLowerCase().includes('trim') ||
-        item.name.toLowerCase().includes('door')
+        item.name.toLowerCase().includes('ceiling')
     );
   }, [localLaborItems]);
 
-  const installationLaborItems = useMemo(() => {
+  const carpentryLaborItems = useMemo(() => {
     return localLaborItems.filter(
       (item) =>
-        item.scope === 'installation' ||
-        item.name.toLowerCase().includes('install') ||
-        item.name.toLowerCase().includes('vanity') ||
-        item.name.toLowerCase().includes('mirror') ||
-        item.name.toLowerCase().includes('lighting') ||
-        item.name.toLowerCase().includes('toilet') ||
-        item.name.toLowerCase().includes('fixture')
+        item.scope === 'carpentry' ||
+        item.name.toLowerCase().includes('baseboard') ||
+        item.name.toLowerCase().includes('casing') ||
+        item.name.toLowerCase().includes('shoe') ||
+        item.name.toLowerCase().includes('quarter round') ||
+        item.name.toLowerCase().includes('door hardware')
     );
   }, [localLaborItems]);
 
-  const accentWallsLaborItems = useMemo(() => {
+  const accessoriesLaborItems = useMemo(() => {
     return localLaborItems.filter(
       (item) =>
-        item.scope === 'accent_walls' ||
-        item.name.toLowerCase().includes('accent') ||
-        item.name.toLowerCase().includes('tile') ||
-        item.name.toLowerCase().includes('wainscot') ||
-        item.name.toLowerCase().includes('wallpaper')
+        item.scope === 'accessories' ||
+        item.name.toLowerCase().includes('towel') ||
+        item.name.toLowerCase().includes('toilet paper') ||
+        item.name.toLowerCase().includes('robe hook') ||
+        item.name.toLowerCase().includes('shower rod') ||
+        item.name.toLowerCase().includes('shelf') ||
+        item.name.toLowerCase().includes('mirror')
     );
   }, [localLaborItems]);
 
@@ -855,21 +817,21 @@ export default function FinishingsLaborSection() {
     0
   );
 
-  const installationTotalHours = installationLaborItems.reduce(
+  const carpentryTotalHours = carpentryLaborItems.reduce(
     (sum, item) => sum + (parseFloat(item.hours) || 0),
     0
   );
-  const installationLaborTotal = installationLaborItems.reduce(
+  const carpentryLaborTotal = carpentryLaborItems.reduce(
     (sum, item) =>
       sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
     0
   );
 
-  const accentWallsTotalHours = accentWallsLaborItems.reduce(
+  const accessoriesTotalHours = accessoriesLaborItems.reduce(
     (sum, item) => sum + (parseFloat(item.hours) || 0),
     0
   );
-  const accentWallsLaborTotal = accentWallsLaborItems.reduce(
+  const accessoriesLaborTotal = accessoriesLaborItems.reduce(
     (sum, item) =>
       sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
     0
@@ -1003,11 +965,11 @@ export default function FinishingsLaborSection() {
   const totalAmount = useMemo(() => {
     return (
       paintingLaborTotal +
-      installationLaborTotal +
-      accentWallsLaborTotal +
+      carpentryLaborTotal +
+      accessoriesLaborTotal +
       flatFeeTotal
     );
-  }, [paintingLaborTotal, installationLaborTotal, accentWallsLaborTotal, flatFeeTotal]);
+  }, [paintingLaborTotal, carpentryLaborTotal, accessoriesLaborTotal, flatFeeTotal]);
 
   return (
     <div className='space-y-5'>
@@ -1080,46 +1042,46 @@ export default function FinishingsLaborSection() {
           </CardContent>
         </Card>
 
-        {/* Installation Labor Section */}
+        {/* Carpentry Labor Section */}
         <Card>
           <CardContent className='p-3 space-y-3'>
             <div
               className='flex justify-between items-center cursor-pointer'
-              onClick={() => setIsInstallationOpen(!isInstallationOpen)}
+              onClick={() => setIsCarpentryOpen(!isCarpentryOpen)}
             >
               <div className='flex items-center gap-2 justify-between w-full'>
                 <div className='flex items-center gap-2'>
-                  {isInstallationOpen ? (
+                  {isCarpentryOpen ? (
                     <ChevronDown className='h-4 w-4 text-slate-600' />
                   ) : (
                     <ChevronRight className='h-4 w-4 text-slate-600' />
                   )}
                   <h3 className='text-lg font-semibold text-slate-700'>
-                    Installation
+                    Carpentry
                   </h3>
                 </div>
                 <span className='text-sm text-slate-500'>
-                  {installationTotalHours.toFixed(1)} hrs
+                  {carpentryTotalHours.toFixed(1)} hrs
                 </span>
                 <p className='font-bold text-blue-600 text-sm'>
-                  ${installationLaborTotal.toFixed(2)}
+                  ${carpentryLaborTotal.toFixed(2)}
                 </p>
               </div>
             </div>
-            {isInstallationOpen && (
+            {isCarpentryOpen && (
               <>
-                {installationLaborItems.length > 0 ? (
+                {carpentryLaborItems.length > 0 ? (
                   <div className='space-y-2'>
-                    {installationLaborItems.map(renderLaborItem)}
+                    {carpentryLaborItems.map(renderLaborItem)}
                   </div>
                 ) : (
                   <p className='text-sm text-slate-500 text-center py-4'>
-                    No installation labor items added yet.
+                    No carpentry labor items added yet.
                   </p>
                 )}
                 <div className='flex justify-center'>
                   <Button
-                    onClick={handleAddInstallationLaborItem}
+                    onClick={handleAddCarpentryLaborItem}
                     variant='default'
                     className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
                   >
@@ -1132,46 +1094,49 @@ export default function FinishingsLaborSection() {
           </CardContent>
         </Card>
 
-        {/* Accent Walls Labor Section */}
+        {/* Accessories Labor Section */}
         <Card>
           <CardContent className='p-3 space-y-3'>
             <div
               className='flex justify-between items-center cursor-pointer'
-              onClick={() => setIsAccentWallsOpen(!isAccentWallsOpen)}
+              onClick={() => setIsAccessoriesOpen(!isAccessoriesOpen)}
             >
               <div className='flex items-center gap-2 justify-between w-full'>
                 <div className='flex items-center gap-2'>
-                  {isAccentWallsOpen ? (
+                  {isAccessoriesOpen ? (
                     <ChevronDown className='h-4 w-4 text-slate-600' />
                   ) : (
                     <ChevronRight className='h-4 w-4 text-slate-600' />
                   )}
-                  <h3 className='text-lg font-semibold text-slate-700'>
-                    Accent Walls
-                  </h3>
+                  <div>
+                    <h3 className='text-lg font-semibold text-slate-700'>
+                      Accessories
+                    </h3>
+                    <p className='text-xs text-slate-500'>Hardware Installation</p>
+                  </div>
                 </div>
                 <span className='text-sm text-slate-500'>
-                  {accentWallsTotalHours.toFixed(1)} hrs
+                  {accessoriesTotalHours.toFixed(1)} hrs
                 </span>
                 <p className='font-bold text-blue-600 text-sm'>
-                  ${accentWallsLaborTotal.toFixed(2)}
+                  ${accessoriesLaborTotal.toFixed(2)}
                 </p>
               </div>
             </div>
-            {isAccentWallsOpen && (
+            {isAccessoriesOpen && (
               <>
-                {accentWallsLaborItems.length > 0 ? (
+                {accessoriesLaborItems.length > 0 ? (
                   <div className='space-y-2'>
-                    {accentWallsLaborItems.map(renderLaborItem)}
+                    {accessoriesLaborItems.map(renderLaborItem)}
                   </div>
                 ) : (
                   <p className='text-sm text-slate-500 text-center py-4'>
-                    No accent walls labor items added yet.
+                    No accessories labor items added yet.
                   </p>
                 )}
                 <div className='flex justify-center'>
                   <Button
-                    onClick={handleAddAccentWallsLaborItem}
+                    onClick={handleAddAccessoriesLaborItem}
                     variant='default'
                     className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
                   >

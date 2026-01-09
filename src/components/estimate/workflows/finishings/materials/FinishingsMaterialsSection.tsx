@@ -34,16 +34,13 @@ interface FinishingsDesignData {
   paintCeiling: boolean;
   paintTrim: boolean;
   paintDoor: boolean;
-  numDoors: string;
-  nonPaintWallAreaSqFt: string;
+  // Carpentry options
   installBaseboard: boolean;
-  installVanity: boolean;
-  vanitySinks: number;
-  installMirror: boolean;
-  installLighting: boolean;
-  lightingQuantity: number;
-  installToilet: boolean;
+  installDoorCasing: boolean;
+  installShoeQuarterRound: boolean;
+  installDoorHardware: boolean;
   // Accessory options
+  installMirror: boolean;
   installTowelBar: boolean;
   towelBarQuantity: number;
   installTPHolder: boolean;
@@ -56,14 +53,6 @@ interface FinishingsDesignData {
   showerRodQuantity: number;
   installWallShelf: boolean;
   wallShelfQuantity: number;
-  plumbingPerformedBy: 'me' | 'trade';
-  electricalPerformedBy: 'me' | 'trade';
-  accentWalls: Array<{
-    id: string;
-    width: string;
-    height: string;
-    finishType: 'tile' | 'wainscot' | 'paint';
-  }>;
   [key: string]: unknown;
 }
 
@@ -97,15 +86,11 @@ export default function FinishingsMaterialsSection() {
         paintCeiling: true,
         paintTrim: false,
         paintDoor: false,
-        numDoors: '1',
-        nonPaintWallAreaSqFt: '0',
         installBaseboard: false,
-        installVanity: true,
-        vanitySinks: 1,
-        installMirror: true,
-        installLighting: true,
-        lightingQuantity: 2,
-        installToilet: true,
+        installDoorCasing: false,
+        installShoeQuarterRound: false,
+        installDoorHardware: false,
+        installMirror: false,
         installTowelBar: false,
         towelBarQuantity: 1,
         installTPHolder: false,
@@ -118,9 +103,6 @@ export default function FinishingsMaterialsSection() {
         showerRodQuantity: 1,
         installWallShelf: false,
         wallShelfQuantity: 1,
-        plumbingPerformedBy: 'me',
-        electricalPerformedBy: 'me',
-        accentWalls: [],
       },
     [designData]
   );
@@ -129,8 +111,8 @@ export default function FinishingsMaterialsSection() {
 
   const [localMaterials, setLocalMaterials] = useState<MaterialItem[]>([]);
   const [isPaintingOpen, setIsPaintingOpen] = useState(true);
-  const [isInstallationOpen, setIsInstallationOpen] = useState(true);
-  const [isAccentWallsOpen, setIsAccentWallsOpen] = useState(true);
+  const [isCarpentryOpen, setIsCarpentryOpen] = useState(true);
+  const [isAccessoriesOpen, setIsAccessoriesOpen] = useState(true);
 
   const isUserActionRef = useRef(false);
   const processedChoicesRef = useRef<string>('');
@@ -158,11 +140,8 @@ export default function FinishingsMaterialsSection() {
     const perimeterFt = 2 * (widthFt + lengthFt);
     const wallAreaSqFt = perimeterFt * heightFt;
 
-    // Non-paint wall area (clamped >= 0)
-    const nonPaintWallAreaSqFt = parseNum(design.nonPaintWallAreaSqFt);
-
-    // Paintable wall area
-    const paintableWallArea = Math.max(0, wallAreaSqFt - nonPaintWallAreaSqFt);
+    // Paintable wall area (all wall area is paintable by default)
+    const paintableWallArea = wallAreaSqFt;
 
     // Paint surface = paintable walls + ceiling
     const paintSurfaceSqFt = paintableWallArea + ceilingAreaSqFt;
@@ -176,12 +155,8 @@ export default function FinishingsMaterialsSection() {
     );
     const baseboardPaintLf = Math.max(0, perimeterFt - coveredBaseboardLf);
 
-    // Number of doors (default 1 if blank/NaN, clamped >= 0)
-    let numDoors = parseNum(design.numDoors, 1);
-    if (design.numDoors === '' || isNaN(parseFloat(design.numDoors))) {
-      numDoors = 1;
-    }
-    numDoors = Math.max(0, numDoors);
+    // Number of doors (default 1)
+    const numDoors = 1;
 
     return {
       widthFt,
@@ -191,14 +166,13 @@ export default function FinishingsMaterialsSection() {
       ceilingAreaSqFt,
       perimeterFt,
       wallAreaSqFt,
-      nonPaintWallAreaSqFt,
       paintableWallArea,
       paintSurfaceSqFt,
       coveredBaseboardLf,
       baseboardPaintLf,
       numDoors,
     };
-  }, [design.width, design.length, design.height, design.nonPaintWallAreaSqFt, design.numDoors]);
+  }, [design.width, design.length, design.height]);
 
   // ============================================================================
   // MATERIALS GENERATION (per spec Section 5)
@@ -367,212 +341,177 @@ export default function FinishingsMaterialsSection() {
     }
 
     // -------------------------------------------------------------------------
-    // Installation Materials (existing logic)
+    // Carpentry Materials (Trim & Doors per spec)
     // -------------------------------------------------------------------------
+
+    // 1) Baseboard (Primed MDF) - Qty: perimeterFt * 1.10, Price: $3.50/LF
     if (design.installBaseboard && geometry.perimeterFt > 0) {
-      const baseboardLength = Math.ceil(geometry.perimeterFt * 1.1); // 10% waste
+      const baseboardLength = Math.ceil(geometry.perimeterFt * 1.10); // 10% waste/extra
       materials.push({
-        ...materialsMap.baseboards,
         id: `mat-finish-baseboards-${Date.now()}`,
+        name: 'Baseboard (Primed MDF)',
         quantity: baseboardLength.toString(),
-        scope: 'installation',
+        unit: 'LF',
+        price: '3.50',
+        scope: 'carpentry',
         isAutoGenerated: true,
       });
     }
 
-    if (design.installVanity) {
+    // 2) Door Casing (Primed MDF) - Qty: numDoors * 17 * 1.10, Price: $1.15/LF
+    if (design.installDoorCasing && geometry.numDoors > 0) {
+      const casingLfPerDoor = 17; // Assumed casing LF per door
+      const casingLength = Math.ceil(geometry.numDoors * casingLfPerDoor * 1.10); // 10% waste
       materials.push({
-        ...materialsMap.vanity,
-        id: `mat-finish-vanity-${Date.now()}`,
-        scope: 'installation',
+        id: `mat-finish-door-casing-${Date.now()}`,
+        name: 'Door Casing (Primed MDF)',
+        quantity: casingLength.toString(),
+        unit: 'LF',
+        price: '1.15',
+        scope: 'carpentry',
         isAutoGenerated: true,
       });
     }
 
-    if (design.installMirror) {
+    // 3) Shoe / Quarter Round - Qty: perimeterFt * 1.10, Price: $1.20/LF
+    if (design.installShoeQuarterRound && geometry.perimeterFt > 0) {
+      const shoeLength = Math.ceil(geometry.perimeterFt * 1.10); // 10% waste
       materials.push({
-        ...materialsMap.mirror,
-        id: `mat-finish-mirror-${Date.now()}`,
-        scope: 'installation',
+        id: `mat-finish-shoe-quarter-${Date.now()}`,
+        name: 'Shoe / Quarter Round',
+        quantity: shoeLength.toString(),
+        unit: 'LF',
+        price: '1.20',
+        scope: 'carpentry',
         isAutoGenerated: true,
       });
     }
 
-    if (design.installLighting) {
-      for (let i = 0; i < design.lightingQuantity; i++) {
-        materials.push({
-          ...materialsMap.lighting,
-          id: `mat-finish-lighting-${i}-${Date.now()}`,
-          name: `Lighting Fixture ${i + 1}`,
-          scope: 'installation',
-          isAutoGenerated: true,
-        });
-      }
-    }
-
-    if (design.installToilet) {
+    // 4) Door Hardware Set (Interior) - Qty: numDoors, Price: $45/set
+    if (design.installDoorHardware && geometry.numDoors > 0) {
       materials.push({
-        ...materialsMap.toilet,
-        id: `mat-finish-toilet-${Date.now()}`,
-        scope: 'installation',
+        id: `mat-finish-door-hardware-${Date.now()}`,
+        name: 'Door Hardware Set (Interior)',
+        quantity: geometry.numDoors.toString(),
+        unit: 'set',
+        price: '45.00',
+        scope: 'carpentry',
         isAutoGenerated: true,
       });
     }
 
     // -------------------------------------------------------------------------
-    // Accessory Materials
+    // Accessory Materials (per spec)
     // -------------------------------------------------------------------------
+
+    // 1) Towel Bar - Price: $38/ea
     if (design.installTowelBar) {
       const qty = design.towelBarQuantity || 1;
       for (let i = 0; i < qty; i++) {
         materials.push({
-          ...materialsMap.towelBar,
           id: `mat-finish-towel-bar-${i}-${Date.now()}`,
           name: qty > 1 ? `Towel Bar ${i + 1}` : 'Towel Bar',
-          scope: 'installation',
+          quantity: '1',
+          unit: '',
+          price: '38.00',
+          scope: 'accessories',
           isAutoGenerated: true,
         });
       }
     }
 
+    // 2) Toilet Paper Holder - Price: $40/ea
     if (design.installTPHolder) {
       const qty = design.tpHolderQuantity || 1;
       for (let i = 0; i < qty; i++) {
         materials.push({
-          ...materialsMap.tpHolder,
           id: `mat-finish-tp-holder-${i}-${Date.now()}`,
           name: qty > 1 ? `Toilet Paper Holder ${i + 1}` : 'Toilet Paper Holder',
-          scope: 'installation',
+          quantity: '1',
+          unit: '',
+          price: '40.00',
+          scope: 'accessories',
           isAutoGenerated: true,
         });
       }
     }
 
+    // 3) Robe Hook - Price: $20/ea
     if (design.installRobeHook) {
       const qty = design.robeHookQuantity || 1;
       for (let i = 0; i < qty; i++) {
         materials.push({
-          ...materialsMap.robeHook,
           id: `mat-finish-robe-hook-${i}-${Date.now()}`,
           name: qty > 1 ? `Robe Hook ${i + 1}` : 'Robe Hook',
-          scope: 'installation',
+          quantity: '1',
+          unit: '',
+          price: '20.00',
+          scope: 'accessories',
           isAutoGenerated: true,
         });
       }
     }
 
+    // 4) Towel Ring - Price: $45/ea
     if (design.installTowelRing) {
       const qty = design.towelRingQuantity || 1;
       for (let i = 0; i < qty; i++) {
         materials.push({
-          ...materialsMap.towelRing,
           id: `mat-finish-towel-ring-${i}-${Date.now()}`,
           name: qty > 1 ? `Towel Ring ${i + 1}` : 'Towel Ring',
-          scope: 'installation',
+          quantity: '1',
+          unit: '',
+          price: '45.00',
+          scope: 'accessories',
           isAutoGenerated: true,
         });
       }
     }
 
+    // 5) Shower Rod - Price: $40/ea
     if (design.installShowerRod) {
       const qty = design.showerRodQuantity || 1;
       for (let i = 0; i < qty; i++) {
         materials.push({
-          ...materialsMap.showerRod,
           id: `mat-finish-shower-rod-${i}-${Date.now()}`,
           name: qty > 1 ? `Shower Rod ${i + 1}` : 'Shower Rod',
-          scope: 'installation',
+          quantity: '1',
+          unit: '',
+          price: '40.00',
+          scope: 'accessories',
           isAutoGenerated: true,
         });
       }
     }
 
+    // 6) Accessory Shelf - Price: $65/ea
     if (design.installWallShelf) {
       const qty = design.wallShelfQuantity || 1;
       for (let i = 0; i < qty; i++) {
         materials.push({
-          ...materialsMap.wallShelf,
           id: `mat-finish-wall-shelf-${i}-${Date.now()}`,
           name: qty > 1 ? `Accessory Shelf ${i + 1}` : 'Accessory Shelf',
-          scope: 'installation',
+          quantity: '1',
+          unit: '',
+          price: '65.00',
+          scope: 'accessories',
           isAutoGenerated: true,
         });
       }
     }
 
-    // -------------------------------------------------------------------------
-    // Accent Wall Materials (existing logic)
-    // -------------------------------------------------------------------------
-    (design.accentWalls && Array.isArray(design.accentWalls)
-      ? design.accentWalls
-      : []
-    ).forEach((wall, index) => {
-      const wallW = parseFloat(wall.width) || 0;
-      const wallH = parseFloat(wall.height) || 0;
-      if (wallW > 0 && wallH > 0) {
-        const area = (wallW * wallH) / 144;
-        let accentMaterial: MaterialItem | null = null;
-
-        switch (wall.finishType) {
-          case 'tile':
-            const tileSqFt = Math.ceil(area * 1.15); // 15% waste
-            accentMaterial = {
-              ...materialsMap.accentTile,
-              id: `mat-finish-accent-tile-${wall.id}-${Date.now()}`,
-              name: `Accent Wall Tile ${index + 1}`,
-              quantity: tileSqFt.toString(),
-              scope: 'accent_walls',
-              isAutoGenerated: true,
-            };
-            // Add thinset and grout for tiling
-            materials.push({
-              ...materialsMap.thinset,
-              id: `mat-finish-thinset-${wall.id}-${Date.now()}`,
-              name: `Thinset for Accent Wall ${index + 1}`,
-              quantity: Math.ceil(area / 80).toString(),
-              scope: 'accent_walls',
-              isAutoGenerated: true,
-            });
-            materials.push({
-              ...materialsMap.grout,
-              id: `mat-finish-grout-${wall.id}-${Date.now()}`,
-              name: `Grout for Accent Wall ${index + 1}`,
-              quantity: Math.ceil(area / 90).toString(),
-              scope: 'accent_walls',
-              isAutoGenerated: true,
-            });
-            break;
-          case 'wainscot':
-            accentMaterial = {
-              ...materialsMap.accentWainscot,
-              id: `mat-finish-accent-wainscot-${wall.id}-${Date.now()}`,
-              name: `Wainscot Panels ${index + 1}`,
-              quantity: Math.ceil(area).toString(),
-              scope: 'accent_walls',
-              isAutoGenerated: true,
-            };
-            break;
-          case 'paint':
-            const paintGallons = Math.max(
-              1,
-              Math.ceil((area * C.WALLS * (1 + W)) / COV.WALL_PAINT)
-            );
-            accentMaterial = {
-              ...materialsMap.accentPaint,
-              id: `mat-finish-accent-paint-${wall.id}-${Date.now()}`,
-              name: `Accent Wall Paint ${index + 1}`,
-              quantity: paintGallons.toString(),
-              scope: 'accent_walls',
-              isAutoGenerated: true,
-            };
-            break;
-        }
-
-        if (accentMaterial) {
-          materials.push(accentMaterial);
-        }
-      }
-    });
+    // 7) Mirror - Price: $150/ea
+    if (design.installMirror) {
+      materials.push({
+        id: `mat-finish-mirror-${Date.now()}`,
+        name: 'Mirror',
+        quantity: '1',
+        unit: '',
+        price: '150.00',
+        scope: 'accessories',
+        isAutoGenerated: true,
+      });
+    }
 
     return materials;
   }, [design, geometry]);
@@ -583,34 +522,34 @@ export default function FinishingsMaterialsSection() {
       design.fixWalls
     }-${design.drywallRepairsLevel}-${design.priming}-${design.paintWalls}-${design.paintCeiling}-${
       design.paintTrim
-    }-${design.paintDoor}-${design.numDoors}-${design.nonPaintWallAreaSqFt}-${design.installBaseboard}-${design.installVanity}-${
-      design.vanitySinks
-    }-${design.installMirror}-${design.installLighting}-${
-      design.lightingQuantity
-    }-${design.installToilet}-${design.installTowelBar}-${design.towelBarQuantity}-${
+    }-${design.paintDoor}-${design.installBaseboard}-${design.installDoorCasing}-${
+      design.installShoeQuarterRound
+    }-${design.installDoorHardware}-${design.installMirror}-${design.installTowelBar}-${design.towelBarQuantity}-${
       design.installTPHolder
     }-${design.tpHolderQuantity}-${design.installRobeHook}-${design.robeHookQuantity}-${
       design.installTowelRing
     }-${design.towelRingQuantity}-${design.installShowerRod}-${design.showerRodQuantity}-${
       design.installWallShelf
-    }-${design.wallShelfQuantity}-${design.plumbingPerformedBy}-${
-      design.electricalPerformedBy
-    }-${JSON.stringify(design.accentWalls)}`;
+    }-${design.wallShelfQuantity}`;
     if (processedChoicesRef.current === choicesKey) return;
-    if (contextMaterials && contextMaterials.length > 0) return;
+
+    // Preserve custom items, regenerate auto items
     const currentMaterials = localMaterials || [];
-    const existingAutoMaterials = currentMaterials.filter(
-      (item) => (item as MaterialItem).source === 'auto'
+    const customItems = currentMaterials.filter(
+      (item) => item.source === 'custom' || item.isAutoGenerated === false
     );
-    if (existingAutoMaterials.length > 0) return;
-    const materials = generateMaterials();
-    if (materials.length > 0) setMaterialItems('finishings', materials);
+
+    const newAutoItems = generateMaterials();
+    const mergedItems = [...customItems, ...newAutoItems];
+
+    if (mergedItems.length > 0 || currentMaterials.length > 0) {
+      setMaterialItems('finishings', mergedItems);
+    }
     processedChoicesRef.current = choicesKey;
   }, [
     design,
     generateMaterials,
     setMaterialItems,
-    contextMaterials,
     localMaterials,
     isReloading,
   ]);
@@ -636,16 +575,16 @@ export default function FinishingsMaterialsSection() {
     }, 100);
   }, [localMaterials, setMaterialItems]);
 
-  const handleAddInstallationMaterial = useCallback(() => {
+  const handleAddAccessoriesMaterial = useCallback(() => {
     const newItem: MaterialItem = {
-      id: `material-installation-${Date.now()}-${Math.random()
+      id: `material-accessories-${Date.now()}-${Math.random()
         .toString(36)
-        .substr(2, 9)}`,
+        .substring(2, 11)}`,
       name: '',
       quantity: '1',
       unit: '',
       price: '0',
-      scope: 'installation',
+      scope: 'accessories',
       source: 'custom',
       isAutoGenerated: false,
     };
@@ -657,16 +596,16 @@ export default function FinishingsMaterialsSection() {
     }, 100);
   }, [localMaterials, setMaterialItems]);
 
-  const handleAddAccentWallsMaterial = useCallback(() => {
+  const handleAddCarpentryMaterial = useCallback(() => {
     const newItem: MaterialItem = {
-      id: `material-accent-walls-${Date.now()}-${Math.random()
+      id: `material-carpentry-${Date.now()}-${Math.random()
         .toString(36)
-        .substr(2, 9)}`,
+        .substring(2, 11)}`,
       name: '',
       quantity: '1',
       unit: '',
       price: '0',
-      scope: 'accent_walls',
+      scope: 'carpentry',
       source: 'custom',
       isAutoGenerated: false,
     };
@@ -726,29 +665,30 @@ export default function FinishingsMaterialsSection() {
     );
   }, [materials]);
 
-  const installationMaterials = useMemo(() => {
+  const carpentryMaterials = useMemo(() => {
     return materials.filter(
       (item) =>
-        item.scope === 'installation' ||
-        item.name.toLowerCase().includes('vanity') ||
-        item.name.toLowerCase().includes('mirror') ||
-        item.name.toLowerCase().includes('lighting') ||
-        item.name.toLowerCase().includes('toilet') ||
-        item.name.toLowerCase().includes('fixture') ||
-        item.name.toLowerCase().includes('baseboard')
+        item.scope === 'carpentry' ||
+        item.name.toLowerCase().includes('baseboard') ||
+        item.name.toLowerCase().includes('casing') ||
+        item.name.toLowerCase().includes('shoe') ||
+        item.name.toLowerCase().includes('quarter round') ||
+        item.name.toLowerCase().includes('door hardware')
     );
   }, [materials]);
 
-  const accentWallsMaterials = useMemo(() => {
+  const accessoriesMaterials = useMemo(() => {
     return materials.filter(
       (item) =>
-        item.scope === 'accent_walls' ||
-        item.name.toLowerCase().includes('accent') ||
-        item.name.toLowerCase().includes('tile') ||
-        item.name.toLowerCase().includes('wainscot') ||
-        item.name.toLowerCase().includes('thinset') ||
-        item.name.toLowerCase().includes('grout') ||
-        item.name.toLowerCase().includes('wallpaper')
+        item.scope === 'accessories' ||
+        item.name.toLowerCase().includes('towel') ||
+        item.name.toLowerCase().includes('tp holder') ||
+        item.name.toLowerCase().includes('toilet paper') ||
+        item.name.toLowerCase().includes('robe hook') ||
+        item.name.toLowerCase().includes('shower rod') ||
+        item.name.toLowerCase().includes('wall shelf') ||
+        item.name.toLowerCase().includes('accessory') ||
+        item.name.toLowerCase().includes('mirror')
     );
   }, [materials]);
 
@@ -759,13 +699,13 @@ export default function FinishingsMaterialsSection() {
     0
   );
 
-  const installationTotal = installationMaterials.reduce(
+  const carpentryTotal = carpentryMaterials.reduce(
     (sum, item) =>
       sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
     0
   );
 
-  const accentWallsTotal = accentWallsMaterials.reduce(
+  const accessoriesTotal = accessoriesMaterials.reduce(
     (sum, item) =>
       sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
     0
@@ -811,18 +751,6 @@ export default function FinishingsMaterialsSection() {
               />
             </div>
             <div>
-              <label className='text-xs text-slate-500'>Unit</label>
-              <Input
-                type='text'
-                value={material.unit}
-                onChange={(e) =>
-                  handleMaterialChange(material.id, 'unit', e.target.value)
-                }
-                placeholder='sq/ft'
-                className={`text-center border-blue-300 focus:border-blue-500`}
-              />
-            </div>
-            <div className='col-span-2'>
               <label className='text-xs text-slate-500'>Price/Unit ($)</label>
               <Input
                 type='number'
@@ -851,7 +779,7 @@ export default function FinishingsMaterialsSection() {
     [handleMaterialChange, handleDeleteMaterial]
   );
 
-  const total = paintingTotal + installationTotal + accentWallsTotal;
+  const total = paintingTotal + carpentryTotal + accessoriesTotal;
 
   return (
     <div className='space-y-5'>
@@ -914,43 +842,43 @@ export default function FinishingsMaterialsSection() {
           </CardContent>
         </Card>
 
-        {/* Installation Materials Section */}
+        {/* Carpentry Materials Section */}
         <Card>
           <CardContent className='p-3 space-y-3'>
             <div
               className='flex justify-between items-center cursor-pointer'
-              onClick={() => setIsInstallationOpen(!isInstallationOpen)}
+              onClick={() => setIsCarpentryOpen(!isCarpentryOpen)}
             >
               <div className='flex items-center gap-2 justify-between w-full'>
                 <div className='flex items-center gap-2'>
-                  {isInstallationOpen ? (
+                  {isCarpentryOpen ? (
                     <ChevronDown className='h-4 w-4 text-slate-600' />
                   ) : (
                     <ChevronRight className='h-4 w-4 text-slate-600' />
                   )}
                   <h3 className='text-lg font-semibold text-slate-700'>
-                    Installation
+                    Carpentry
                   </h3>
                 </div>
                 <p className='font-bold text-blue-600 text-sm'>
-                  ${installationTotal.toFixed(2)}
+                  ${carpentryTotal.toFixed(2)}
                 </p>
               </div>
             </div>
-            {isInstallationOpen && (
+            {isCarpentryOpen && (
               <>
-                {installationMaterials.length > 0 ? (
+                {carpentryMaterials.length > 0 ? (
                   <div className='space-y-2'>
-                    {installationMaterials.map(renderMaterialItem)}
+                    {carpentryMaterials.map(renderMaterialItem)}
                   </div>
                 ) : (
                   <p className='text-sm text-slate-500 text-center py-4'>
-                    No installation materials added yet.
+                    No carpentry materials added yet.
                   </p>
                 )}
                 <div className='flex justify-center'>
                   <Button
-                    onClick={handleAddInstallationMaterial}
+                    onClick={handleAddCarpentryMaterial}
                     variant='default'
                     className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
                   >
@@ -963,43 +891,46 @@ export default function FinishingsMaterialsSection() {
           </CardContent>
         </Card>
 
-        {/* Accent Walls Materials Section */}
+        {/* Accessories Materials Section */}
         <Card>
           <CardContent className='p-3 space-y-3'>
             <div
               className='flex justify-between items-center cursor-pointer'
-              onClick={() => setIsAccentWallsOpen(!isAccentWallsOpen)}
+              onClick={() => setIsAccessoriesOpen(!isAccessoriesOpen)}
             >
               <div className='flex items-center gap-2 justify-between w-full'>
                 <div className='flex items-center gap-2'>
-                  {isAccentWallsOpen ? (
+                  {isAccessoriesOpen ? (
                     <ChevronDown className='h-4 w-4 text-slate-600' />
                   ) : (
                     <ChevronRight className='h-4 w-4 text-slate-600' />
                   )}
-                  <h3 className='text-lg font-semibold text-slate-700'>
-                    Accent Walls
-                  </h3>
+                  <div>
+                    <h3 className='text-lg font-semibold text-slate-700'>
+                      Accessories
+                    </h3>
+                    <p className='text-xs text-slate-500'>Hardware Installation</p>
+                  </div>
                 </div>
                 <p className='font-bold text-blue-600 text-sm'>
-                  ${accentWallsTotal.toFixed(2)}
+                  ${accessoriesTotal.toFixed(2)}
                 </p>
               </div>
             </div>
-            {isAccentWallsOpen && (
+            {isAccessoriesOpen && (
               <>
-                {accentWallsMaterials.length > 0 ? (
+                {accessoriesMaterials.length > 0 ? (
                   <div className='space-y-2'>
-                    {accentWallsMaterials.map(renderMaterialItem)}
+                    {accessoriesMaterials.map(renderMaterialItem)}
                   </div>
                 ) : (
                   <p className='text-sm text-slate-500 text-center py-4'>
-                    No accent walls materials added yet.
+                    No accessories materials added yet.
                   </p>
                 )}
                 <div className='flex justify-center'>
                   <Button
-                    onClick={handleAddAccentWallsMaterial}
+                    onClick={handleAddAccessoriesMaterial}
                     variant='default'
                     className='w-auto mt-2 flex items-center justify-center gap-2 py-2.5 px-4 text-white font-semibold border-blue-200'
                   >
