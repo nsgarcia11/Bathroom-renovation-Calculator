@@ -53,7 +53,7 @@ export function StructuralSection() {
         // Wall Modifications
         frameNewWall: false,
         relocateWall: false,
-        relocateWallLength: '10',
+        relocateWallLength: '8',
         relocateWallHeight: '8',
         removeNonLoadBearingWall: false,
         installBlocking: false,
@@ -141,7 +141,7 @@ export function StructuralSection() {
                       e.target.value
                     )
                   }
-                  placeholder='10'
+                  placeholder='8'
                   className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
                 />
               </div>
