@@ -1716,13 +1716,88 @@ export default function EstimatesOverview({
                   );
                 })()}
 
-              {/* Demolition, Shower Walls, Shower Base, Floors & Finishings Detailed Breakdown */}
-              {workflow.id === 'demolition' || workflow.id === 'showerWalls' || workflow.id === 'showerBase' || workflow.id === 'floors' || workflow.id === 'finishings' ? (
+              {/* Design Options for Structural */}
+              {workflow.id === 'structural' &&
+                (() => {
+                  const design = getDesignData('structural') as {
+                    frameNewWall?: boolean;
+                    relocateWall?: boolean;
+                    relocateWallLength?: string;
+                    removeNonLoadBearingWall?: boolean;
+                    installBlocking?: boolean;
+                    frameShowerNiche?: boolean;
+                    addInsulation?: boolean;
+                    changeDoorwayOpening?: boolean;
+                    repairSisterFloorJoists?: boolean;
+                    levelFloor?: boolean;
+                    installNewPlywoodSubfloor?: boolean;
+                    plywoodThickness?: string;
+                    replaceRottenSubfloor?: boolean;
+                  } | null;
+
+                  if (!design) return null;
+
+                  // Collect wall modifications
+                  const wallModifications: string[] = [];
+                  if (design.frameNewWall) wallModifications.push('Frame New Wall');
+                  if (design.relocateWall) wallModifications.push(`Relocate Wall (${design.relocateWallLength || '8'}ft)`);
+                  if (design.removeNonLoadBearingWall) wallModifications.push('Remove Non-Load Bearing Wall');
+                  if (design.installBlocking) wallModifications.push('Install Blocking');
+                  if (design.frameShowerNiche) wallModifications.push('Frame Shower Niche');
+                  if (design.addInsulation) wallModifications.push('Add Insulation');
+                  if (design.changeDoorwayOpening) wallModifications.push('Change Doorway Opening');
+
+                  // Collect floor tasks
+                  const floorTasks: string[] = [];
+                  if (design.repairSisterFloorJoists) floorTasks.push('Repair/Sister Floor Joists');
+                  if (design.levelFloor) floorTasks.push('Level Floor');
+                  if (design.installNewPlywoodSubfloor) floorTasks.push(`Install Plywood Subfloor (${design.plywoodThickness || '3/4'}")`);
+                  if (design.replaceRottenSubfloor) floorTasks.push('Replace Rotten Subfloor');
+
+                  const hasAnyOption = wallModifications.length > 0 || floorTasks.length > 0;
+                  if (!hasAnyOption) return null;
+
+                  return (
+                    <div className='mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200'>
+                      <h4 className='font-semibold text-blue-900 mb-2'>
+                        Design Specifications
+                      </h4>
+                      <div className='grid grid-cols-2 gap-2 text-sm'>
+                        {/* Wall Modifications */}
+                        {wallModifications.length > 0 && (
+                          <div className='col-span-2'>
+                            <span className='font-medium text-gray-700'>
+                              Wall Modifications:
+                            </span>
+                            <div className='text-gray-600'>
+                              {wallModifications.join(', ')}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Floor Tasks */}
+                        {floorTasks.length > 0 && (
+                          <div className='col-span-2'>
+                            <span className='font-medium text-gray-700'>
+                              Floors:
+                            </span>
+                            <div className='text-gray-600'>
+                              {floorTasks.join(', ')}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+              {/* Demolition, Shower Walls, Shower Base, Floors, Finishings & Structural Detailed Breakdown */}
+              {workflow.id === 'demolition' || workflow.id === 'showerWalls' || workflow.id === 'showerBase' || workflow.id === 'floors' || workflow.id === 'finishings' || workflow.id === 'structural' ? (
                 <>
                   {/* Labor Items */}
                   {(() => {
-                    const laborItems = getLaborItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings');
-                    const flatFeeItems = getFlatFeeItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings');
+                    const laborItems = getLaborItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings' | 'structural');
+                    const flatFeeItems = getFlatFeeItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings' | 'structural');
                     const designData = workflow.id === 'demolition'
                       ? (getDesignData('demolition') as {
                           isDemolitionFlatFee?: 'yes' | 'no';
@@ -1845,7 +1920,7 @@ export default function EstimatesOverview({
 
                   {/* Material Items */}
                   {(() => {
-                    const materialItems = getMaterialItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings');
+                    const materialItems = getMaterialItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings' | 'structural');
 
                     if (materialItems.length === 0) return null;
 

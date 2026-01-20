@@ -19,6 +19,7 @@ interface StructuralDesignData {
   installBlocking: boolean;
   frameShowerNiche: boolean;
   addInsulation: boolean;
+  changeDoorwayOpening: boolean;
 
   // Floors
   repairSisterFloorJoists: boolean;
@@ -26,12 +27,6 @@ interface StructuralDesignData {
   installNewPlywoodSubfloor: boolean;
   plywoodThickness: '1/2' | '5/8' | '3/4';
   replaceRottenSubfloor: boolean;
-
-  // Window & Door Openings
-  addNewWindow: boolean;
-  enlargeExistingWindow: boolean;
-  changeDoorwayOpening: boolean;
-  closeOffWindow: boolean;
 
   // Notes
   designContractorNotes: string;
@@ -59,6 +54,7 @@ export function StructuralSection() {
         installBlocking: false,
         frameShowerNiche: false,
         addInsulation: false,
+        changeDoorwayOpening: false,
 
         // Floors
         repairSisterFloorJoists: false,
@@ -66,12 +62,6 @@ export function StructuralSection() {
         installNewPlywoodSubfloor: false,
         plywoodThickness: '3/4' as const,
         replaceRottenSubfloor: false,
-
-        // Window & Door Openings
-        addNewWindow: false,
-        enlargeExistingWindow: false,
-        changeDoorwayOpening: false,
-        closeOffWindow: false,
 
         // Notes
         designContractorNotes: '',
@@ -145,23 +135,6 @@ export function StructuralSection() {
                   className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
                 />
               </div>
-              <div>
-                <Label className='text-sm text-slate-600 mb-2 block'>
-                  Height (ft)
-                </Label>
-                <Input
-                  type='number'
-                  value={localDesign.relocateWallHeight}
-                  onChange={(e) =>
-                    handleMeasurementChange(
-                      'relocateWallHeight',
-                      e.target.value
-                    )
-                  }
-                  placeholder='8'
-                  className='w-20 p-2 text-center border border-blue-300 rounded-lg focus:border-blue-500'
-                />
-              </div>
             </div>
           </div>
         )}
@@ -196,8 +169,15 @@ export function StructuralSection() {
           className='pt-2'
         />
 
+        <ToggleSwitch
+          label='Change doorway opening (non-load bearing)'
+          enabled={localDesign.changeDoorwayOpening}
+          onToggle={(enabled) => setDesign({ changeDoorwayOpening: enabled })}
+          className='pt-2'
+        />
+
         {/* Design Notes */}
-        <div className='pt-4 border-t border-gray-200'>
+        <div className='mt-4 pt-4 border-t border-gray-200'>
           <WorkflowNotesSection
             contractorNotes={localDesign.designContractorNotes || ''}
             clientNotes={localDesign.designClientNotes || ''}
@@ -293,42 +273,9 @@ export function StructuralSection() {
           onToggle={(enabled) => setDesign({ replaceRottenSubfloor: enabled })}
           className='pt-2'
         />
-      </CollapsibleSection>
-
-      {/* Window & Door Openings Card */}
-      <CollapsibleSection
-        title='Window & Door Openings'
-        colorScheme='construction'
-      >
-        <ToggleSwitch
-          label='Add new window'
-          enabled={localDesign.addNewWindow}
-          onToggle={(enabled) => setDesign({ addNewWindow: enabled })}
-        />
-
-        <ToggleSwitch
-          label='Enlarging an Existing Window'
-          enabled={localDesign.enlargeExistingWindow}
-          onToggle={(enabled) => setDesign({ enlargeExistingWindow: enabled })}
-          className='pt-2'
-        />
-
-        <ToggleSwitch
-          label='Changing Doorway'
-          enabled={localDesign.changeDoorwayOpening}
-          onToggle={(enabled) => setDesign({ changeDoorwayOpening: enabled })}
-          className='pt-2'
-        />
-
-        <ToggleSwitch
-          label='Closing off window'
-          enabled={localDesign.closeOffWindow}
-          onToggle={(enabled) => setDesign({ closeOffWindow: enabled })}
-          className='pt-2'
-        />
 
         {/* Construction Notes */}
-        <div className='pt-4 border-t border-gray-200'>
+        <div className='mt-4 pt-4 border-t border-gray-200'>
           <WorkflowNotesSection
             contractorNotes={localDesign.constructionContractorNotes || ''}
             clientNotes={localDesign.constructionClientNotes || ''}
