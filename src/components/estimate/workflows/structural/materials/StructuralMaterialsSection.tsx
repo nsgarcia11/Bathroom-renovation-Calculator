@@ -46,6 +46,17 @@ interface StructuralDesignData {
   replaceRottenSubfloor: boolean;
 }
 
+interface FloorsDesignData {
+  width: string;
+  length: string;
+  extraMeasurements?: Array<{
+    id: number;
+    label: string;
+    width: string;
+    length: string;
+  }>;
+}
+
 export default function StructuralMaterialsSection() {
   const { getDesignData, getMaterialItems, setMaterialItems, isReloading } =
     useEstimateWorkflowContext();
@@ -75,6 +86,36 @@ export default function StructuralMaterialsSection() {
     [designData]
   );
 
+  // Get floors design data for floor measurements
+  const floorsDesignData = getDesignData('floors') as FloorsDesignData | null;
+
+  // Calculate floor area in sq ft and plywood sheet count
+  const { floorAreaSqFt, plywoodSheetCount } = useMemo(() => {
+    let totalArea = 0;
+    const mainWidth = parseFloat(floorsDesignData?.width || '0') || 0;
+    const mainLength = parseFloat(floorsDesignData?.length || '0') || 0;
+
+    if (mainWidth > 0 && mainLength > 0) {
+      totalArea += (mainWidth * mainLength) / 144; // Convert sq inches to sq ft
+    }
+
+    // Add extra measurements if any
+    if (floorsDesignData?.extraMeasurements && Array.isArray(floorsDesignData.extraMeasurements)) {
+      floorsDesignData.extraMeasurements.forEach((m) => {
+        const sideWidth = parseFloat(m.width) || 0;
+        const sideLength = parseFloat(m.length) || 0;
+        if (sideWidth > 0 && sideLength > 0) {
+          totalArea += (sideWidth * sideLength) / 144;
+        }
+      });
+    }
+
+    // Each 4x8 plywood sheet = 32 sq ft, minimum 1 sheet if area > 0
+    const sheets = totalArea > 0 ? Math.max(1, Math.ceil(totalArea / 32)) : 1;
+
+    return { floorAreaSqFt: totalArea, plywoodSheetCount: sheets };
+  }, [floorsDesignData]);
+
   const [localMaterialItems, setLocalMaterialItems] = useState<MaterialItem[]>(
     []
   );
@@ -101,7 +142,7 @@ export default function StructuralMaterialsSection() {
     }
 
     // Create a key based on all design choices to detect changes
-    const choicesKey = `${design.frameNewWall}-${design.relocateWall}-${design.relocateWallLength}-${design.relocateWallHeight}-${design.removeNonLoadBearingWall}-${design.installBlocking}-${design.frameShowerNiche}-${design.addInsulation}-${design.changeDoorwayOpening}-${design.repairSisterFloorJoists}-${design.levelFloor}-${design.installNewPlywoodSubfloor}-${design.plywoodThickness}-${design.replaceRottenSubfloor}`;
+    const choicesKey = `${design.frameNewWall}-${design.relocateWall}-${design.relocateWallLength}-${design.relocateWallHeight}-${design.removeNonLoadBearingWall}-${design.installBlocking}-${design.frameShowerNiche}-${design.addInsulation}-${design.changeDoorwayOpening}-${design.repairSisterFloorJoists}-${design.levelFloor}-${design.installNewPlywoodSubfloor}-${design.plywoodThickness}-${design.replaceRottenSubfloor}-${plywoodSheetCount}`;
 
     // Skip if choices haven't changed
     if (processedChoicesRef.current === choicesKey) return;
@@ -226,13 +267,13 @@ export default function StructuralMaterialsSection() {
     }
 
     // F) Add insulation
-    // Materials: R-22 batts (qty 2), 6mil poly (qty 1), acoustic sealant (qty 2)
+    // Materials: R-22 batts (qty 1), 6mil poly (qty 1), acoustic sealant (qty 2)
     if (design.addInsulation) {
       newMaterialItems.push(
         {
           id: 'add-insulation-batt',
           name: 'R-22 Batt insulation',
-          quantity: '2',
+          quantity: '1',
           price: '105.00',
           unit: 'bag',
           category: 'construction',
@@ -346,7 +387,7 @@ export default function StructuralMaterialsSection() {
     }
 
     // C) Install new plywood subfloor (with thickness selector)
-    // Materials: plywood (qty 3, price depends on thickness), flooring screws (qty 1), subfloor glue (qty 4)
+    // Materials: plywood (qty based on floor area), flooring screws (qty 1), subfloor glue (qty 4)
     if (design.installNewPlywoodSubfloor) {
       const thicknessName =
         design.plywoodThickness === '1/2'
@@ -365,7 +406,7 @@ export default function StructuralMaterialsSection() {
         {
           id: 'install-plywood-sheets',
           name: `Plywood subfloor ${thicknessName}`,
-          quantity: '3',
+          quantity: plywoodSheetCount.toString(),
           price: thicknessPrice,
           unit: 'sheet',
           category: 'construction',
@@ -396,13 +437,13 @@ export default function StructuralMaterialsSection() {
     }
 
     // D) Replace rotten subfloor
-    // Materials: plywood (qty 3), blocking studs (qty 4)
+    // Materials: plywood (qty based on floor area), blocking studs (qty 4)
     if (design.replaceRottenSubfloor) {
       newMaterialItems.push(
         {
           id: 'replace-subfloor-plywood',
           name: '5/8" plywood',
-          quantity: '3',
+          quantity: plywoodSheetCount.toString(),
           price: '60.00',
           unit: 'sheet',
           category: 'construction',
@@ -433,7 +474,7 @@ export default function StructuralMaterialsSection() {
 
     // Update processed choices key
     processedChoicesRef.current = choicesKey;
-  }, [design, studCount, isReloading, setMaterialItems, contextMaterialItems]);
+  }, [design, studCount, plywoodSheetCount, isReloading, setMaterialItems, contextMaterialItems]);
 
   // Sync with context changes
   useEffect(() => {
