@@ -264,6 +264,9 @@ export function StructuralSection() {
                 </Button>
               ))}
             </div>
+            <p className='text-xs text-slate-500 mt-2 italic'>
+              Plywood sheets are calculated automatically from the Floors screen square footage
+            </p>
           </div>
         )}
 
