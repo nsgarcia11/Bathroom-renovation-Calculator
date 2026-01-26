@@ -1791,13 +1791,13 @@ export default function EstimatesOverview({
                   );
                 })()}
 
-              {/* Demolition, Shower Walls, Shower Base, Floors, Finishings & Structural Detailed Breakdown */}
-              {workflow.id === 'demolition' || workflow.id === 'showerWalls' || workflow.id === 'showerBase' || workflow.id === 'floors' || workflow.id === 'finishings' || workflow.id === 'structural' ? (
+              {/* Demolition, Shower Walls, Shower Base, Floors, Finishings, Structural & Trade Detailed Breakdown */}
+              {workflow.id === 'demolition' || workflow.id === 'showerWalls' || workflow.id === 'showerBase' || workflow.id === 'floors' || workflow.id === 'finishings' || workflow.id === 'structural' || workflow.id === 'trade' ? (
                 <>
                   {/* Labor Items */}
                   {(() => {
-                    const laborItems = getLaborItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings' | 'structural');
-                    const flatFeeItems = getFlatFeeItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings' | 'structural');
+                    const laborItems = getLaborItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings' | 'structural' | 'trade');
+                    const flatFeeItems = getFlatFeeItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings' | 'structural' | 'trade');
                     const designData = workflow.id === 'demolition'
                       ? (getDesignData('demolition') as {
                           isDemolitionFlatFee?: 'yes' | 'no';
@@ -1920,7 +1920,7 @@ export default function EstimatesOverview({
 
                   {/* Material Items */}
                   {(() => {
-                    const materialItems = getMaterialItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings' | 'structural');
+                    const materialItems = getMaterialItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings' | 'structural' | 'trade');
 
                     if (materialItems.length === 0) return null;
 
