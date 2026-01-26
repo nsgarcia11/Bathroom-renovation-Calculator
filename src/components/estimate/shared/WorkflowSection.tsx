@@ -306,7 +306,7 @@ export default function WorkflowSection({
       case 'structural':
         return 'Structural';
       case 'trades':
-        return 'Trades';
+        return 'Plumbing Electrical';
       default:
         return 'Workflow';
     }

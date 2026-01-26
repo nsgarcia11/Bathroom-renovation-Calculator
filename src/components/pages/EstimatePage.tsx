@@ -83,8 +83,8 @@ const CATEGORIES = [
   },
   {
     id: 'trades',
-    name: 'Trades',
-    accronym: 'TR',
+    name: 'Plumbing Electrical',
+    accronym: 'PE',
     icon: TradeIcon,
     color: 'bg-gray-100 text-gray-600',
   },
