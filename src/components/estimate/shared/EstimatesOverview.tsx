@@ -821,7 +821,7 @@ export default function EstimatesOverview({
 
     return {
       id: 'trade',
-      name: 'Trade',
+      name: 'Plumbing Electrical',
       icon: <TradeIcon size={24} />,
       color: 'text-blue-600',
       designLabor,
