@@ -2018,6 +2018,55 @@ export function EstimateWorkflowProvider({
             }
           }
 
+          // Migrate trade design: convert old showerTrimOption to new individual fields
+          const tradeData = transformedWorkflows.trade as Record<
+            string,
+            unknown
+          >;
+          if (
+            tradeData?.design &&
+            typeof tradeData.design === 'object'
+          ) {
+            const design = tradeData.design as Record<string, unknown>;
+            // Migrate showerTrimOption to individual booleans
+            if (design.showerTrimOption && design.showerTrimOption !== 'none') {
+              if (design.showerTrimOption === 'valve_head' || design.showerTrimOption === 'valve_head_spout') {
+                if (design.showerTrimValve === undefined) design.showerTrimValve = true;
+                if (design.showerTrimShowerHead === undefined) design.showerTrimShowerHead = true;
+              }
+              if (design.showerTrimOption === 'valve_head_spout') {
+                if (design.showerTrimSpout === undefined) design.showerTrimSpout = true;
+              }
+              delete design.showerTrimOption;
+            }
+            // Migrate installTubSpout to showerTrimSpout
+            if (design.installTubSpout === true && design.showerTrimSpout === undefined) {
+              design.showerTrimSpout = true;
+            }
+            if (design.installTubSpout !== undefined) {
+              delete design.installTubSpout;
+            }
+            // Set default quantities for new quantity fields if missing
+            if (design.moveToiletDrainSupply && design.moveToiletDrainSupplyQuantity === undefined) {
+              design.moveToiletDrainSupplyQuantity = 1;
+            }
+            if (design.relocateFixtureDrain && design.relocateFixtureDrainQuantity === undefined) {
+              design.relocateFixtureDrainQuantity = 1;
+            }
+            if (design.addVanityPlumbingRoughIn && design.addVanityPlumbingRoughInQuantity === undefined) {
+              design.addVanityPlumbingRoughInQuantity = 1;
+            }
+            if (design.addBidetPlumbingRoughIn && design.addBidetPlumbingRoughInQuantity === undefined) {
+              design.addBidetPlumbingRoughInQuantity = 1;
+            }
+            if (design.connectSinkDrains && design.connectSinkDrainsQuantity === undefined) {
+              design.connectSinkDrainsQuantity = 1;
+            }
+            if (design.installVanityFaucetSupplyLines && design.installVanityFaucetSupplyLinesQuantity === undefined) {
+              design.installVanityFaucetSupplyLinesQuantity = 1;
+            }
+          }
+
           const transformedData = {
             projectId,
             projectNotes: (rawData.projectNotes as string) || '',

@@ -23,25 +23,30 @@ export interface TradeDesignData {
 
   // Plumbing - Rough-in
   moveToiletDrainSupply: boolean;
-  addVanityPlumbingRoughIn: boolean;
+  moveToiletDrainSupplyQuantity: number;
+  relocateFixtureDrain: boolean;
+  relocateFixtureDrainQuantity: number;
   installNewShowerValve: boolean;
   roughInDiverter: boolean;
+  addVanityPlumbingRoughIn: boolean;
+  addVanityPlumbingRoughInQuantity: number;
   addFreestandingTubRoughIn: boolean;
-  relocateFixtureDrain: boolean;
   addBidetPlumbingRoughIn: boolean;
+  addBidetPlumbingRoughInQuantity: number;
 
   // Plumbing - Fixture Installation
   vanityInstallationType: 'none' | 'single' | 'double';
   connectSinkDrains: boolean;
+  connectSinkDrainsQuantity: number;
   installVanityFaucetSupplyLines: boolean;
+  installVanityFaucetSupplyLinesQuantity: number;
 
-  // Shower Trim - Main option (valve_head or valve_head_spout)
-  showerTrimOption: 'none' | 'valve_head' | 'valve_head_spout';
-  // Shower Trim - Add-ons
+  // Shower Trim Components (individual selections)
+  showerTrimValve: boolean;
+  showerTrimShowerHead: boolean;
   showerTrimHandheld: boolean;
   showerTrimRainhead: boolean;
-  // Separate tub spout (disabled when valve_head_spout is selected)
-  installTubSpout: boolean;
+  showerTrimSpout: boolean;
 
   installToilet: boolean;
   installBidetSeat: boolean;
@@ -89,12 +94,11 @@ export const FLAT_PRICES = {
   // Plumbing Fixture Installation
   install_vanity_single: 475,
   install_vanity_double: 550,
-  install_vanity_plumbing_single: 165,
-  install_vanity_plumbing_double: 275,
-  install_faucet_single: 165,
-  install_faucet_double: 330,
-  install_shower_trim_valve_head: 325,
-  install_shower_trim_valve_head_spout: 425,
+  connect_sink_drain: 165,
+  install_vanity_faucet: 165,
+  // Shower Trim - individual components
+  install_shower_trim_valve: 175,
+  install_shower_head: 150,
   install_handheld: 85,
   install_rainhead: 85,
   install_tub_spout: 85,
@@ -129,12 +133,11 @@ export const DEFAULT_HOURS = {
   // Plumbing Fixture Installation
   install_vanity_single: 3,
   install_vanity_double: 4,
-  install_vanity_plumbing_single: 1.5,
-  install_vanity_plumbing_double: 2.5,
-  install_faucet_single: 1.5,
-  install_faucet_double: 3,
-  install_shower_trim_valve_head: 2.5,
-  install_shower_trim_valve_head_spout: 3.5,
+  connect_sink_drain: 1.5,
+  install_vanity_faucet: 1.5,
+  // Shower Trim - individual components
+  install_shower_trim_valve: 1.5,
+  install_shower_head: 1,
   install_handheld: 0.75,
   install_rainhead: 0.75,
   install_tub_spout: 0.75,
@@ -169,20 +172,27 @@ export const DEFAULT_TRADE_DESIGN: TradeDesignData = {
   },
   // Plumbing - Rough-in
   moveToiletDrainSupply: false,
-  addVanityPlumbingRoughIn: false,
+  moveToiletDrainSupplyQuantity: 1,
+  relocateFixtureDrain: false,
+  relocateFixtureDrainQuantity: 1,
   installNewShowerValve: false,
   roughInDiverter: false,
+  addVanityPlumbingRoughIn: false,
+  addVanityPlumbingRoughInQuantity: 1,
   addFreestandingTubRoughIn: false,
-  relocateFixtureDrain: false,
   addBidetPlumbingRoughIn: false,
+  addBidetPlumbingRoughInQuantity: 1,
   // Plumbing - Fixture Installation
   vanityInstallationType: 'none',
   connectSinkDrains: false,
+  connectSinkDrainsQuantity: 1,
   installVanityFaucetSupplyLines: false,
-  showerTrimOption: 'none',
+  installVanityFaucetSupplyLinesQuantity: 1,
+  showerTrimValve: false,
+  showerTrimShowerHead: false,
   showerTrimHandheld: false,
   showerTrimRainhead: false,
-  installTubSpout: false,
+  showerTrimSpout: false,
   installToilet: false,
   installBidetSeat: false,
   installFreestandingTubFaucet: false,
@@ -258,12 +268,6 @@ export function TradeSection() {
   // Update design in context
   const setDesign = useCallback(
     (updates: Partial<TradeDesignData>) => {
-      // Handle anti-double-charge logic for shower trim
-      if (updates.showerTrimOption === 'valve_head_spout') {
-        // Disable separate tub spout when valve_head_spout is selected
-        updates.installTubSpout = false;
-      }
-
       setLocalDesign((prev) => ({ ...prev, ...updates }));
       updateDesign('trade', updates);
     },
@@ -365,6 +369,66 @@ export function TradeSection() {
     </div>
   );
 
+  // Toggle item with quantity
+  const ToggleQuantityItem = ({
+    label,
+    description,
+    enabled,
+    onToggle,
+    quantity,
+    onQuantityChange,
+  }: {
+    label: string;
+    description: string;
+    enabled: boolean;
+    onToggle: (enabled: boolean) => void;
+    quantity: number;
+    onQuantityChange: (qty: number) => void;
+  }) => (
+    <div className='py-3 px-4 bg-white rounded-lg border border-slate-200'>
+      <div className='flex items-center justify-between'>
+        <div className='flex-1'>
+          <div className='font-medium text-slate-800'>{label}</div>
+          <div className='text-sm text-slate-500'>{description}</div>
+        </div>
+        <ToggleSwitch
+          label=''
+          enabled={enabled}
+          onToggle={onToggle}
+        />
+      </div>
+      {enabled && (
+        <div className='flex items-center justify-between mt-3 pt-3 border-t border-slate-100'>
+          <span className='text-sm font-medium text-slate-700'>Quantity</span>
+          <div className='flex items-center gap-2'>
+            <Button
+              onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
+              variant='outline'
+              size='sm'
+              className='h-8 w-8 p-0'
+            >
+              -
+            </Button>
+            <Input
+              type='number'
+              value={quantity.toString()}
+              onChange={(e) => onQuantityChange(Math.max(1, parseInt(e.target.value) || 1))}
+              className='w-16 text-center h-8'
+            />
+            <Button
+              onClick={() => onQuantityChange(quantity + 1)}
+              variant='outline'
+              size='sm'
+              className='h-8 w-8 p-0'
+            >
+              +
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   // Pricing mode selector
   const PricingModeSelector = ({
     category,
@@ -451,32 +515,45 @@ export function TradeSection() {
         {/* Plumbing Rough-in */}
         {plumbingTab === 'rough-in' && (
           <div className='space-y-3'>
-            <ToggleItem
+            <ToggleQuantityItem
               label='Move toilet drain and supply'
               description='Relocate toilet drain and water supply to new location'
               enabled={localDesign.moveToiletDrainSupply}
               onToggle={(enabled) => setDesign({ moveToiletDrainSupply: enabled })}
+              quantity={localDesign.moveToiletDrainSupplyQuantity}
+              onQuantityChange={(qty) => setDesign({ moveToiletDrainSupplyQuantity: qty })}
+            />
+
+            <ToggleQuantityItem
+              label='Relocate Fixture Drain (Sink / Shower / Tub)'
+              description='Relocate existing drain to suit new fixture layout (Sink / Shower / Tub)'
+              enabled={localDesign.relocateFixtureDrain}
+              onToggle={(enabled) => setDesign({ relocateFixtureDrain: enabled })}
+              quantity={localDesign.relocateFixtureDrainQuantity}
+              onQuantityChange={(qty) => setDesign({ relocateFixtureDrainQuantity: qty })}
             />
 
             <ToggleItem
-              label='Add Vanity Plumbing Rough-In'
-              description='Add water supply and drain rough-in for new vanity location'
-              enabled={localDesign.addVanityPlumbingRoughIn}
-              onToggle={(enabled) => setDesign({ addVanityPlumbingRoughIn: enabled })}
-            />
-
-            <ToggleItem
-              label='Install new shower valve'
-              description='Install new shower valve body and connect water lines'
+              label='Replace / Install Shower Valve'
+              description='Install/replace shower valve rough-in and connect water lines. Client-supplied valve/trim.'
               enabled={localDesign.installNewShowerValve}
               onToggle={(enabled) => setDesign({ installNewShowerValve: enabled })}
             />
 
             <ToggleItem
-              label='Rough-in Diverter'
-              description='Install diverter valve rough-in for multi-head shower system'
+              label='Add Shower Diverter (Handheld / Rainhead)'
+              description='Rough-in diverter valve for handheld/rainhead upgrades and connect outlet lines. Client-supplied diverter/trim.'
               enabled={localDesign.roughInDiverter}
               onToggle={(enabled) => setDesign({ roughInDiverter: enabled })}
+            />
+
+            <ToggleQuantityItem
+              label='Add Vanity Plumbing Rough-In'
+              description='Add water supply and drain rough-in for new vanity location'
+              enabled={localDesign.addVanityPlumbingRoughIn}
+              onToggle={(enabled) => setDesign({ addVanityPlumbingRoughIn: enabled })}
+              quantity={localDesign.addVanityPlumbingRoughInQuantity}
+              onQuantityChange={(qty) => setDesign({ addVanityPlumbingRoughInQuantity: qty })}
             />
 
             <ToggleItem
@@ -486,18 +563,13 @@ export function TradeSection() {
               onToggle={(enabled) => setDesign({ addFreestandingTubRoughIn: enabled })}
             />
 
-            <ToggleItem
-              label='Relocate Fixture Drain (Sink / Shower / Tub)'
-              description='Relocate existing drain to suit new fixture layout (Sink / Shower / Tub)'
-              enabled={localDesign.relocateFixtureDrain}
-              onToggle={(enabled) => setDesign({ relocateFixtureDrain: enabled })}
-            />
-
-            <ToggleItem
+            <ToggleQuantityItem
               label='Add Bidet Plumbing Rough-In'
               description='Add water supply rough-in for bidet or bidet seat'
               enabled={localDesign.addBidetPlumbingRoughIn}
               onToggle={(enabled) => setDesign({ addBidetPlumbingRoughIn: enabled })}
+              quantity={localDesign.addBidetPlumbingRoughInQuantity}
+              onQuantityChange={(qty) => setDesign({ addBidetPlumbingRoughInQuantity: qty })}
             />
           </div>
         )}
@@ -505,17 +577,14 @@ export function TradeSection() {
         {/* Plumbing Fixture Installation */}
         {plumbingTab === 'fixture' && (
           <div className='space-y-4'>
-            {/* Vanity Installation Type */}
+            {/* Vanity Cabinet Installation */}
             <div className='p-4 bg-white rounded-lg border border-slate-200'>
-              <div className='font-medium text-slate-800 mb-1'>Vanity Installation</div>
-              <div className='text-sm text-slate-500 mb-3'>
-                Select vanity type - includes cabinet installation
-              </div>
+              <div className='font-medium text-slate-800 mb-3'>Vanity Cabinet Installation (Finishing)</div>
               <div className='flex space-x-2'>
                 {[
                   { value: 'none', label: 'None' },
-                  { value: 'single', label: 'Single ($475)' },
-                  { value: 'double', label: 'Double ($550)' },
+                  { value: 'single', label: 'Single Sink' },
+                  { value: 'double', label: 'Double Vanity' },
                 ].map((option) => (
                   <Button
                     key={option.value}
@@ -536,129 +605,98 @@ export function TradeSection() {
                   </Button>
                 ))}
               </div>
-
-              {/* Vanity plumbing tasks - shown when vanity type is selected */}
-              {localDesign.vanityInstallationType !== 'none' && (
-                <div className='mt-4 pl-4 border-l-2 border-slate-200 space-y-3'>
-                  <div className='flex items-center justify-between'>
-                    <div className='flex-1'>
-                      <div className='font-medium text-slate-800'>Connect Sink Drain(s)</div>
-                      <div className='text-sm text-slate-500'>
-                        Connect sink drain(s) to existing plumbing
-                        {localDesign.vanityInstallationType === 'double' && ' (qty: 2)'}
-                      </div>
-                    </div>
-                    <ToggleSwitch
-                      label=''
-                      enabled={localDesign.connectSinkDrains}
-                      onToggle={(enabled) => setDesign({ connectSinkDrains: enabled })}
-                    />
-                  </div>
-                  <div className='flex items-center justify-between'>
-                    <div className='flex-1'>
-                      <div className='font-medium text-slate-800'>Install Faucet & Supply Lines</div>
-                      <div className='text-sm text-slate-500'>
-                        Install faucet and connect hot/cold water lines
-                        {localDesign.vanityInstallationType === 'double' && ' (qty: 2)'}
-                      </div>
-                    </div>
-                    <ToggleSwitch
-                      label=''
-                      enabled={localDesign.installVanityFaucetSupplyLines}
-                      onToggle={(enabled) => setDesign({ installVanityFaucetSupplyLines: enabled })}
-                    />
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Shower Trim - Main Option Selector */}
+            {/* Connect Sink Drain(s) - standalone with quantity */}
+            <ToggleQuantityItem
+              label='Connect Sink Drain(s)'
+              description='Connect sink drain(s) to existing plumbing'
+              enabled={localDesign.connectSinkDrains}
+              onToggle={(enabled) => setDesign({ connectSinkDrains: enabled })}
+              quantity={localDesign.connectSinkDrainsQuantity}
+              onQuantityChange={(qty) => setDesign({ connectSinkDrainsQuantity: qty })}
+            />
+
+            {/* Install Vanity Faucet & Supply Lines - standalone with quantity */}
+            <ToggleQuantityItem
+              label='Install Vanity Faucet & Supply Lines'
+              description='Install faucet and connect hot/cold water lines'
+              enabled={localDesign.installVanityFaucetSupplyLines}
+              onToggle={(enabled) => setDesign({ installVanityFaucetSupplyLines: enabled })}
+              quantity={localDesign.installVanityFaucetSupplyLinesQuantity}
+              onQuantityChange={(qty) => setDesign({ installVanityFaucetSupplyLinesQuantity: qty })}
+            />
+
+            {/* Shower Trim Components */}
             <div className='p-4 bg-white rounded-lg border border-slate-200'>
-              <div className='font-medium text-slate-800 mb-1'>Shower Trim Installation</div>
+              <div className='font-medium text-slate-800 mb-1'>Shower Trim Components</div>
               <div className='text-sm text-slate-500 mb-3'>
-                Select trim package for existing shower valve rough-in
+                Install trim components on existing shower valve rough-in
               </div>
-              <div className='flex flex-col space-y-2'>
-                {[
-                  { value: 'none', label: 'None', price: '' },
-                  { value: 'valve_head', label: 'Valve Trim + Shower Head', price: '$325' },
-                  { value: 'valve_head_spout', label: 'Valve Trim + Shower Head + Tub Spout', price: '$425' },
-                ].map((option) => (
-                  <Button
-                    key={option.value}
-                    onClick={() =>
-                      setDesign({
-                        showerTrimOption: option.value as 'none' | 'valve_head' | 'valve_head_spout',
-                      })
-                    }
-                    variant={localDesign.showerTrimOption === option.value ? 'default' : 'outline'}
-                    size='sm'
-                    className={`justify-between ${
-                      localDesign.showerTrimOption === option.value
-                        ? 'bg-blue-600 text-white'
-                        : 'border-blue-200 text-blue-600 hover:bg-blue-50'
-                    }`}
-                  >
-                    <span>{option.label}</span>
-                    {option.price && <span className='ml-2 font-semibold'>{option.price}</span>}
-                  </Button>
-                ))}
+              <div className='grid grid-cols-2 gap-2'>
+                <Button
+                  onClick={() => setDesign({ showerTrimValve: !localDesign.showerTrimValve })}
+                  variant={localDesign.showerTrimValve ? 'default' : 'outline'}
+                  size='sm'
+                  className={
+                    localDesign.showerTrimValve
+                      ? 'bg-blue-600 text-white'
+                      : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                  }
+                >
+                  Valve trim
+                </Button>
+                <Button
+                  onClick={() => setDesign({ showerTrimShowerHead: !localDesign.showerTrimShowerHead })}
+                  variant={localDesign.showerTrimShowerHead ? 'default' : 'outline'}
+                  size='sm'
+                  className={
+                    localDesign.showerTrimShowerHead
+                      ? 'bg-blue-600 text-white'
+                      : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                  }
+                >
+                  Shower Head
+                </Button>
               </div>
-
-              {/* Shower Trim Add-ons */}
-              {localDesign.showerTrimOption !== 'none' && (
-                <div className='mt-4 pl-4 border-l-2 border-slate-200 space-y-2'>
-                  <div className='text-sm font-medium text-slate-700 mb-2'>Optional Add-ons:</div>
-                  <div className='grid grid-cols-2 gap-2'>
-                    <Button
-                      onClick={() => setDesign({ showerTrimHandheld: !localDesign.showerTrimHandheld })}
-                      variant={localDesign.showerTrimHandheld ? 'default' : 'outline'}
-                      size='sm'
-                      className={
-                        localDesign.showerTrimHandheld
-                          ? 'bg-blue-600 text-white'
-                          : 'border-blue-200 text-blue-600 hover:bg-blue-50'
-                      }
-                    >
-                      Handheld (+$85)
-                    </Button>
-                    <Button
-                      onClick={() => setDesign({ showerTrimRainhead: !localDesign.showerTrimRainhead })}
-                      variant={localDesign.showerTrimRainhead ? 'default' : 'outline'}
-                      size='sm'
-                      className={
-                        localDesign.showerTrimRainhead
-                          ? 'bg-blue-600 text-white'
-                          : 'border-blue-200 text-blue-600 hover:bg-blue-50'
-                      }
-                    >
-                      Rainhead (+$85)
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Separate Tub Spout - disabled when valve_head_spout is selected */}
-              {localDesign.showerTrimOption === 'valve_head' && (
-                <div className='mt-4 pl-4 border-l-2 border-slate-200'>
-                  <div className='flex items-center justify-between'>
-                    <div className='flex-1'>
-                      <div className='font-medium text-slate-800'>Install Tub Spout (Separate)</div>
-                      <div className='text-sm text-slate-500'>Install tub spout without shower head combo (+$85)</div>
-                    </div>
-                    <ToggleSwitch
-                      label=''
-                      enabled={localDesign.installTubSpout}
-                      onToggle={(enabled) => setDesign({ installTubSpout: enabled })}
-                    />
-                  </div>
-                </div>
-              )}
-              {localDesign.showerTrimOption === 'valve_head_spout' && (
-                <div className='mt-2 text-sm text-amber-600 bg-amber-50 p-2 rounded'>
-                  Tub spout is included in the selected package
-                </div>
-              )}
+              <div className='grid grid-cols-3 gap-2 mt-2'>
+                <Button
+                  onClick={() => setDesign({ showerTrimHandheld: !localDesign.showerTrimHandheld })}
+                  variant={localDesign.showerTrimHandheld ? 'default' : 'outline'}
+                  size='sm'
+                  className={
+                    localDesign.showerTrimHandheld
+                      ? 'bg-blue-600 text-white'
+                      : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                  }
+                >
+                  Handheld
+                </Button>
+                <Button
+                  onClick={() => setDesign({ showerTrimRainhead: !localDesign.showerTrimRainhead })}
+                  variant={localDesign.showerTrimRainhead ? 'default' : 'outline'}
+                  size='sm'
+                  className={
+                    localDesign.showerTrimRainhead
+                      ? 'bg-blue-600 text-white'
+                      : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                  }
+                >
+                  Rainhead
+                </Button>
+                <Button
+                  onClick={() => setDesign({ showerTrimSpout: !localDesign.showerTrimSpout })}
+                  variant={localDesign.showerTrimSpout ? 'default' : 'outline'}
+                  size='sm'
+                  className={
+                    localDesign.showerTrimSpout
+                      ? 'bg-blue-600 text-white'
+                      : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                  }
+                >
+                  Spout
+                </Button>
+              </div>
             </div>
 
             <ToggleItem
@@ -676,12 +714,8 @@ export function TradeSection() {
             />
 
             <ToggleItem
-              label='Install Freestanding Tub & Faucet'
-              description={`Set tub, install faucet, and connect water supply and drain${
-                localDesign.addFreestandingTubRoughIn
-                  ? ' (Bundle discount applied: -$150 flat / -1hr hourly)'
-                  : ''
-              }`}
+              label='Finish-only: Freestanding Tub + Faucet Connections'
+              description='Finish-only after rough-in: set tub, connect drain & water lines, install faucet trim.'
               enabled={localDesign.installFreestandingTubFaucet}
               onToggle={(enabled) => setDesign({ installFreestandingTubFaucet: enabled })}
             />
@@ -758,31 +792,39 @@ export function TradeSection() {
               onToggle={(enabled) => setDesign({ heatedFloorThermostatPower: enabled })}
             />
 
-            <QuantityItem
+            <ToggleQuantityItem
               label='Add Recessed Pot Light(s)'
-              description='Includes wiring, housing/canless install, and final trim'
-              quantity={localDesign.potLightQuantity}
+              description='Includes wiring, housing/canless install, and final trim.'
+              enabled={localDesign.potLightQuantity > 0}
+              onToggle={(enabled) => setDesign({ potLightQuantity: enabled ? 1 : 0 })}
+              quantity={localDesign.potLightQuantity || 1}
               onQuantityChange={(qty) => setDesign({ potLightQuantity: qty })}
             />
 
-            <QuantityItem
+            <ToggleQuantityItem
               label='Add Vanity GFCI Outlet(s)'
               description='Includes wiring, box installation, and final GFCI device'
-              quantity={localDesign.gfciOutletQuantity}
+              enabled={localDesign.gfciOutletQuantity > 0}
+              onToggle={(enabled) => setDesign({ gfciOutletQuantity: enabled ? 1 : 0 })}
+              quantity={localDesign.gfciOutletQuantity || 1}
               onQuantityChange={(qty) => setDesign({ gfciOutletQuantity: qty })}
             />
 
-            <QuantityItem
-              label='Add Toilet / Bidet Power Outlet(s)'
-              description='Install new outlet location (rough-in + final receptacle install)'
-              quantity={localDesign.bidetOutletQuantity}
+            <ToggleQuantityItem
+              label='Add Toilet / Bidet Power Outlet'
+              description='Install one new outlet location (rough-in + final receptacle install).'
+              enabled={localDesign.bidetOutletQuantity > 0}
+              onToggle={(enabled) => setDesign({ bidetOutletQuantity: enabled ? 1 : 0 })}
+              quantity={localDesign.bidetOutletQuantity || 1}
               onQuantityChange={(qty) => setDesign({ bidetOutletQuantity: qty })}
             />
 
-            <QuantityItem
+            <ToggleQuantityItem
               label='LED Mirror / Medicine Cabinet Power'
-              description='Includes power rough-in and final connection for mirror or cabinet'
-              quantity={localDesign.ledMirrorQuantity}
+              description='Includes power rough-in and final connection for mirror or cabinet.'
+              enabled={localDesign.ledMirrorQuantity > 0}
+              onToggle={(enabled) => setDesign({ ledMirrorQuantity: enabled ? 1 : 0 })}
+              quantity={localDesign.ledMirrorQuantity || 1}
               onQuantityChange={(qty) => setDesign({ ledMirrorQuantity: qty })}
             />
           </div>
@@ -793,7 +835,7 @@ export function TradeSection() {
           <div className='space-y-3'>
             <ToggleItem
               label='Replace Bathroom Exhaust Fan'
-              description='Replace existing fan using current wiring and venting'
+              description='Replace existing fan using current wiring and venting.'
               enabled={localDesign.replaceBathroomExhaustFan}
               onToggle={(enabled) => setDesign({ replaceBathroomExhaustFan: enabled })}
             />
@@ -805,31 +847,39 @@ export function TradeSection() {
               onToggle={(enabled) => setDesign({ exhaustFanControl: enabled })}
             />
 
-            <QuantityItem
-              label='Vanity / Wall Light Fixture(s)'
-              description='Install client-supplied light fixtures at existing wiring'
-              quantity={localDesign.vanityWallLightQuantity}
+            <ToggleQuantityItem
+              label='Vanity / Wall Light Fixture(s) (finish-only)'
+              description='Install client-supplied light fixtures at existing wiring.'
+              enabled={localDesign.vanityWallLightQuantity > 0}
+              onToggle={(enabled) => setDesign({ vanityWallLightQuantity: enabled ? 1 : 0 })}
+              quantity={localDesign.vanityWallLightQuantity || 1}
               onQuantityChange={(qty) => setDesign({ vanityWallLightQuantity: qty })}
             />
 
-            <QuantityItem
-              label='Replace Light Switch with Dimmer'
-              description='Replace existing light switch with dimmer control'
-              quantity={localDesign.dimmerQuantity}
+            <ToggleQuantityItem
+              label='Replace Light Switch with Dimmer (finish-only)'
+              description='Replace existing light switch with dimmer control.'
+              enabled={localDesign.dimmerQuantity > 0}
+              onToggle={(enabled) => setDesign({ dimmerQuantity: enabled ? 1 : 0 })}
+              quantity={localDesign.dimmerQuantity || 1}
               onQuantityChange={(qty) => setDesign({ dimmerQuantity: qty })}
             />
 
-            <QuantityItem
+            <ToggleQuantityItem
               label='Replace Switch or Outlet (Finish-Only)'
-              description='Replace existing switch or outlet at finished walls'
-              quantity={localDesign.switchOutletQuantity}
+              description='Replace existing switch or outlet at finished walls.'
+              enabled={localDesign.switchOutletQuantity > 0}
+              onToggle={(enabled) => setDesign({ switchOutletQuantity: enabled ? 1 : 0 })}
+              quantity={localDesign.switchOutletQuantity || 1}
               onQuantityChange={(qty) => setDesign({ switchOutletQuantity: qty })}
             />
 
-            <QuantityItem
-              label='Replace Shower Pot Light (Wet-Rated)'
-              description='Replace existing shower pot light with wet-rated fixture'
-              quantity={localDesign.showerPotLightQuantity}
+            <ToggleQuantityItem
+              label='Replace Shower Pot Light (Wet-Rated) (finish-only)'
+              description='Replace existing shower pot light with wet-rated fixture.'
+              enabled={localDesign.showerPotLightQuantity > 0}
+              onToggle={(enabled) => setDesign({ showerPotLightQuantity: enabled ? 1 : 0 })}
+              quantity={localDesign.showerPotLightQuantity || 1}
               onQuantityChange={(qty) => setDesign({ showerPotLightQuantity: qty })}
             />
           </div>
