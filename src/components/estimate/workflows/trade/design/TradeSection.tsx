@@ -427,6 +427,40 @@ export function TradeSection() {
     </div>
   );
 
+  // Rate input component with local state to prevent input issues
+  const RateInput = ({
+    value,
+    onChange,
+  }: {
+    value: number;
+    onChange: (rate: number) => void;
+  }) => {
+    const [localValue, setLocalValue] = useState(value.toString());
+
+    // Sync local value when external value changes (e.g., on load)
+    useEffect(() => {
+      setLocalValue(value.toString());
+    }, [value]);
+
+    return (
+      <Input
+        type='number'
+        value={localValue}
+        onChange={(e) => setLocalValue(e.target.value)}
+        onBlur={() => {
+          const parsed = parseFloat(localValue);
+          if (!isNaN(parsed) && parsed > 0) {
+            onChange(parsed);
+          } else {
+            // Reset to previous valid value if invalid
+            setLocalValue(value.toString());
+          }
+        }}
+        className='w-20 h-8 text-center'
+      />
+    );
+  };
+
   // Pricing mode selector
   const PricingModeSelector = ({
     category,
@@ -460,18 +494,16 @@ export function TradeSection() {
       {mode === 'hourly' && (
         <div className='flex items-center gap-1 ml-2'>
           <span className='text-sm text-slate-600'>Rate:</span>
-          <Input
-            type='number'
-            value={localDesign.tradeRates[category].toString()}
-            onChange={(e) =>
+          <RateInput
+            value={localDesign.tradeRates[category]}
+            onChange={(rate) =>
               setDesign({
                 tradeRates: {
                   ...localDesign.tradeRates,
-                  [category]: parseFloat(e.target.value) || 0,
+                  [category]: rate,
                 },
               })
             }
-            className='w-20 h-8 text-center'
           />
           <span className='text-sm text-slate-600'>/hr</span>
         </div>

@@ -797,10 +797,30 @@ export default function TradeLaborSection() {
     0
   );
 
+  // Task IDs that support quantity editing
+  const quantityEnabledTasks = [
+    'move_toilet_drain',
+    'move_drain',
+    'rough_in_vanity',
+    'rough_in_bidet',
+    'install_vanity_plumbing',
+    'install_faucet',
+    'install_pot_light',
+    'install_new_gfci',
+    'elec_bidet_outlet',
+    'elec_led_mirror_power',
+    'elec_vanity_wall_light',
+    'install_dimmer',
+    'replace_switch_outlet_finish',
+    'replace_pot_light_wet',
+  ];
+
   const renderLaborItem = useCallback(
     (item: LaborItem) => {
       const itemCost = calculateItemCost(item);
       const isFlat = item.pricingMode === 'flat';
+      const hasQuantity = item.taskId && quantityEnabledTasks.includes(item.taskId);
+      const quantity = item.quantity || 1;
 
       return (
         <div
@@ -830,12 +850,60 @@ export default function TradeLaborSection() {
           {/* Pricing mode indicator */}
           <div className='text-xs text-slate-500 mb-2'>
             Mode: {isFlat ? 'Flat Rate' : 'Hourly'}
-            {(item.quantity || 1) > 1 && ` | Qty: ${item.quantity}`}
           </div>
 
           <div className='grid grid-cols-2 gap-3'>
+            {/* Quantity input for items that support it */}
+            {hasQuantity && (
+              <div className='w-full'>
+                <label className='text-xs text-slate-500'>Qty</label>
+                <div className='flex items-center gap-1'>
+                  <Button
+                    onClick={() =>
+                      handleUpdateLaborItem(
+                        item.id,
+                        'quantity',
+                        Math.max(1, quantity - 1)
+                      )
+                    }
+                    variant='outline'
+                    size='sm'
+                    className='h-8 w-8 p-0'
+                  >
+                    -
+                  </Button>
+                  <Input
+                    type='number'
+                    value={quantity.toString()}
+                    onChange={(e) =>
+                      handleUpdateLaborItem(
+                        item.id,
+                        'quantity',
+                        Math.max(1, parseInt(e.target.value) || 1)
+                      )
+                    }
+                    className='text-center w-12 h-8 border-blue-300 focus:border-blue-500'
+                  />
+                  <Button
+                    onClick={() =>
+                      handleUpdateLaborItem(
+                        item.id,
+                        'quantity',
+                        quantity + 1
+                      )
+                    }
+                    variant='outline'
+                    size='sm'
+                    className='h-8 w-8 p-0'
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {isFlat ? (
-              <div className='w-full col-span-2'>
+              <div className={`w-full ${hasQuantity ? '' : 'col-span-2'}`}>
                 <label className='text-xs text-slate-500'>Flat Price ($)</label>
                 <Input
                   type='number'
@@ -849,7 +917,7 @@ export default function TradeLaborSection() {
               </div>
             ) : (
               <>
-                <div className='w-full'>
+                <div className={`w-full ${hasQuantity ? '' : ''}`}>
                   <label className='text-xs text-slate-500'>Hours</label>
                   <Input
                     type='number'
@@ -861,7 +929,7 @@ export default function TradeLaborSection() {
                     className='text-center w-full border-blue-300 focus:border-blue-500'
                   />
                 </div>
-                <div className='w-full'>
+                <div className={`w-full ${hasQuantity ? 'col-span-2' : ''}`}>
                   <label className='text-xs text-slate-500'>Rate ($/hr)</label>
                   <Input
                     type='number'
