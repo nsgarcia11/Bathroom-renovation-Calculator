@@ -25,8 +25,26 @@ import {
 const TUB_BUNDLE_FLAT_DISCOUNT = 150;
 const TUB_BUNDLE_HOURS_DISCOUNT = 1.0;
 
+// Mapping from taskId to design quantity field
+const TASK_TO_DESIGN_QUANTITY_FIELD: Record<string, string> = {
+  move_toilet_drain: 'moveToiletDrainSupplyQuantity',
+  move_drain: 'relocateFixtureDrainQuantity',
+  rough_in_vanity: 'addVanityPlumbingRoughInQuantity',
+  rough_in_bidet: 'addBidetPlumbingRoughInQuantity',
+  install_vanity_plumbing: 'connectSinkDrainsQuantity',
+  install_faucet: 'installVanityFaucetSupplyLinesQuantity',
+  install_pot_light: 'potLightQuantity',
+  install_new_gfci: 'gfciOutletQuantity',
+  elec_bidet_outlet: 'bidetOutletQuantity',
+  elec_led_mirror_power: 'ledMirrorQuantity',
+  elec_vanity_wall_light: 'vanityWallLightQuantity',
+  install_dimmer: 'dimmerQuantity',
+  replace_switch_outlet_finish: 'switchOutletQuantity',
+  replace_pot_light_wet: 'showerPotLightQuantity',
+};
+
 export default function TradeLaborSection() {
-  const { getDesignData, getLaborItems, setLaborItems, isReloading } =
+  const { getDesignData, getLaborItems, setLaborItems, updateDesign, isReloading } =
     useEstimateWorkflowContext();
 
   const { hourlyRate: contractorHourlyRate } = useContractorContext();
@@ -701,8 +719,19 @@ export default function TradeLaborSection() {
       setLocalLaborItems(updatedItems);
       setLaborItems('trade', updatedItems);
       userActionRef.current = true;
+
+      // Sync quantity changes back to design data
+      if (field === 'quantity') {
+        const item = localLaborItems.find((i) => i.id === id);
+        if (item?.taskId) {
+          const designField = TASK_TO_DESIGN_QUANTITY_FIELD[item.taskId];
+          if (designField) {
+            updateDesign('trade', { [designField]: value });
+          }
+        }
+      }
     },
-    [localLaborItems, setLaborItems]
+    [localLaborItems, setLaborItems, updateDesign]
   );
 
   const handleDeleteLaborItem = useCallback(
