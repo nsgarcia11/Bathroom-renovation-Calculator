@@ -34,8 +34,9 @@ export default function ShowerBaseMaterialsSection() {
   // Ref to track user actions and prevent context updates during user edits
   const isUserActionRef = useRef(false);
 
-  // Sync local state with context
+  // Sync local state with context (skip during user edits)
   useEffect(() => {
+    if (isUserActionRef.current) return;
     setLocalMaterials(contextMaterials);
   }, [contextMaterials]);
 
@@ -60,13 +61,17 @@ export default function ShowerBaseMaterialsSection() {
     };
 
     isUserActionRef.current = true;
-    setLocalMaterials((prev) => [...prev, newItem]);
+    setLocalMaterials((prev) => {
+      const updatedMaterials = [...prev, newItem];
 
-    setTimeout(() => {
-      setMaterialItems('showerBase', [...localMaterials, newItem]);
-      isUserActionRef.current = false;
-    }, 100);
-  }, [localMaterials, setMaterialItems]);
+      setTimeout(() => {
+        setMaterialItems('showerBase', updatedMaterials);
+        isUserActionRef.current = false;
+      }, 100);
+
+      return updatedMaterials;
+    });
+  }, [setMaterialItems]);
 
   const handleAddConstructionMaterial = useCallback(() => {
     const newItem: MaterialItem = {
@@ -83,34 +88,37 @@ export default function ShowerBaseMaterialsSection() {
     };
 
     isUserActionRef.current = true;
-    setLocalMaterials((prev) => [...prev, newItem]);
+    setLocalMaterials((prev) => {
+      const updatedMaterials = [...prev, newItem];
 
-    setTimeout(() => {
-      setMaterialItems('showerBase', [...localMaterials, newItem]);
-      isUserActionRef.current = false;
-    }, 100);
-  }, [localMaterials, setMaterialItems]);
+      setTimeout(() => {
+        setMaterialItems('showerBase', updatedMaterials);
+        isUserActionRef.current = false;
+      }, 100);
+
+      return updatedMaterials;
+    });
+  }, [setMaterialItems]);
 
   // Handle material changes
   const handleMaterialChange = useCallback(
     (id: string, field: keyof MaterialItem, value: string) => {
       isUserActionRef.current = true;
 
-      setLocalMaterials((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, [field]: value } : item
-        )
-      );
-
-      setTimeout(() => {
-        const updatedMaterials = localMaterials.map((item) =>
+      setLocalMaterials((prev) => {
+        const updatedMaterials = prev.map((item) =>
           item.id === id ? { ...item, [field]: value } : item
         );
-        setMaterialItems('showerBase', updatedMaterials);
-        isUserActionRef.current = false;
-      }, 100);
+
+        setTimeout(() => {
+          setMaterialItems('showerBase', updatedMaterials);
+          isUserActionRef.current = false;
+        }, 100);
+
+        return updatedMaterials;
+      });
     },
-    [localMaterials, setMaterialItems]
+    [setMaterialItems]
   );
 
   // Handle deleting material
@@ -118,17 +126,18 @@ export default function ShowerBaseMaterialsSection() {
     (id: string) => {
       isUserActionRef.current = true;
 
-      setLocalMaterials((prev) => prev.filter((item) => item.id !== id));
+      setLocalMaterials((prev) => {
+        const updatedMaterials = prev.filter((item) => item.id !== id);
 
-      setTimeout(() => {
-        const updatedMaterials = localMaterials.filter(
-          (item) => item.id !== id
-        );
-        setMaterialItems('showerBase', updatedMaterials);
-        isUserActionRef.current = false;
-      }, 100);
+        setTimeout(() => {
+          setMaterialItems('showerBase', updatedMaterials);
+          isUserActionRef.current = false;
+        }, 100);
+
+        return updatedMaterials;
+      });
     },
-    [localMaterials, setMaterialItems]
+    [setMaterialItems]
   );
 
   const materials = localMaterials;

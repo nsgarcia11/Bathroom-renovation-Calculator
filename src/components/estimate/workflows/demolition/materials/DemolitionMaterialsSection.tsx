@@ -94,8 +94,9 @@ export default function DemolitionMaterialsSection() {
     });
   }, [contextMaterials, demolitionChoices, debrisDisposal]);
 
-  // Sync local state with filtered materials
+  // Sync local state with filtered materials (skip during user edits)
   useEffect(() => {
+    if (isUserActionRef.current) return;
     setLocalMaterials(filteredMaterials);
   }, [filteredMaterials]);
 
@@ -126,18 +127,21 @@ export default function DemolitionMaterialsSection() {
       isUserActionRef.current = true;
 
       // Update local state immediately for responsive UI
-      const updatedMaterials = localMaterials.map((material) =>
-        material.id === id ? { ...material, [field]: value } : material
-      );
-      setLocalMaterials(updatedMaterials);
+      setLocalMaterials((prev) => {
+        const updatedMaterials = prev.map((material) =>
+          material.id === id ? { ...material, [field]: value } : material
+        );
 
-      // Update context after a short delay to avoid conflicts
-      setTimeout(() => {
-        setMaterialItems('demolition', updatedMaterials);
-        isUserActionRef.current = false;
-      }, 100);
+        // Update context after a short delay to avoid conflicts
+        setTimeout(() => {
+          setMaterialItems('demolition', updatedMaterials);
+          isUserActionRef.current = false;
+        }, 100);
+
+        return updatedMaterials;
+      });
     },
-    [localMaterials, setMaterialItems]
+    [setMaterialItems]
   );
 
   const handleDeleteMaterial = useCallback(

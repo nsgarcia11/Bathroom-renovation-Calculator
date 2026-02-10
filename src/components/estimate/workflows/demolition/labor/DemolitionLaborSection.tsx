@@ -88,8 +88,9 @@ export default function DemolitionLaborSection() {
   const contextLaborItems = getLaborItems('demolition');
   const contextFlatFeeItems = getFlatFeeItems('demolition');
 
-  // Sync local state with context data
+  // Sync local state with context data (skip during user edits)
   useEffect(() => {
+    if (isUserActionRef.current) return;
     // Always sync with context data, even if arrays are empty
     setLocalLaborItems(contextLaborItems || []);
     setLocalFlatFeeItems(contextFlatFeeItems || []);
@@ -140,18 +141,21 @@ export default function DemolitionLaborSection() {
       isUserActionRef.current = true;
 
       // Update local state immediately for responsive UI
-      const updatedLabor = localLaborItems.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item
-      );
-      setLocalLaborItems(updatedLabor);
+      setLocalLaborItems((prev) => {
+        const updatedLabor = prev.map((item) =>
+          item.id === id ? { ...item, [field]: value } : item
+        );
 
-      // Update context after a short delay to avoid conflicts
-      setTimeout(() => {
-        setLaborItems('demolition', updatedLabor);
-        isUserActionRef.current = false;
-      }, 100);
+        // Update context after a short delay to avoid conflicts
+        setTimeout(() => {
+          setLaborItems('demolition', updatedLabor);
+          isUserActionRef.current = false;
+        }, 100);
+
+        return updatedLabor;
+      });
     },
-    [localLaborItems, setLaborItems]
+    [setLaborItems]
   );
 
   const handleDeleteLaborItem = useCallback(

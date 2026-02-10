@@ -13,7 +13,6 @@ import { StructuralIcon } from '@/components/icons/StructuralIcon';
 import { TradeIcon } from '@/components/icons/TradeIcon';
 import domtoimage from 'dom-to-image';
 import jsPDF from 'jspdf';
-import { DEMOLITION_ITEM_ORDER } from '@/lib/constants';
 
 interface EstimatesOverviewProps {
   projectId: string;
@@ -1791,185 +1790,51 @@ export default function EstimatesOverview({
                   );
                 })()}
 
-              {/* Demolition, Shower Walls, Shower Base, Floors, Finishings, Structural & Trade Detailed Breakdown */}
-              {workflow.id === 'demolition' || workflow.id === 'showerWalls' || workflow.id === 'showerBase' || workflow.id === 'floors' || workflow.id === 'finishings' || workflow.id === 'structural' || workflow.id === 'trade' ? (
-                <>
-                  {/* Labor Items */}
-                  {(() => {
-                    const laborItems = getLaborItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings' | 'structural' | 'trade');
-                    const flatFeeItems = getFlatFeeItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings' | 'structural' | 'trade');
-                    const designData = workflow.id === 'demolition'
-                      ? (getDesignData('demolition') as {
-                          isDemolitionFlatFee?: 'yes' | 'no';
-                          [key: string]: unknown;
-                        } | null)
-                      : null;
+              {/* Demolition: list labor item names in one line, no individual prices */}
+              {workflow.id === 'demolition' ? (
+                (() => {
+                  const laborItems = getLaborItems('demolition');
+                  const flatFeeItems = getFlatFeeItems('demolition');
+                  const designData = getDesignData('demolition') as {
+                    isDemolitionFlatFee?: 'yes' | 'no';
+                    [key: string]: unknown;
+                  } | null;
 
-                    if (laborItems.length === 0 && flatFeeItems.length === 0)
-                      return null;
+                  const items = designData?.isDemolitionFlatFee === 'yes'
+                    ? flatFeeItems
+                    : laborItems;
 
-                    // Sort labor items according to DEMOLITION_ITEM_ORDER (only for demolition)
-                    const sortedLaborItems = workflow.id === 'demolition'
-                      ? laborItems.sort((a, b) => {
-                          const aIndex = DEMOLITION_ITEM_ORDER.findIndex(
-                            (orderKey) => {
-                              const laborConfigs = {
-                                removeFlooring: 'lab-demo-floor',
-                                removeShowerWall: 'lab-demo-shower',
-                                removeShowerBase: 'lab-demo-shower-base',
-                                removeTub: 'lab-demo-tub',
-                                removeVanity: 'lab-demo-vanity',
-                                removeToilet: 'lab-demo-toilet',
-                                removeAccessories: 'lab-demo-accessories',
-                                removeWall: 'lab-demo-wall',
-                              };
-                              return a.id === laborConfigs[orderKey];
-                            }
-                          );
+                  if (items.length === 0) return null;
 
-                          const bIndex = DEMOLITION_ITEM_ORDER.findIndex(
-                            (orderKey) => {
-                              const laborConfigs = {
-                                removeFlooring: 'lab-demo-floor',
-                                removeShowerWall: 'lab-demo-shower',
-                                removeShowerBase: 'lab-demo-shower-base',
-                                removeTub: 'lab-demo-tub',
-                                removeVanity: 'lab-demo-vanity',
-                                removeToilet: 'lab-demo-toilet',
-                                removeAccessories: 'lab-demo-accessories',
-                                removeWall: 'lab-demo-wall',
-                              };
-                              return b.id === laborConfigs[orderKey];
-                            }
-                          );
+                  // Shorten demolition labels for estimate display
+                  const shortenLabel = (name: string) => {
+                    const labelMap: Record<string, string> = {
+                      'Remove Flooring': 'Remove Flooring',
+                      'Remove Shower Wall': 'Shower Wall',
+                      'Remove Shower Base': 'Shower Base',
+                      'Remove Tub': 'Tub',
+                      'Remove Vanity': 'Vanity',
+                      'Remove Toilet': 'Toilet',
+                      'Remove Accessories': 'Accessories',
+                      'Remove Wall': 'Wall',
+                    };
+                    return labelMap[name] || name;
+                  };
 
-                          // If both items are in the order, sort by order
-                          if (aIndex !== -1 && bIndex !== -1) {
-                            return aIndex - bIndex;
-                          }
+                  const itemNames = items.map((item) => shortenLabel(item.name)).join(', ');
 
-                          // If only one is in the order, prioritize it
-                          if (aIndex !== -1) return -1;
-                          if (bIndex !== -1) return 1;
-
-                          // If neither is in the order, maintain original order
-                          return 0;
-                        })
-                      : laborItems;
-
-                    return (
-                      <div className='mb-4'>
-                        <h4 className='font-semibold text-gray-800 mb-3 text-sm'>
-                          Labor Breakdown
-                        </h4>
-                        <div className='space-y-2'>
-                          {/* Show flat fee items if flat fee mode is selected */}
-                          {designData?.isDemolitionFlatFee === 'yes'
-                            ? flatFeeItems.map((item) => {
-                                const price = parseFloat(item.unitPrice) || 0;
-
-                                return (
-                                  <div
-                                    key={item.id}
-                                    className='flex justify-between items-center text-sm bg-gray-50 px-3 py-2 rounded'
-                                  >
-                                    <div className='flex-1'>
-                                      <span className='text-gray-700'>
-                                        {item.name}
-                                      </span>
-                                    </div>
-                                    <div className='text-right'>
-                                      <span className='font-semibold text-gray-900'>
-                                        ${price.toFixed(2)}
-                                      </span>
-                                    </div>
-                                  </div>
-                                );
-                              })
-                            : /* Show individual labor items if hourly mode */
-                              sortedLaborItems.map((item) => {
-                                const hours = parseFloat(item.hours) || 0;
-                                const rate = parseFloat(item.rate) || 0;
-                                const total = hours * rate;
-
-                                return (
-                                  <div
-                                    key={item.id}
-                                    className='flex justify-between items-center text-sm bg-gray-50 px-3 py-2 rounded'
-                                  >
-                                    <div className='flex-1'>
-                                      <span className='text-gray-700'>
-                                        {item.name}
-                                      </span>
-                                      {/* <span className='text-gray-500 ml-2'>
-                                      ({hours}h × ${rate.toFixed(2)}/h)
-                                    </span> */}
-                                    </div>
-                                    <div className='text-right'>
-                                      <span className='font-semibold text-gray-900'>
-                                        ${total.toFixed(2)}
-                                      </span>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Material Items */}
-                  {(() => {
-                    const materialItems = getMaterialItems(workflow.id as 'demolition' | 'showerWalls' | 'showerBase' | 'floors' | 'finishings' | 'structural' | 'trade');
-
-                    if (materialItems.length === 0) return null;
-
-                    return (
-                      <div className='mb-4'>
-                        <h4 className='font-semibold text-gray-800 mb-3 text-sm'>
-                          Materials Breakdown
-                        </h4>
-                        <div className='space-y-2'>
-                          {materialItems.map((item) => {
-                            const quantity = parseFloat(item.quantity) || 0;
-                            const price = parseFloat(item.price) || 0;
-                            const total = quantity * price;
-
-                            return (
-                              <div
-                                key={item.id}
-                                className='flex justify-between items-center text-sm bg-gray-50 px-3 py-2 rounded'
-                              >
-                                <div className='flex-1'>
-                                  <span className='text-gray-700'>
-                                    {item.name}
-                                  </span>
-                                  {/* <span className='text-gray-500 ml-2'>
-                                    ({quantity} {item.unit} × $
-                                    {price.toFixed(2)})
-                                  </span> */}
-                                </div>
-                                <div className='text-right'>
-                                  <span className='font-semibold text-gray-900'>
-                                    ${total.toFixed(2)}
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </>
+                  return (
+                    <div className='text-sm text-gray-700'>
+                      {itemNames}
+                    </div>
+                  );
+                })()
               ) : (
                 <>
+                  {/* All other sections: show only Labor & Materials totals */}
                   <div className='flex justify-between items-center'>
                     <div className='flex-1'>
-                      <p className='text-gray-700'>
-                        Labor (e.g., {workflow.name.toLowerCase()},
-                        installation)
-                      </p>
+                      <p className='text-gray-700'>Labor</p>
                     </div>
                     <div className='text-right'>
                       <p className='font-semibold text-gray-900'>
@@ -1979,9 +1844,7 @@ export default function EstimatesOverview({
                   </div>
                   <div className='flex justify-between items-center'>
                     <div className='flex-1'>
-                      <p className='text-gray-700'>
-                        Materials (e.g., supplies, equipment)
-                      </p>
+                      <p className='text-gray-700'>Materials</p>
                     </div>
                     <div className='text-right'>
                       <p className='font-semibold text-gray-900'>

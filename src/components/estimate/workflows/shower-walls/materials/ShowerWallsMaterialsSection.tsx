@@ -316,8 +316,9 @@ export default function ShowerWallsMaterialsSection() {
     []
   );
 
-  // Sync local state with context
+  // Sync local state with context (skip during user edits)
   useEffect(() => {
+    if (isUserActionRef.current) return;
     setLocalMaterials(contextMaterials);
   }, [contextMaterials]);
 
@@ -341,7 +342,7 @@ export default function ShowerWallsMaterialsSection() {
       return;
     }
 
-    const currentMaterials = localMaterials || [];
+    const currentMaterials = (contextMaterials || []) as MaterialItem[];
     const existingAutoItems = currentMaterials.filter(
       (item) => item.source === 'calculated'
     );
@@ -365,7 +366,6 @@ export default function ShowerWallsMaterialsSection() {
     design,
     totalSqft,
     generateMaterials,
-    localMaterials,
     contextMaterials,
     isReloading,
     setMaterialItems,
@@ -430,12 +430,9 @@ export default function ShowerWallsMaterialsSection() {
     (id: string, field: keyof MaterialItem, value: string) => {
       isUserActionRef.current = true;
 
-      // Update local state immediately - also mark as no longer auto-generated to preserve edits
       setLocalMaterials((prev) => {
         const updatedItems = prev.map((item) =>
-          item.id === id
-            ? { ...item, [field]: value, source: 'custom' }
-            : item
+          item.id === id ? { ...item, [field]: value } : item
         );
 
         setTimeout(() => {

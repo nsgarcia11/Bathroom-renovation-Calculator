@@ -35,8 +35,9 @@ export default function FloorsMaterialsSection() {
   // Ref to track user actions and prevent context updates during user edits
   const isUserActionRef = useRef(false);
 
-  // Sync local state with context
+  // Sync local state with context (skip during user edits)
   useEffect(() => {
+    if (isUserActionRef.current) return;
     setLocalMaterials(contextMaterials);
   }, [contextMaterials]);
 

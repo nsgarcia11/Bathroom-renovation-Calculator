@@ -48,8 +48,9 @@ export default function ShowerBaseLaborSection() {
   // Ref to track user actions and prevent context updates during user edits
   const isUserActionRef = useRef(false);
 
-  // Sync local state with context
+  // Sync local state with context (skip during user edits)
   useEffect(() => {
+    if (isUserActionRef.current) return;
     setLocalLaborItems(contextLaborItems);
     setLocalFlatFeeItems(contextFlatFeeItems);
   }, [contextLaborItems, contextFlatFeeItems]);
@@ -109,21 +110,20 @@ export default function ShowerBaseLaborSection() {
     (id: string, field: keyof LaborItem, value: string) => {
       isUserActionRef.current = true;
 
-      setLocalLaborItems((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, [field]: value } : item
-        )
-      );
-
-      setTimeout(() => {
-        const updatedItems = localLaborItems.map((item) =>
+      setLocalLaborItems((prev) => {
+        const updatedItems = prev.map((item) =>
           item.id === id ? { ...item, [field]: value } : item
         );
-        setLaborItems('showerBase', updatedItems);
-        isUserActionRef.current = false;
-      }, 100);
+
+        setTimeout(() => {
+          setLaborItems('showerBase', updatedItems);
+          isUserActionRef.current = false;
+        }, 100);
+
+        return updatedItems;
+      });
     },
-    [localLaborItems, setLaborItems]
+    [setLaborItems]
   );
 
   // Handle deleting labor item

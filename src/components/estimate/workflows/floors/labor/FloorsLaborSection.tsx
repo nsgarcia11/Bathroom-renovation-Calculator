@@ -115,7 +115,9 @@ export default function FloorsLaborSection() {
     return totalArea;
   }, [design.width, design.length, design.extraMeasurements]);
 
+  // Sync local state with context (skip during user edits)
   useEffect(() => {
+    if (isUserActionRef.current) return;
     setLocalLaborItems(contextLaborItems);
     setLocalFlatFeeItems(contextFlatFeeItems);
   }, [contextLaborItems, contextFlatFeeItems]);

@@ -156,6 +156,12 @@ export function EstimateWorkflowProvider({
   // Track previous loadedData to detect changes
   const prevLoadedDataRef = useRef<EstimateData | null>(null);
 
+  // Track previous design data to avoid recalculating on labor/material edits
+  const prevDemolitionDesignRef = useRef<string>('');
+  const prevShowerWallsDesignRef = useRef<string>('');
+  const prevShowerBaseDesignRef = useRef<string>('');
+  const prevFloorsDesignRef = useRef<string>('');
+
   // Refetch on mount to get latest data
   useEffect(() => {
     refetchEstimate();
@@ -178,6 +184,13 @@ export function EstimateWorkflowProvider({
     if (estimateData.workflows?.demolition) {
       const demolitionData = estimateData.workflows.demolition;
       const designData = demolitionData.design;
+
+      // Only recalculate when design data changes, not when labor/material edits trigger workflows update
+      const designKey = JSON.stringify(designData);
+      if (designKey === prevDemolitionDesignRef.current) {
+        return;
+      }
+      prevDemolitionDesignRef.current = designKey;
 
       if (designData?.demolitionChoices) {
         const demolitionChoices = designData.demolitionChoices;
@@ -292,6 +305,13 @@ export function EstimateWorkflowProvider({
         design?: ShowerWallsDesign;
       };
 
+      // Only recalculate when the DESIGN data changes, not when labor/material edits trigger workflows update
+      const designKey = JSON.stringify(designData);
+      if (designKey === prevShowerWallsDesignRef.current) {
+        return;
+      }
+      prevShowerWallsDesignRef.current = designKey;
+
       if (
         designData?.walls &&
         designData?.design?.tileSize &&
@@ -350,41 +370,11 @@ export function EstimateWorkflowProvider({
               existingAutoIds.size !== newAutoIds.size ||
               Array.from(newAutoIds).some(id => !existingAutoIds.has(id));
 
-            // Check if hours have changed (for wall dimension changes)
-            const hoursChanged = autoLaborItems.some(newItem => {
-              const existingItem = existingLaborItems.find(item => item.id === newItem.id);
-              if (!existingItem) return true;
-              // Compare as numbers (convert from string if needed)
-              const existingHours = typeof existingItem.hours === 'string'
-                ? parseFloat(existingItem.hours)
-                : existingItem.hours;
-              const newHours = typeof newItem.hours === 'string'
-                ? parseFloat(newItem.hours)
-                : newItem.hours;
-              return Math.abs(existingHours - newHours) > 0.01; // Allow small floating point differences
-            });
-
-            // Check if quantities have changed (for wall dimension changes)
-            const quantitiesChanged = autoMaterialItems.some(newItem => {
-              const existingItem = existingMaterialItems.find(item => item.id === newItem.id);
-              if (!existingItem) return true;
-              // Compare as numbers (convert from string if needed)
-              const existingQty = typeof existingItem.quantity === 'string'
-                ? parseFloat(existingItem.quantity)
-                : existingItem.quantity;
-              const newQty = typeof newItem.quantity === 'string'
-                ? parseFloat(newItem.quantity)
-                : newItem.quantity;
-              return Math.abs(existingQty - newQty) > 0.01;
-            });
-
-            // Update if there's a difference in count, IDs, hours, or quantities
+            // Update if there's a difference in count or IDs
             if (
               existingLaborItems.length !== expectedLaborCount ||
               existingMaterialItems.length !== expectedMaterialCount ||
-              idsChanged ||
-              hoursChanged ||
-              quantitiesChanged
+              idsChanged
             ) {
               actions.updateWorkflowData('showerWalls', {
                 ...currentWorkflow,
@@ -421,6 +411,13 @@ export function EstimateWorkflowProvider({
         clientSuppliesBase?: string;
         installationBy?: string;
       } | null;
+
+      // Only recalculate when design data changes, not when labor/material edits trigger workflows update
+      const designKey = JSON.stringify(designData);
+      if (designKey === prevShowerBaseDesignRef.current) {
+        return;
+      }
+      prevShowerBaseDesignRef.current = designKey;
 
       // Check if construction options are enabled (these work independently of base type)
       const hasConstructionOptions = designData?.subfloorRepair || designData?.joistModification;
@@ -802,6 +799,13 @@ export function EstimateWorkflowProvider({
         plywoodThickness?: string;
         joistCount?: number;
       } | null;
+
+      // Only recalculate when design data changes, not when labor/material edits trigger workflows update
+      const designKey = JSON.stringify(designData);
+      if (designKey === prevFloorsDesignRef.current) {
+        return;
+      }
+      prevFloorsDesignRef.current = designKey;
 
       // Skip if no design data or no dimensions
       if (!designData) {

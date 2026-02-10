@@ -250,8 +250,9 @@ export default function ShowerWallsLaborSection() {
     [contractorHourlyRate]
   );
 
-  // Sync local state with context
+  // Sync local state with context (skip during user edits)
   useEffect(() => {
+    if (isUserActionRef.current) return;
     setLocalLaborItems(contextLaborItems);
     setLocalFlatFeeItems(contextFlatFeeItems);
   }, [contextLaborItems, contextFlatFeeItems]);
@@ -276,7 +277,7 @@ export default function ShowerWallsLaborSection() {
       return;
     }
 
-    const currentLabor = localLaborItems || [];
+    const currentLabor = (contextLaborItems || []) as LaborItem[];
     const existingAutoItems = currentLabor.filter(
       (item) => item.source === 'calculated'
     );
@@ -300,7 +301,6 @@ export default function ShowerWallsLaborSection() {
     design,
     totalSqft,
     generateLaborItems,
-    localLaborItems,
     contextLaborItems,
     isReloading,
     setLaborItems,
@@ -363,12 +363,9 @@ export default function ShowerWallsLaborSection() {
     (id: string, field: keyof LaborItem, value: string) => {
       isUserActionRef.current = true;
 
-      // Update local state immediately - also mark as custom to preserve edits
       setLocalLaborItems((prev) => {
         const updatedItems = prev.map((item) =>
-          item.id === id
-            ? { ...item, [field]: value, source: 'custom' }
-            : item
+          item.id === id ? { ...item, [field]: value } : item
         );
 
         setTimeout(() => {
