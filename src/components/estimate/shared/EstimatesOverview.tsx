@@ -11,6 +11,7 @@ import { Hammer, ShowerHead, Layers, Paintbrush, Download } from 'lucide-react';
 import { ShowerBaseIcon } from '@/components/icons/ShowerBaseIcon';
 import { StructuralIcon } from '@/components/icons/StructuralIcon';
 import { TradeIcon } from '@/components/icons/TradeIcon';
+import { LaborItem } from '@/types/estimate';
 import domtoimage from 'dom-to-image';
 import jsPDF from 'jspdf';
 
@@ -774,22 +775,22 @@ export default function EstimatesOverview({
     const hasData = laborItems.length > 0 || materialItems.length > 0;
     if (!hasData) return null;
 
+    const calcLaborCost = (item: LaborItem) => {
+      const quantity = item.quantity || 1;
+      if (item.pricingMode === 'flat') {
+        return (parseFloat(item.flatPrice || '0') || 0) * quantity;
+      }
+      return (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0) * quantity;
+    };
+
     // Trade items use 'category' instead of 'scope', check both
     const designLabor = laborItems
       .filter((item) => (item.scope || item.category) === 'design')
-      .reduce(
-        (sum, item) =>
-          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
-        0
-      );
+      .reduce((sum, item) => sum + calcLaborCost(item), 0);
 
     const constructionLabor = laborItems
       .filter((item) => (item.scope || item.category) === 'construction')
-      .reduce(
-        (sum, item) =>
-          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
-        0
-      );
+      .reduce((sum, item) => sum + calcLaborCost(item), 0);
 
     const designMaterials = materialItems
       .filter((item) => (item.scope || item.category) === 'design')
@@ -811,8 +812,7 @@ export default function EstimatesOverview({
 
     // Compute totals from all items (not just scope-matched) to catch items without scope/category
     const totalLabor = laborItems.reduce(
-      (sum, item) =>
-        sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+      (sum, item) => sum + calcLaborCost(item),
       0
     );
     const totalMaterials = materialItems.reduce(
@@ -844,22 +844,22 @@ export default function EstimatesOverview({
     const hasData = laborItems.length > 0 || materialItems.length > 0;
     if (!hasData) return null;
 
+    const calcLaborCost = (item: LaborItem) => {
+      const quantity = item.quantity || 1;
+      if (item.pricingMode === 'flat') {
+        return (parseFloat(item.flatPrice || '0') || 0) * quantity;
+      }
+      return (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0) * quantity;
+    };
+
     // Trade items use 'category' instead of 'scope', check both
     const designLabor = laborItems
       .filter((item) => (item.scope || item.category) === 'design')
-      .reduce(
-        (sum, item) =>
-          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
-        0
-      );
+      .reduce((sum, item) => sum + calcLaborCost(item), 0);
 
     const constructionLabor = laborItems
       .filter((item) => (item.scope || item.category) === 'construction')
-      .reduce(
-        (sum, item) =>
-          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
-        0
-      );
+      .reduce((sum, item) => sum + calcLaborCost(item), 0);
 
     const designMaterials = materialItems
       .filter((item) => (item.scope || item.category) === 'design')
@@ -881,8 +881,7 @@ export default function EstimatesOverview({
 
     // Compute totals from all items (not just scope-matched) to catch items without scope/category
     const totalLabor = laborItems.reduce(
-      (sum, item) =>
-        sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+      (sum, item) => sum + calcLaborCost(item),
       0
     );
     const totalMaterials = materialItems.reduce(

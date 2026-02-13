@@ -2474,11 +2474,13 @@ export function EstimateWorkflowProvider({
       }
 
       const laborTotal =
-        (workflow.labor?.hourlyItems || []).reduce(
-          (sum, item) =>
-            sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
-          0
-        ) +
+        (workflow.labor?.hourlyItems || []).reduce((sum, item) => {
+          const quantity = item.quantity || 1;
+          if (item.pricingMode === 'flat') {
+            return sum + (parseFloat(item.flatPrice || '0') || 0) * quantity;
+          }
+          return sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0) * quantity;
+        }, 0) +
         (workflow.labor?.flatFeeItems || []).reduce(
           (sum, item) => sum + (parseFloat(item.unitPrice) || 0),
           0
