@@ -764,28 +764,19 @@ export default function EstimatesOverview({
   ]);
 
   // Get trade workflow data
-  const tradeDesignData = getDesignData('trade');
   const tradeLaborItems = getLaborItems('trade');
   const tradeMaterialItems = getMaterialItems('trade');
-  const tradeTotals = getWorkflowTotals('trade');
 
-  const tradeData = useMemo(() => {
-    const designData = tradeDesignData;
-    const laborItems = tradeLaborItems;
-    const materialItems = tradeMaterialItems;
-    const totals = tradeTotals;
+  const plumbingData = useMemo(() => {
+    const laborItems = tradeLaborItems.filter((item) => item.color === 'blue');
+    const materialItems = tradeMaterialItems.filter((item) => item.color === 'blue');
 
-    // Check if there's any data
-    const hasData =
-      laborItems.length > 0 ||
-      materialItems.length > 0 ||
-      (designData && Object.keys(designData).length > 0);
-
+    const hasData = laborItems.length > 0 || materialItems.length > 0;
     if (!hasData) return null;
 
-    // Calculate scope-based totals
+    // Trade items use 'category' instead of 'scope', check both
     const designLabor = laborItems
-      .filter((item) => item.scope === 'design')
+      .filter((item) => (item.scope || item.category) === 'design')
       .reduce(
         (sum, item) =>
           sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
@@ -793,7 +784,7 @@ export default function EstimatesOverview({
       );
 
     const constructionLabor = laborItems
-      .filter((item) => item.scope === 'construction')
+      .filter((item) => (item.scope || item.category) === 'construction')
       .reduce(
         (sum, item) =>
           sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
@@ -801,7 +792,7 @@ export default function EstimatesOverview({
       );
 
     const designMaterials = materialItems
-      .filter((item) => item.scope === 'design')
+      .filter((item) => (item.scope || item.category) === 'design')
       .reduce(
         (sum, item) =>
           sum +
@@ -810,7 +801,7 @@ export default function EstimatesOverview({
       );
 
     const constructionMaterials = materialItems
-      .filter((item) => item.scope === 'construction')
+      .filter((item) => (item.scope || item.category) === 'construction')
       .reduce(
         (sum, item) =>
           sum +
@@ -818,20 +809,103 @@ export default function EstimatesOverview({
         0
       );
 
+    // Compute totals from all items (not just scope-matched) to catch items without scope/category
+    const totalLabor = laborItems.reduce(
+      (sum, item) =>
+        sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+      0
+    );
+    const totalMaterials = materialItems.reduce(
+      (sum, item) =>
+        sum +
+        (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+      0
+    );
+
     return {
-      id: 'trade',
-      name: 'Plumbing Electrical',
+      id: 'plumbing',
+      name: 'Plumbing',
       icon: <TradeIcon size={24} />,
       color: 'text-blue-600',
       designLabor,
       constructionLabor,
       designMaterials,
       constructionMaterials,
-      totalLabor: totals.laborTotal,
-      totalMaterials: totals.materialsTotal,
-      total: totals.grandTotal,
+      totalLabor,
+      totalMaterials,
+      total: totalLabor + totalMaterials,
     };
-  }, [tradeDesignData, tradeLaborItems, tradeMaterialItems, tradeTotals]);
+  }, [tradeLaborItems, tradeMaterialItems]);
+
+  const electricalData = useMemo(() => {
+    const laborItems = tradeLaborItems.filter((item) => item.color === 'green');
+    const materialItems = tradeMaterialItems.filter((item) => item.color === 'green');
+
+    const hasData = laborItems.length > 0 || materialItems.length > 0;
+    if (!hasData) return null;
+
+    // Trade items use 'category' instead of 'scope', check both
+    const designLabor = laborItems
+      .filter((item) => (item.scope || item.category) === 'design')
+      .reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      );
+
+    const constructionLabor = laborItems
+      .filter((item) => (item.scope || item.category) === 'construction')
+      .reduce(
+        (sum, item) =>
+          sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+        0
+      );
+
+    const designMaterials = materialItems
+      .filter((item) => (item.scope || item.category) === 'design')
+      .reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      );
+
+    const constructionMaterials = materialItems
+      .filter((item) => (item.scope || item.category) === 'construction')
+      .reduce(
+        (sum, item) =>
+          sum +
+          (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+        0
+      );
+
+    // Compute totals from all items (not just scope-matched) to catch items without scope/category
+    const totalLabor = laborItems.reduce(
+      (sum, item) =>
+        sum + (parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0),
+      0
+    );
+    const totalMaterials = materialItems.reduce(
+      (sum, item) =>
+        sum +
+        (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+      0
+    );
+
+    return {
+      id: 'electrical',
+      name: 'Electrical',
+      icon: <TradeIcon size={24} />,
+      color: 'text-green-600',
+      designLabor,
+      constructionLabor,
+      designMaterials,
+      constructionMaterials,
+      totalLabor,
+      totalMaterials,
+      total: totalLabor + totalMaterials,
+    };
+  }, [tradeLaborItems, tradeMaterialItems]);
 
   // Create workflows array
   const workflows = useMemo(() => {
@@ -854,8 +928,11 @@ export default function EstimatesOverview({
     if (structuralData) {
       workflowList.push(structuralData);
     }
-    if (tradeData) {
-      workflowList.push(tradeData);
+    if (plumbingData) {
+      workflowList.push(plumbingData);
+    }
+    if (electricalData) {
+      workflowList.push(electricalData);
     }
 
     return workflowList;
@@ -866,7 +943,8 @@ export default function EstimatesOverview({
     floorsData,
     finishingsData,
     structuralData,
-    tradeData,
+    plumbingData,
+    electricalData,
   ]);
 
   // Get base total from context
@@ -1868,9 +1946,11 @@ export default function EstimatesOverview({
 
             {/* Client Notes */}
             {(() => {
+              // Map plumbing/electrical IDs back to 'trade' for data fetching
+              const workflowKey = (workflow.id === 'plumbing' || workflow.id === 'electrical') ? 'trade' : workflow.id;
               // Get design data to access client notes
               const designData = getDesignData(
-                workflow.id as
+                workflowKey as
                   | 'demolition'
                   | 'showerWalls'
                   | 'showerBase'
