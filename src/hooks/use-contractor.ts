@@ -1,37 +1,32 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Contractor } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useContractor() {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ['contractor'],
+    queryKey: ['contractor', user?.id],
     queryFn: async (): Promise<Contractor | null> => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+      if (!user) {
+        return null;
+      }
 
-        if (!user) {
-          return null;
-        }
+      // Query contractors table for the user
+      const { data, error } = await supabase
+        .from('contractors')
+        .select('*')
+        .eq('user_id', user.id);
 
-        // Query contractors table for the user
-        const { data, error } = await supabase
-          .from('contractors')
-          .select('*')
-          .eq('user_id', user.id);
-
-        if (error) {
-          throw error;
-        }
-
-        if (data && data.length > 0) {
-          return data[0];
-        } else {
-          return null;
-        }
-      } catch (error) {
+      if (error) {
         throw error;
+      }
+
+      if (data && data.length > 0) {
+        return data[0];
+      } else {
+        return null;
       }
     },
     retry: (failureCount, error) => {
@@ -47,35 +42,25 @@ export function useContractor() {
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: true, // Keep enabled to allow the query to run
+    enabled: !!user, // Only fetch when user is authenticated
   });
 }
 
 export function useUpdateContractor() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (contractorData: Partial<Contractor>) => {
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       // First try to refresh the session
       const { error: sessionError } = await supabase.auth.refreshSession();
 
       if (sessionError) {
         console.error('Session refresh error:', sessionError);
-      }
-
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError) {
-        console.error('Auth error:', authError);
-        throw authError;
-      }
-
-      if (!user) {
-        console.error('No user found');
-        throw new Error('User not authenticated');
       }
 
       // First, try to get existing contractor record
@@ -125,10 +110,12 @@ export function useUpdateContractor() {
       return data;
     },
     onSuccess: (data) => {
-      // Invalidate and refetch contractor data
+      // Invalidate all contractor queries (matches ['contractor', <any-user-id>])
       queryClient.invalidateQueries({ queryKey: ['contractor'] });
-      // Also set the data directly to ensure immediate update
-      queryClient.setQueryData(['contractor'], data);
+      // Also set the data directly for immediate update
+      if (user) {
+        queryClient.setQueryData(['contractor', user.id], data);
+      }
     },
   });
 }

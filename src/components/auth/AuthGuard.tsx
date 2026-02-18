@@ -18,11 +18,11 @@ export function AuthGuard({ children }: AuthGuardProps) {
     error: contractorError,
     isFetching: contractorFetching,
     isSuccess: contractorSuccess,
+    refetch: refetchContractor,
   } = useContractor();
 
-  const loading = authLoading || (user && contractorLoading);
-
-  if (loading) {
+  // Show loading while auth is resolving
+  if (authLoading) {
     return <LoadingSpinner />;
   }
 
@@ -30,40 +30,41 @@ export function AuthGuard({ children }: AuthGuardProps) {
     return <LoginForm />;
   }
 
-  // If we're still loading contractor data, show loading
-  if (contractorLoading) {
+  // Show loading while contractor data is being fetched for the first time
+  if (contractorLoading || contractorFetching) {
     return <LoadingSpinner />;
   }
 
-  // If we're still fetching contractor data and don't have any data yet, show loading
-  if (contractorFetching && !contractor) {
-    return <LoadingSpinner />;
-  }
-
-  // If user is authenticated but hasn't completed setup, show setup wizard
-  // Only redirect to setup if we're sure there's no contractor data and the query has completed successfully
-  // AND we're not currently fetching data
-  if (
-    !contractor &&
-    contractorSuccess &&
-    !contractorError &&
-    !contractorFetching
-  ) {
-    return <SetupPage />;
-  }
-
-  // If there's an error loading contractor data, show setup page as fallback
+  // If there's an error loading contractor data, show error with retry — NOT setup page
   if (contractorError && !contractor) {
+    return (
+      <div className='min-h-screen bg-slate-50 flex items-center justify-center p-4'>
+        <div className='text-center max-w-md'>
+          <h2 className='text-xl font-bold text-slate-800 mb-2'>
+            Unable to load your data
+          </h2>
+          <p className='text-slate-600 mb-4'>
+            There was a problem connecting to the server. Please check your
+            connection and try again.
+          </p>
+          <button
+            onClick={() => refetchContractor()}
+            className='bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors'
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is authenticated but has no contractor record, show setup wizard
+  if (!contractor && contractorSuccess) {
     return <SetupPage />;
   }
 
-  // Check if contractor exists but is missing required fields (incomplete setup)
-  if (
-    contractor &&
-    contractorSuccess &&
-    !contractorError &&
-    !contractorFetching
-  ) {
+  // If contractor exists but is missing required fields (incomplete setup)
+  if (contractor && contractorSuccess) {
     const stringHasValue = (value: string | null | undefined) =>
       typeof value === 'string' && value.trim().length > 0;
     const numberHasValue = (value: number | null | undefined) =>
