@@ -14,9 +14,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const { user, loading: authLoading } = useAuth();
   const {
     data: contractor,
-    isLoading: contractorLoading,
     error: contractorError,
-    isFetching: contractorFetching,
     isSuccess: contractorSuccess,
     refetch: refetchContractor,
   } = useContractor();
@@ -30,8 +28,10 @@ export function AuthGuard({ children }: AuthGuardProps) {
     return <LoginForm />;
   }
 
-  // Show loading while contractor data is being fetched for the first time
-  if (contractorLoading || contractorFetching) {
+  // Wait until the contractor query has a definitive result (success or error).
+  // This covers: initial loading, background refetching, AND the idle→fetching
+  // transition that happens when `enabled` flips from false to true after sign-in.
+  if (!contractorSuccess && !contractorError) {
     return <LoadingSpinner />;
   }
 
@@ -64,7 +64,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   }
 
   // If contractor exists but is missing required fields (incomplete setup)
-  if (contractor && contractorSuccess) {
+  if (contractor) {
     const stringHasValue = (value: string | null | undefined) =>
       typeof value === 'string' && value.trim().length > 0;
     const numberHasValue = (value: number | null | undefined) =>
