@@ -95,7 +95,6 @@ export interface SubscriptionLimits {
   currentPlan: (typeof PLANS)[string];
   canCreateEstimate: boolean;
   canExportPdf: boolean;
-  isRedownload: (projectId: string) => boolean;
   estimatesUsed: number;
   estimatesRemaining: number | null;
   pdfExportsUsed: number;
@@ -148,17 +147,12 @@ export function useSubscriptionLimits(
   // PDF export limits — paid plans: unlimited, everyone else: 3 free exports
   const canExportPdf = isPaidPlan || !pdfLimitReached;
 
-  const isRedownload = (projectId: string) => {
-    return (pdfExports || []).some((e) => e.project_id === projectId);
-  };
-
   const needsUpgrade = !canCreateEstimate || !canExportPdf;
 
   return {
     currentPlan: plan,
     canCreateEstimate,
     canExportPdf,
-    isRedownload,
     estimatesUsed: projectCount,
     estimatesRemaining,
     pdfExportsUsed,

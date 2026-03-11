@@ -49,16 +49,6 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       } = await supabase.auth.getUser();
       if (!user) return { allowed: false };
 
-      // Check if this is a re-download (always allowed)
-      const { data: existingExport } = await supabase
-        .from('pdf_exports')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('project_id', projectId)
-        .maybeSingle();
-
-      if (existingExport) return { allowed: true };
-
       // Get fresh subscription data
       const { data: sub } = await supabase
         .from('subscriptions')
@@ -69,14 +59,12 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       if (!sub) return { allowed: false };
 
       const planId = sub.plan_id;
-
-      // Paid plans: unlimited exports if subscription is active
       const isPaid =
         (planId === 'starter' || planId === 'pro') &&
         sub.status === 'active';
 
       if (!isPaid) {
-        // Free plan: check 3 export limit
+        // Free plan: check 3 export limit (every download counts)
         const { count } = await supabase
           .from('pdf_exports')
           .select('*', { count: 'exact', head: true })
@@ -87,31 +75,26 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         }
       }
 
-      // Record the export
+      // Record every download
       const { error } = await supabase
         .from('pdf_exports')
         .insert({ user_id: user.id, project_id: projectId });
 
-      // 23505 = unique violation (already exported this project) — that's fine
-      if (error && error.code !== '23505') {
+      if (error) {
         console.error('Failed to record PDF export:', error);
         return { allowed: false };
       }
 
-      // Update cache immediately so the banner counter reflects the new export
-      queryClient.setQueryData<PdfExport[]>(['pdf-exports'], (old = []) => {
-        // Don't add duplicate
-        if (old.some((e) => e.project_id === projectId)) return old;
-        return [
-          ...old,
-          {
-            id: crypto.randomUUID(),
-            user_id: user.id,
-            project_id: projectId,
-            created_at: new Date().toISOString(),
-          },
-        ];
-      });
+      // Update cache immediately so the banner counter increments
+      queryClient.setQueryData<PdfExport[]>(['pdf-exports'], (old = []) => [
+        ...old,
+        {
+          id: crypto.randomUUID(),
+          user_id: user.id,
+          project_id: projectId,
+          created_at: new Date().toISOString(),
+        },
+      ]);
 
       return { allowed: true };
     },
