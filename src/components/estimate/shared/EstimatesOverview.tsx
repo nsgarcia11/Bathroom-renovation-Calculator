@@ -330,7 +330,8 @@ export default function EstimatesOverview({
       // Cleanup: Remove temporary styles and class
       document.head.removeChild(style);
       estimateRef.current.classList.remove('pdf-export');
-    } catch {
+    } catch (err) {
+      console.error('PDF export error:', err);
       showError('Error generating PDF', 'Please try again.');
 
       // Cleanup on error
