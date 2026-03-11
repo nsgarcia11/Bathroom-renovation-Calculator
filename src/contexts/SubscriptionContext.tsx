@@ -9,7 +9,7 @@ import {
   SubscriptionLimits,
 } from '@/hooks/use-subscription';
 import { useProjects } from '@/hooks/use-projects';
-import { Subscription } from '@/types';
+import { Subscription, PdfExport } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { FREE_PDF_EXPORT_LIMIT } from '@/lib/plans';
 
@@ -87,21 +87,31 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         }
       }
 
-      // Record the export directly and refresh queries
+      // Record the export
       const { error } = await supabase
         .from('pdf_exports')
-        .upsert(
-          { user_id: user.id, project_id: projectId },
-          { onConflict: 'user_id,project_id', ignoreDuplicates: true }
-        );
+        .insert({ user_id: user.id, project_id: projectId });
 
-      if (error) {
+      // 23505 = unique violation (already exported this project) — that's fine
+      if (error && error.code !== '23505') {
         console.error('Failed to record PDF export:', error);
         return { allowed: false };
       }
 
-      // Force refresh the cached data so banner updates immediately
-      await queryClient.invalidateQueries({ queryKey: ['pdf-exports'] });
+      // Update cache immediately so the banner counter reflects the new export
+      queryClient.setQueryData<PdfExport[]>(['pdf-exports'], (old = []) => {
+        // Don't add duplicate
+        if (old.some((e) => e.project_id === projectId)) return old;
+        return [
+          ...old,
+          {
+            id: crypto.randomUUID(),
+            user_id: user.id,
+            project_id: projectId,
+            created_at: new Date().toISOString(),
+          },
+        ];
+      });
 
       return { allowed: true };
     },
