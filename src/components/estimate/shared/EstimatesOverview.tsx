@@ -47,7 +47,7 @@ export default function EstimatesOverview({
   const { data: project } = useProject(projectId);
   const { error: showError, success: showSuccess } = useToast();
 
-  const { limits, recordPdfExport } = useSubscriptionContext();
+  const { limits, checkAndRecordPdfExport } = useSubscriptionContext();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // State for pricing adjustments
@@ -58,9 +58,9 @@ export default function EstimatesOverview({
   const handleExportToPDF = async () => {
     if (!estimateRef.current) return;
 
-    // Check subscription limits (re-downloads of same estimate are always free)
-    const isRedownload = limits.isRedownload(projectId);
-    if (!isRedownload && !limits.canExportPdf) {
+    // Check subscription limits with fresh database check (prevents stale cache bypass)
+    const { allowed } = await checkAndRecordPdfExport(projectId);
+    if (!allowed) {
       setShowUpgradeModal(true);
       return;
     }
@@ -319,12 +319,6 @@ export default function EstimatesOverview({
 
       // Download PDF
       pdf.save(filename);
-      // Record the PDF export (re-downloads are handled by UNIQUE constraint)
-      try {
-        await recordPdfExport(projectId);
-      } catch (err) {
-        console.error('Failed to record PDF export:', err);
-      }
       showSuccess('PDF exported successfully');
 
       // Cleanup: Remove temporary styles and class
