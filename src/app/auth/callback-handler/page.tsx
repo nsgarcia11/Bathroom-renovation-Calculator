@@ -22,6 +22,7 @@ export default function CallbackHandler() {
           const params = new URLSearchParams(hash.substring(1));
           const accessToken = params.get('access_token');
           const refreshToken = params.get('refresh_token');
+          const type = params.get('type');
 
           if (accessToken && refreshToken) {
             // Set the session using the tokens
@@ -34,12 +35,19 @@ export default function CallbackHandler() {
               throw error;
             }
 
-            // Clear the URL hash and redirect to home
+            // Clear the URL hash
             window.history.replaceState(
               {},
               document.title,
               window.location.pathname
             );
+
+            // Redirect to reset password page for recovery flow
+            if (type === 'recovery') {
+              router.push('/auth/reset-password');
+              return;
+            }
+
             router.push('/');
             return;
           }

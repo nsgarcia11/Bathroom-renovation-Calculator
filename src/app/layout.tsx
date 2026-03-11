@@ -5,6 +5,7 @@ import { QueryProvider } from '@/providers/QueryProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ContractorProvider } from '@/contexts/ContractorContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { SubscriptionProvider } from '@/contexts/SubscriptionContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,7 +25,9 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             <ContractorProvider>
-              <ToastProvider>{children}</ToastProvider>
+              <SubscriptionProvider>
+                <ToastProvider>{children}</ToastProvider>
+              </SubscriptionProvider>
             </ContractorProvider>
           </AuthProvider>
         </QueryProvider>

@@ -2,13 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase-server';
 
+const PRICE_IDS: Record<string, string | undefined> = {
+  starter: process.env.STRIPE_STARTER_PRICE_ID,
+  pro: process.env.STRIPE_PRO_PRICE_ID,
+};
+
 export async function POST(request: NextRequest) {
   try {
-    const { priceId } = await request.json();
+    const { planId } = await request.json();
 
-    if (!priceId) {
+    const priceId = PRICE_IDS[planId];
+    if (!planId || !priceId) {
       return NextResponse.json(
-        { error: 'Price ID is required' },
+        { error: 'Invalid plan' },
         { status: 400 }
       );
     }
@@ -59,10 +65,12 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?canceled=true`,
+      allow_promotion_codes: true,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
       metadata: {
         user_id: user.id,
+        plan_id: planId,
       },
     });
 

@@ -6,8 +6,9 @@ import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthProvider } from '@/contexts/AuthContext';
-import { Settings, Menu, X, LogOut } from 'lucide-react';
+import { Settings, Menu, X, LogOut, CreditCard } from 'lucide-react';
 import { EstimateNavigation } from '@/components/EstimateNavigation';
+import { TrialBanner } from '@/components/subscription/TrialBanner';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -33,6 +34,11 @@ function LayoutContent({
 
   const handleSettings = () => {
     router.push('/settings');
+    setIsMenuOpen(false);
+  };
+
+  const handlePricing = () => {
+    router.push('/pricing');
     setIsMenuOpen(false);
   };
 
@@ -93,6 +99,9 @@ function LayoutContent({
         </header>
       )}
 
+      {/* Trial Banner */}
+      {showHeader && user && <TrialBanner />}
+
       {/* Main Content */}
       {allowFullHeight ? (
         <div className='h-full'>{children}</div>
@@ -131,6 +140,13 @@ function LayoutContent({
               }}
             >
               <div className='py-2'>
+                <button
+                  onClick={handlePricing}
+                  className='w-full px-4 py-3 text-left hover:bg-slate-50 flex items-center space-x-3'
+                >
+                  <CreditCard size={20} className='text-slate-600' />
+                  <span className='text-slate-800'>Plan & Billing</span>
+                </button>
                 <button
                   onClick={handleSettings}
                   className='w-full px-4 py-3 text-left hover:bg-slate-50 flex items-center space-x-3'

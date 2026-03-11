@@ -31,11 +31,13 @@ const authSchema = z
 type AuthFormData = z.infer<typeof authSchema>;
 
 export function LoginForm() {
-  const { signIn, signUp, resendVerification } = useAuth();
+  const { signIn, signUp, resendVerification, resetPassword } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const [userEmail, setUserEmail] = useState('');
 
   const {
@@ -100,6 +102,103 @@ export function LoginForm() {
       setIsLoading(false);
     }
   };
+
+  const handleForgotPassword = async () => {
+    if (!userEmail) {
+      setMessage('Please enter your email address first.');
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage('');
+    try {
+      await resetPassword(userEmail);
+      setResetSent(true);
+      setMessage('Password reset link sent! Check your email.');
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Failed to send reset email.';
+      setMessage(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (showForgotPassword) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8'>
+        <div className='max-w-md w-full space-y-8'>
+          <div>
+            <h2 className='mt-6 text-center text-3xl font-extrabold text-gray-900'>
+              Reset Your Password
+            </h2>
+            <p className='mt-2 text-center text-sm text-gray-600'>
+              {resetSent
+                ? `We've sent a reset link to ${userEmail}`
+                : 'Enter your email and we\'ll send you a reset link'}
+            </p>
+          </div>
+
+          <div className='space-y-4'>
+            {message && (
+              <Alert variant={resetSent ? 'informative' : 'destructive'}>
+                <AlertDescription>{message}</AlertDescription>
+              </Alert>
+            )}
+
+            {!resetSent && (
+              <>
+                <Input
+                  type='email'
+                  placeholder='Enter your email'
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                />
+                <Button
+                  onClick={handleForgotPassword}
+                  className='w-full'
+                  disabled={isLoading || !userEmail}
+                >
+                  {isLoading ? 'Sending...' : 'Send Reset Link'}
+                </Button>
+              </>
+            )}
+
+            {resetSent && (
+              <Button
+                onClick={() => {
+                  setIsLoading(true);
+                  resetPassword(userEmail)
+                    .then(() => setMessage('Reset link resent! Check your email.'))
+                    .catch(() => setMessage('Failed to resend. Try again.'))
+                    .finally(() => setIsLoading(false));
+                }}
+                className='w-full'
+                disabled={isLoading}
+                variant='outline'
+              >
+                {isLoading ? 'Sending...' : 'Resend Reset Link'}
+              </Button>
+            )}
+
+            <Button
+              onClick={() => {
+                setShowForgotPassword(false);
+                setResetSent(false);
+                setMessage('');
+              }}
+              className='w-full'
+              variant='ghost'
+            >
+              Back to Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (needsVerification) {
     return (
@@ -229,7 +328,19 @@ export function LoginForm() {
               : 'Sign In'}
           </Button>
 
-          <div className='text-center'>
+          <div className='text-center space-y-2'>
+            {!isSignUp && (
+              <button
+                type='button'
+                onClick={() => {
+                  setShowForgotPassword(true);
+                  setMessage('');
+                }}
+                className='text-sm text-slate-500 hover:text-slate-700 block w-full'
+              >
+                Forgot your password?
+              </button>
+            )}
             <button
               type='button'
               onClick={() => {

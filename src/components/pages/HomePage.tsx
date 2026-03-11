@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
+import { UpgradeModal } from '@/components/subscription/UpgradeModal';
 
 export function HomePage() {
   const router = useRouter();
@@ -28,9 +30,12 @@ export function HomePage() {
   const deleteProject = useDeleteProject();
   const { error: showError, success: showSuccess } = useToast();
 
+  const { limits } = useSubscriptionContext();
+
   // Confirmation modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const loading = contractorLoading || projectsLoading || totalValueLoading;
 
@@ -40,6 +45,10 @@ export function HomePage() {
   }, [refetchContractor]);
 
   const handleNewProject = () => {
+    if (!limits.canCreateEstimate) {
+      setShowUpgradeModal(true);
+      return;
+    }
     router.push('/project/new');
   };
 
@@ -187,6 +196,19 @@ export function HomePage() {
         cancelText='Cancel'
         variant='danger'
         isLoading={deleteProject.isPending}
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        message={
+          limits.currentPlan.id === 'free'
+            ? `You've reached your ${limits.currentPlan.estimateLimit}-estimate limit on the Free plan. Upgrade to create more estimates.`
+            : limits.currentPlan.id === 'starter'
+              ? `You've used all ${limits.currentPlan.estimateLimit} estimates for this billing period. Upgrade to Pro for unlimited estimates.`
+              : 'Your trial has ended. Choose a plan to continue creating estimates.'
+        }
       />
     </div>
   );

@@ -16,6 +16,10 @@ export async function GET(request: NextRequest) {
       if (type === 'signup') {
         return NextResponse.redirect(`${origin}/auth/verify-email`);
       }
+      // Check if this is a password recovery
+      if (type === 'recovery' || next === '/auth/reset-password') {
+        return NextResponse.redirect(`${origin}/auth/reset-password`);
+      }
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

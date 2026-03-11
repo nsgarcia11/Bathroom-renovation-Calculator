@@ -3,6 +3,30 @@ import { stripe } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase-server';
 import Stripe from 'stripe';
 
+function getPlanIdFromPriceId(priceId: string): string {
+  if (priceId === process.env.STRIPE_STARTER_PRICE_ID) return 'starter';
+  if (priceId === process.env.STRIPE_PRO_PRICE_ID) return 'pro';
+  return 'free';
+}
+
+function getSubscriptionPeriod(subscription: Stripe.Subscription) {
+  // In newer Stripe API versions, period may be on items
+  const sub = subscription as unknown as Record<string, unknown>;
+  const item = subscription.items?.data?.[0] as unknown as Record<string, unknown> | undefined;
+
+  const periodStart = (sub.current_period_start as number) ?? (item?.current_period_start as number);
+  const periodEnd = (sub.current_period_end as number) ?? (item?.current_period_end as number);
+
+  return {
+    ...(periodStart && {
+      current_period_start: new Date(periodStart * 1000).toISOString(),
+    }),
+    ...(periodEnd && {
+      current_period_end: new Date(periodEnd * 1000).toISOString(),
+    }),
+  };
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get('stripe-signature');
@@ -31,18 +55,37 @@ export async function POST(request: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const subscriptionId = session.subscription as string;
+        const userId = session.metadata?.user_id;
+
+        if (!userId) {
+          console.error('Webhook error: missing user_id in session metadata');
+          return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
+        }
 
         // Get subscription details
         const subscription = (await stripe.subscriptions.retrieve(
           subscriptionId
         )) as Stripe.Subscription;
 
+        const subItem = subscription.items?.data?.[0];
+        const priceId = subItem?.price?.id || '';
+        const metaPlanId = session.metadata?.plan_id;
+        const planId = (metaPlanId && metaPlanId !== 'unknown')
+          ? metaPlanId
+          : getPlanIdFromPriceId(priceId);
+
+        const period = getSubscriptionPeriod(subscription);
+
         // Update subscription in database
         await supabase.from('subscriptions').upsert({
-          user_id: session.metadata?.user_id,
+          user_id: userId,
           stripe_customer_id: session.customer as string,
           stripe_subscription_id: subscriptionId,
+          stripe_price_id: priceId,
           status: subscription.status,
+          plan_id: planId,
+          trial_status: 'converted',
+          ...period,
         });
 
         break;
@@ -50,12 +93,18 @@ export async function POST(request: NextRequest) {
 
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
+        const subItem = subscription.items?.data?.[0];
+        const priceId = subItem?.price?.id || '';
+        const planId = getPlanIdFromPriceId(priceId);
+        const period = getSubscriptionPeriod(subscription);
 
-        // Update subscription status
         await supabase
           .from('subscriptions')
           .update({
             status: subscription.status,
+            plan_id: planId,
+            stripe_price_id: priceId,
+            ...period,
           })
           .eq('stripe_subscription_id', subscription.id);
 
@@ -65,13 +114,29 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
 
-        // Update subscription status to canceled
         await supabase
           .from('subscriptions')
           .update({
             status: 'canceled',
+            plan_id: 'free',
+            stripe_subscription_id: null,
+            stripe_price_id: null,
           })
           .eq('stripe_subscription_id', subscription.id);
+
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as unknown as Record<string, unknown>;
+        const subscriptionId = invoice.subscription as string;
+
+        if (subscriptionId) {
+          await supabase
+            .from('subscriptions')
+            .update({ status: 'past_due' })
+            .eq('stripe_subscription_id', subscriptionId);
+        }
 
         break;
       }

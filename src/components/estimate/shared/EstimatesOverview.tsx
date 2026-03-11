@@ -14,6 +14,8 @@ import { TradeIcon } from '@/components/icons/TradeIcon';
 import { LaborItem } from '@/types/estimate';
 import domtoimage from 'dom-to-image';
 import jsPDF from 'jspdf';
+import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
+import { UpgradeModal } from '@/components/subscription/UpgradeModal';
 
 interface EstimatesOverviewProps {
   projectId: string;
@@ -45,6 +47,9 @@ export default function EstimatesOverview({
   const { data: project } = useProject(projectId);
   const { error: showError, success: showSuccess } = useToast();
 
+  const { limits, recordPdfExport } = useSubscriptionContext();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
   // State for pricing adjustments
   const [markup, setMarkup] = useState<string>('0');
   const [discount, setDiscount] = useState<string>('0');
@@ -52,6 +57,13 @@ export default function EstimatesOverview({
   // PDF Export function
   const handleExportToPDF = async () => {
     if (!estimateRef.current) return;
+
+    // Check subscription limits (re-downloads of same estimate are always free)
+    const isRedownload = limits.isRedownload(projectId);
+    if (!isRedownload && !limits.canExportPdf) {
+      setShowUpgradeModal(true);
+      return;
+    }
 
     let style: HTMLStyleElement | null = null;
 
@@ -307,6 +319,12 @@ export default function EstimatesOverview({
 
       // Download PDF
       pdf.save(filename);
+      // Record the PDF export (re-downloads are handled by UNIQUE constraint)
+      try {
+        await recordPdfExport(projectId);
+      } catch (err) {
+        console.error('Failed to record PDF export:', err);
+      }
       showSuccess('PDF exported successfully');
 
       // Cleanup: Remove temporary styles and class
@@ -2136,6 +2154,18 @@ export default function EstimatesOverview({
           </Button>
         </div>
       </div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        title='PDF Export Limit Reached'
+        message={
+          limits.isTrialActive
+            ? `You've used all 3 PDF exports in your Founders Trial. Choose a paid plan to continue exporting.`
+            : 'Your trial has ended. Choose a plan to continue exporting PDFs.'
+        }
+      />
     </div>
   );
 }
