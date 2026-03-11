@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useCallback, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useSubscription,
   useSubscriptionLimits,
@@ -34,6 +35,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
   const projectCount = projects?.length || 0;
   const limits = useSubscriptionLimits(projectCount);
   const recordExportMutation = useRecordPdfExport();
+  const queryClient = useQueryClient();
 
   const recordPdfExport = async (projectId: string) => {
     await recordExportMutation.mutateAsync(projectId);
@@ -69,28 +71,41 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       const planId = sub.plan_id;
 
       // Paid plans: unlimited exports if subscription is active
-      if (
+      const isPaid =
         (planId === 'starter' || planId === 'pro') &&
-        sub.status === 'active'
-      ) {
-        await recordExportMutation.mutateAsync(projectId);
-        return { allowed: true };
+        sub.status === 'active';
+
+      if (!isPaid) {
+        // Free plan: check 3 export limit
+        const { count } = await supabase
+          .from('pdf_exports')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        if ((count || 0) >= FREE_PDF_EXPORT_LIMIT) {
+          return { allowed: false };
+        }
       }
 
-      // Free plan: 3 free PDF exports
-      const { count } = await supabase
+      // Record the export directly and refresh queries
+      const { error } = await supabase
         .from('pdf_exports')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
+        .upsert(
+          { user_id: user.id, project_id: projectId },
+          { onConflict: 'user_id,project_id', ignoreDuplicates: true }
+        );
 
-      if ((count || 0) >= FREE_PDF_EXPORT_LIMIT) {
+      if (error) {
+        console.error('Failed to record PDF export:', error);
         return { allowed: false };
       }
 
-      await recordExportMutation.mutateAsync(projectId);
+      // Force refresh the cached data so banner updates immediately
+      await queryClient.invalidateQueries({ queryKey: ['pdf-exports'] });
+
       return { allowed: true };
     },
-    [recordExportMutation]
+    [queryClient]
   );
 
   return (
