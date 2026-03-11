@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 function ResetPasswordForm() {
@@ -60,14 +60,12 @@ function ResetPasswordForm() {
 
         <form className='mt-8 space-y-6' onSubmit={handleSubmit}>
           <div className='space-y-4'>
-            <Input
-              type='password'
+            <PasswordInput
               placeholder='New password'
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <Input
-              type='password'
+            <PasswordInput
               placeholder='Confirm new password'
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

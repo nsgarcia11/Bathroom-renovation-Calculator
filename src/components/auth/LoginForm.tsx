@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const authSchema = z
@@ -277,9 +278,8 @@ export function LoginForm() {
             </div>
 
             <div>
-              <Input
+              <PasswordInput
                 {...register('password')}
-                type='password'
                 placeholder='Enter your password'
                 className={errors.password ? 'border-red-500' : ''}
               />
@@ -292,9 +292,8 @@ export function LoginForm() {
 
             {isSignUp && (
               <div>
-                <Input
+                <PasswordInput
                   {...register('confirmPassword')}
-                  type='password'
                   placeholder='Confirm your password'
                   className={errors.confirmPassword ? 'border-red-500' : ''}
                 />
