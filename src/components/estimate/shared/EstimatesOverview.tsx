@@ -2,12 +2,13 @@
 
 import React, { useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useEstimateWorkflowContext } from '@/contexts/EstimateWorkflowContext';
 import { useContractor } from '@/hooks/use-contractor';
 import { useProject } from '@/hooks/use-projects';
 import { useToast } from '@/contexts/ToastContext';
-import { Hammer, ShowerHead, Layers, Paintbrush, Download } from 'lucide-react';
+import { Hammer, ShowerHead, Layers, Paintbrush, Download, CreditCard } from 'lucide-react';
 import { ShowerBaseIcon } from '@/components/icons/ShowerBaseIcon';
 import { StructuralIcon } from '@/components/icons/StructuralIcon';
 import { TradeIcon } from '@/components/icons/TradeIcon';
@@ -47,6 +48,7 @@ export default function EstimatesOverview({
   const { data: project } = useProject(projectId);
   const { error: showError, success: showSuccess } = useToast();
 
+  const router = useRouter();
   const { limits, checkAndRecordPdfExport } = useSubscriptionContext();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -2136,16 +2138,26 @@ export default function EstimatesOverview({
       </div>
 
       {/* Action Buttons */}
-      {/* Export to PDF Button */}
+      {/* Export to PDF or Upgrade Button */}
       <div className='px-8 pb-8'>
         <div className='flex justify-center'>
-          <Button
-            onClick={handleExportToPDF}
-            className='bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold rounded-lg flex items-center gap-3 no-pdf'
-          >
-            <Download size={24} />
-            Export to PDF
-          </Button>
+          {limits.canExportPdf || limits.isRedownload(projectId) ? (
+            <Button
+              onClick={handleExportToPDF}
+              className='bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold rounded-lg flex items-center gap-3 no-pdf'
+            >
+              <Download size={24} />
+              Export to PDF
+            </Button>
+          ) : (
+            <Button
+              onClick={() => router.push('/pricing')}
+              className='bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 text-lg font-semibold rounded-lg flex items-center gap-3 no-pdf'
+            >
+              <CreditCard size={24} />
+              Upgrade to Export
+            </Button>
+          )}
         </div>
       </div>
 
@@ -2154,11 +2166,7 @@ export default function EstimatesOverview({
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         title='PDF Export Limit Reached'
-        message={
-          limits.isTrialActive
-            ? `You've used all 3 PDF exports in your Founders Trial. Choose a paid plan to continue exporting.`
-            : 'Your trial has ended. Choose a plan to continue exporting PDFs.'
-        }
+        message={`You've used all 3 free PDF exports. Subscribe to a plan for unlimited exports.`}
       />
     </div>
   );

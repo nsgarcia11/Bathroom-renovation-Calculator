@@ -24,7 +24,7 @@ export const PLANS: Record<string, PlanConfig> = {
     description: 'Get started with basic estimating',
     features: [
       '2 estimates total',
-      'Professional PDF export',
+      '3 free PDF exports',
       'Cloud-ready estimates',
     ],
   },
@@ -78,4 +78,4 @@ export const PLANS: Record<string, PlanConfig> = {
 };
 
 export const FOUNDERS_TRIAL_DURATION_DAYS = 30;
-export const FOUNDERS_TRIAL_PDF_LIMIT = 3;
+export const FREE_PDF_EXPORT_LIMIT = 3;

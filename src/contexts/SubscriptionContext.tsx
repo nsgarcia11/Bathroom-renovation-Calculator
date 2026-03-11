@@ -10,7 +10,7 @@ import {
 import { useProjects } from '@/hooks/use-projects';
 import { Subscription } from '@/types';
 import { supabase } from '@/lib/supabase';
-import { PLANS, FOUNDERS_TRIAL_PDF_LIMIT } from '@/lib/plans';
+import { FREE_PDF_EXPORT_LIMIT } from '@/lib/plans';
 
 interface SubscriptionContextType {
   subscription: Subscription | null;
@@ -68,7 +68,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
 
       const planId = sub.plan_id;
 
-      // Paid plans: allowed if subscription is active
+      // Paid plans: unlimited exports if subscription is active
       if (
         (planId === 'starter' || planId === 'pro') &&
         sub.status === 'active'
@@ -77,7 +77,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         return { allowed: true };
       }
 
-      // Founders trial: check time + PDF count
+      // Founders trial: also check time expiry
       if (planId === 'founders_trial' && sub.trial_status === 'active') {
         const trialEndsAt = sub.trial_ends_at
           ? new Date(sub.trial_ends_at)
@@ -85,28 +85,20 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         if (trialEndsAt && new Date() > trialEndsAt) {
           return { allowed: false };
         }
-
-        // Fresh count from database
-        const { count } = await supabase
-          .from('pdf_exports')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id);
-
-        if ((count || 0) >= FOUNDERS_TRIAL_PDF_LIMIT) {
-          return { allowed: false };
-        }
-
-        await recordExportMutation.mutateAsync(projectId);
-        return { allowed: true };
       }
 
-      // Free plan: check plan config
-      if (PLANS[planId]?.pdfExportEnabled) {
-        await recordExportMutation.mutateAsync(projectId);
-        return { allowed: true };
+      // Free + founders trial: 3 free PDF exports
+      const { count } = await supabase
+        .from('pdf_exports')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      if ((count || 0) >= FREE_PDF_EXPORT_LIMIT) {
+        return { allowed: false };
       }
 
-      return { allowed: false };
+      await recordExportMutation.mutateAsync(projectId);
+      return { allowed: true };
     },
     [recordExportMutation]
   );

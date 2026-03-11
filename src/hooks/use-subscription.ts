@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Subscription, PdfExport } from '@/types';
-import { PLANS, FOUNDERS_TRIAL_PDF_LIMIT } from '@/lib/plans';
+import { PLANS, FREE_PDF_EXPORT_LIMIT } from '@/lib/plans';
 
 export function useSubscription() {
   return useQuery({
@@ -129,7 +129,7 @@ export interface SubscriptionLimits {
   pdfExportsUsed: number;
   isTrialActive: boolean;
   trialDaysRemaining: number;
-  trialPdfRemaining: number;
+  freePdfRemaining: number;
   needsUpgrade: boolean;
   isLoading: boolean;
 }
@@ -150,6 +150,9 @@ export function useSubscriptionLimits(
 
   // Trial calculations
   const isTrialPlan = planId === 'founders_trial';
+  const isPaidPlan =
+    (planId === 'starter' || planId === 'pro') &&
+    subscription?.status === 'active';
   const trialEndsAt = subscription?.trial_ends_at
     ? new Date(subscription.trial_ends_at)
     : null;
@@ -158,19 +161,18 @@ export function useSubscriptionLimits(
     trialEndsAt && isTrialPlan
       ? Math.max(0, Math.ceil((trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
       : 0;
-  const trialPdfRemaining = isTrialPlan
-    ? Math.max(0, FOUNDERS_TRIAL_PDF_LIMIT - pdfExportsUsed)
-    : 0;
+  const freePdfRemaining = isPaidPlan
+    ? Infinity
+    : Math.max(0, FREE_PDF_EXPORT_LIMIT - pdfExportsUsed);
 
   // Check if trial has expired
   const trialTimeExpired = isTrialPlan && trialEndsAt && now > trialEndsAt;
-  const trialPdfExpired =
-    isTrialPlan && pdfExportsUsed >= FOUNDERS_TRIAL_PDF_LIMIT;
+  const pdfLimitReached = !isPaidPlan && pdfExportsUsed >= FREE_PDF_EXPORT_LIMIT;
   const isTrialActive =
     isTrialPlan &&
     subscription?.trial_status === 'active' &&
     !trialTimeExpired &&
-    !trialPdfExpired;
+    !pdfLimitReached;
 
   // Auto-expire trial if needed (fires once via ref guard)
   const shouldExpire =
@@ -211,13 +213,8 @@ export function useSubscriptionLimits(
     canCreateEstimate = estimatesRemaining > 0;
   }
 
-  // PDF export limits
-  let canExportPdf = true;
-  if (isTrialPlan && !isTrialActive) {
-    canExportPdf = false;
-  } else if (isTrialPlan && isTrialActive && trialPdfExpired) {
-    canExportPdf = false;
-  }
+  // PDF export limits — paid plans: unlimited, everyone else: 3 free exports
+  const canExportPdf = isPaidPlan || !pdfLimitReached;
 
   const isRedownload = (projectId: string) => {
     return (pdfExports || []).some((e) => e.project_id === projectId);
@@ -235,7 +232,7 @@ export function useSubscriptionLimits(
     pdfExportsUsed,
     isTrialActive,
     trialDaysRemaining,
-    trialPdfRemaining,
+    freePdfRemaining,
     needsUpgrade,
     isLoading,
   };
