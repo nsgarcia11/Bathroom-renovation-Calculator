@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Check } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
 import { useToast } from '@/contexts/ToastContext';
 import { PLANS } from '@/lib/plans';
 
 export function PricingPage() {
+  const router = useRouter();
   const { subscription } = useSubscriptionContext();
   const { success: showSuccess, info: showInfo } = useToast();
   const searchParams = useSearchParams();
@@ -172,6 +173,17 @@ export function PricingPage() {
           </button>
         </div>
       )}
+
+      <div className='mt-8 flex justify-center'>
+        <Button
+          onClick={() => router.back()}
+          variant='ghost'
+          className='flex items-center gap-2 text-slate-600 hover:text-slate-800'
+        >
+          <ArrowLeft size={18} />
+          Back
+        </Button>
+      </div>
     </div>
   );
 }
