@@ -2,14 +2,14 @@
 
 import React, { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Check, Crown } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
 import { useToast } from '@/contexts/ToastContext';
 import { PLANS } from '@/lib/plans';
 
 export function PricingPage() {
-  const { subscription, limits } = useSubscriptionContext();
+  const { subscription } = useSubscriptionContext();
   const { success: showSuccess, info: showInfo } = useToast();
   const searchParams = useSearchParams();
 
@@ -69,19 +69,12 @@ export function PricingPage() {
         <p className='text-slate-500'>
           Select the plan that best fits your business needs.
         </p>
-        {limits.isTrialActive && (
-          <div className='mt-3 inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-sm font-medium'>
-            <Crown size={16} />
-            Founders Trial: {limits.trialDaysRemaining} days remaining
-          </div>
-        )}
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
         {displayPlans.map((plan) => {
           const isCurrent =
-            (currentPlanId === plan.id && (isActive || plan.id === 'free')) ||
-            (currentPlanId === 'founders_trial' && plan.id === 'free' && subscription?.trial_status === 'expired');
+            currentPlanId === plan.id && (isActive || plan.id === 'free');
           const isPopular = plan.id === 'pro';
 
           return (
@@ -144,7 +137,7 @@ export function PricingPage() {
                 <Button variant='outline' disabled className='w-full'>
                   Free
                 </Button>
-              ) : isActive && currentPlanId !== 'free' && currentPlanId !== 'founders_trial' ? (
+              ) : isActive && currentPlanId !== 'free' ? (
                 <Button
                   onClick={handleManageSubscription}
                   variant='outline'

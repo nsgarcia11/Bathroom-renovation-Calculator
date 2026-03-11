@@ -59,8 +59,7 @@ export interface LineItem {
   updated_at: string;
 }
 
-export type PlanId = 'free' | 'starter' | 'pro' | 'founders_trial';
-export type TrialStatus = 'none' | 'active' | 'expired' | 'converted';
+export type PlanId = 'free' | 'starter' | 'pro';
 
 export interface Subscription {
   id: string;
@@ -70,9 +69,6 @@ export interface Subscription {
   stripe_price_id?: string;
   status: 'inactive' | 'active' | 'canceled' | 'past_due';
   plan_id: PlanId;
-  trial_started_at?: string;
-  trial_ends_at?: string;
-  trial_status: TrialStatus;
   current_period_start?: string;
   current_period_end?: string;
   created_at: string;

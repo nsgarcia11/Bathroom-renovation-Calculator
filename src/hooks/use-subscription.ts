@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRef, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Subscription, PdfExport } from '@/types';
 import { PLANS, FREE_PDF_EXPORT_LIMIT } from '@/lib/plans';
@@ -92,33 +91,6 @@ export function useRecordPdfExport() {
   });
 }
 
-function useExpireTrialIfNeeded() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({
-          trial_status: 'expired',
-          plan_id: 'free',
-        })
-        .eq('user_id', user.id)
-        .eq('trial_status', 'active');
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscription'] });
-    },
-  });
-}
-
 export interface SubscriptionLimits {
   currentPlan: (typeof PLANS)[string];
   canCreateEstimate: boolean;
@@ -127,8 +99,6 @@ export interface SubscriptionLimits {
   estimatesUsed: number;
   estimatesRemaining: number | null;
   pdfExportsUsed: number;
-  isTrialActive: boolean;
-  trialDaysRemaining: number;
   freePdfRemaining: number;
   needsUpgrade: boolean;
   isLoading: boolean;
@@ -139,8 +109,6 @@ export function useSubscriptionLimits(
 ): SubscriptionLimits {
   const { data: subscription, isLoading: subLoading } = useSubscription();
   const { data: pdfExports, isLoading: exportsLoading } = usePdfExports();
-  const expireTrial = useExpireTrialIfNeeded();
-  const hasExpiredRef = useRef(false);
 
   const isLoading = subLoading || exportsLoading;
 
@@ -148,60 +116,24 @@ export function useSubscriptionLimits(
   const plan = PLANS[planId] || PLANS.free;
   const pdfExportsUsed = pdfExports?.length || 0;
 
-  // Trial calculations
-  const isTrialPlan = planId === 'founders_trial';
   const isPaidPlan =
     (planId === 'starter' || planId === 'pro') &&
     subscription?.status === 'active';
-  const trialEndsAt = subscription?.trial_ends_at
-    ? new Date(subscription.trial_ends_at)
-    : null;
-  const now = new Date();
-  const trialDaysRemaining =
-    trialEndsAt && isTrialPlan
-      ? Math.max(0, Math.ceil((trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
-      : 0;
+
+  const pdfLimitReached =
+    !isPaidPlan && pdfExportsUsed >= FREE_PDF_EXPORT_LIMIT;
   const freePdfRemaining = isPaidPlan
     ? Infinity
     : Math.max(0, FREE_PDF_EXPORT_LIMIT - pdfExportsUsed);
 
-  // Check if trial has expired
-  const trialTimeExpired = isTrialPlan && trialEndsAt && now > trialEndsAt;
-  const pdfLimitReached = !isPaidPlan && pdfExportsUsed >= FREE_PDF_EXPORT_LIMIT;
-  const isTrialActive =
-    isTrialPlan &&
-    subscription?.trial_status === 'active' &&
-    !trialTimeExpired &&
-    !pdfLimitReached;
-
-  // Auto-expire trial if needed (fires once via ref guard)
-  const shouldExpire =
-    isTrialPlan &&
-    subscription?.trial_status === 'active' &&
-    trialTimeExpired &&
-    !isLoading;
-
-  useEffect(() => {
-    if (shouldExpire && !hasExpiredRef.current) {
-      hasExpiredRef.current = true;
-      expireTrial.mutate();
-    }
-  }, [shouldExpire, expireTrial]);
-
   // Estimate limits
-  const hasActiveSubscription =
-    subscription?.status === 'active' || isTrialActive;
-
   let canCreateEstimate = true;
   let estimatesRemaining: number | null = null;
 
-  if (isTrialActive) {
+  if (planId === 'pro' && isPaidPlan) {
     canCreateEstimate = true;
     estimatesRemaining = null;
-  } else if (planId === 'pro' && hasActiveSubscription) {
-    canCreateEstimate = true;
-    estimatesRemaining = null;
-  } else if (planId === 'starter' && hasActiveSubscription) {
+  } else if (planId === 'starter' && isPaidPlan) {
     estimatesRemaining = Math.max(
       0,
       (plan.estimateLimit || 8) - projectCount
@@ -230,8 +162,6 @@ export function useSubscriptionLimits(
     estimatesUsed: projectCount,
     estimatesRemaining,
     pdfExportsUsed,
-    isTrialActive,
-    trialDaysRemaining,
     freePdfRemaining,
     needsUpgrade,
     isLoading,

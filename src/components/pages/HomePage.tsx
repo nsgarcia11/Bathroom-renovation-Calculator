@@ -203,11 +203,9 @@ export function HomePage() {
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         message={
-          limits.currentPlan.id === 'free'
-            ? `You've reached your ${limits.currentPlan.estimateLimit}-estimate limit on the Free plan. Upgrade to create more estimates.`
-            : limits.currentPlan.id === 'starter'
-              ? `You've used all ${limits.currentPlan.estimateLimit} estimates for this billing period. Upgrade to Pro for unlimited estimates.`
-              : 'Your trial has ended. Choose a plan to continue creating estimates.'
+          limits.currentPlan.id === 'starter'
+            ? `You've used all ${limits.currentPlan.estimateLimit} estimates for this billing period. Upgrade to Pro for unlimited estimates.`
+            : `You've reached your ${limits.currentPlan.estimateLimit}-estimate limit on the Free plan. Upgrade to create more estimates.`
         }
       />
     </div>

@@ -14,14 +14,7 @@ ALTER TABLE subscriptions
   DROP CONSTRAINT IF EXISTS subscriptions_plan_id_check;
 ALTER TABLE subscriptions
   ADD CONSTRAINT subscriptions_plan_id_check
-  CHECK (plan_id IN ('free', 'starter', 'pro', 'founders_trial'));
-
--- Add check constraint for trial_status
-ALTER TABLE subscriptions
-  DROP CONSTRAINT IF EXISTS subscriptions_trial_status_check;
-ALTER TABLE subscriptions
-  ADD CONSTRAINT subscriptions_trial_status_check
-  CHECK (trial_status IN ('none', 'active', 'expired', 'converted'));
+  CHECK (plan_id IN ('free', 'starter', 'pro'));
 
 -- 2. Create pdf_exports table to track unique PDF exports per estimate
 CREATE TABLE IF NOT EXISTS pdf_exports (
@@ -44,24 +37,21 @@ CREATE POLICY "Users can insert own exports" ON pdf_exports
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- 3. Initialize subscription rows for existing users who don't have one
-INSERT INTO subscriptions (user_id, status, plan_id, trial_status)
-SELECT u.id, 'inactive', 'free', 'none'
+INSERT INTO subscriptions (user_id, status, plan_id)
+SELECT u.id, 'inactive', 'free'
 FROM auth.users u
 LEFT JOIN subscriptions s ON s.user_id = u.id
 WHERE s.id IS NULL;
 
--- 4. Create trigger to auto-create subscription for new signups (Founders Trial)
+-- 4. Create trigger to auto-create subscription for new signups
 CREATE OR REPLACE FUNCTION create_default_subscription()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO subscriptions (user_id, status, plan_id, trial_started_at, trial_ends_at, trial_status)
+  INSERT INTO subscriptions (user_id, status, plan_id)
   VALUES (
     NEW.id,
     'inactive',
-    'founders_trial',
-    now(),
-    now() + interval '30 days',
-    'active'
+    'free'
   );
   RETURN NEW;
 END;

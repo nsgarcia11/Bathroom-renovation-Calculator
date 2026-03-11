@@ -84,7 +84,6 @@ export async function POST(request: NextRequest) {
           stripe_price_id: priceId,
           status: subscription.status,
           plan_id: planId,
-          trial_status: 'converted',
           ...period,
         });
 

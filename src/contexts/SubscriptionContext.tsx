@@ -77,17 +77,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         return { allowed: true };
       }
 
-      // Founders trial: also check time expiry
-      if (planId === 'founders_trial' && sub.trial_status === 'active') {
-        const trialEndsAt = sub.trial_ends_at
-          ? new Date(sub.trial_ends_at)
-          : null;
-        if (trialEndsAt && new Date() > trialEndsAt) {
-          return { allowed: false };
-        }
-      }
-
-      // Free + founders trial: 3 free PDF exports
+      // Free plan: 3 free PDF exports
       const { count } = await supabase
         .from('pdf_exports')
         .select('*', { count: 'exact', head: true })

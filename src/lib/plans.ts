@@ -60,22 +60,6 @@ export const PLANS: Record<string, PlanConfig> = {
       'Priority onboarding call',
     ],
   },
-  founders_trial: {
-    id: 'founders_trial',
-    name: 'Founders Trial',
-    price: 0,
-    estimateLimit: null,
-    estimateLimitType: 'monthly',
-    pdfExportEnabled: true,
-    priorityOnboarding: true,
-    description: 'Full Pro access for 30 days',
-    features: [
-      'Full Pro features for 30 days',
-      '3 unique PDF exports',
-      'Unlimited estimates',
-    ],
-  },
 };
 
-export const FOUNDERS_TRIAL_DURATION_DAYS = 30;
 export const FREE_PDF_EXPORT_LIMIT = 3;
