@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Check } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -11,9 +12,11 @@ import { supabase } from '@/lib/supabase';
 
 export function PricingPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { subscription } = useSubscriptionContext();
-  const { success: showSuccess, info: showInfo } = useToast();
+  const { success: showSuccess, info: showInfo, error: showError } = useToast();
   const searchParams = useSearchParams();
+  const [switchingPlan, setSwitchingPlan] = useState<string | null>(null);
 
   useEffect(() => {
     if (searchParams.get('success') === 'true') {
@@ -66,6 +69,31 @@ export function PricingPage() {
       }
     } catch (error) {
       console.error('Portal error:', error);
+    }
+  };
+
+  const handleSwitchPlan = async (planId: string) => {
+    setSwitchingPlan(planId);
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch('/api/switch-plan', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ planId }),
+      });
+
+      if (response.ok) {
+        showSuccess(`Switched to ${PLANS[planId as keyof typeof PLANS]?.name || planId} plan!`);
+        queryClient.invalidateQueries({ queryKey: ['subscription'] });
+      } else {
+        const data = await response.json();
+        showError(data.error || 'Failed to switch plan');
+      }
+    } catch (error) {
+      console.error('Switch plan error:', error);
+      showError('Failed to switch plan');
+    } finally {
+      setSwitchingPlan(null);
     }
   };
 
@@ -153,11 +181,16 @@ export function PricingPage() {
                 </Button>
               ) : isActive && currentPlanId !== 'free' ? (
                 <Button
-                  onClick={handleManageSubscription}
+                  onClick={() => handleSwitchPlan(plan.id)}
+                  disabled={switchingPlan === plan.id}
                   variant='outline'
                   className='w-full'
                 >
-                  Switch Plan
+                  {switchingPlan === plan.id ? (
+                    <><Loader2 size={16} className='animate-spin mr-2' /> Switching...</>
+                  ) : (
+                    'Switch Plan'
+                  )}
                 </Button>
               ) : (
                 <Button
