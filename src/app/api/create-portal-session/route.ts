@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createClient } from '@/lib/supabase-server';
 import { createServerClient } from '@supabase/ssr';
 
 export async function POST(request: NextRequest) {
   try {
-    let supabase = await createClient();
+    const supabase = await createClient();
     let {
       data: { user },
     } = await supabase.auth.getUser();
@@ -16,16 +17,13 @@ export async function POST(request: NextRequest) {
         const accessToken = authHeader.slice(7);
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
         const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-        supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+        const tokenClient = createServerClient(supabaseUrl, supabaseAnonKey, {
           cookies: {
             getAll() { return []; },
             setAll() { /* noop */ },
           },
-          global: {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          },
         });
-        const { data } = await supabase.auth.getUser(accessToken);
+        const { data } = await tokenClient.auth.getUser(accessToken);
         user = data.user;
       }
     }
@@ -34,8 +32,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get customer ID
-    const { data: subscription } = await supabase
+    // Get customer ID (use admin client to bypass RLS)
+    const { data: subscription } = await supabaseAdmin
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', user.id)

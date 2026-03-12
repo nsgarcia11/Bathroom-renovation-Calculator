@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createClient } from '@/lib/supabase-server';
 import { createServerClient } from '@supabase/ssr';
 
@@ -21,28 +22,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Try cookie-based auth first, fall back to Authorization header
-    let supabase = await createClient();
+    const supabase = await createClient();
     let {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      // Fall back to Bearer token from Authorization header
       const authHeader = request.headers.get('authorization');
       if (authHeader?.startsWith('Bearer ')) {
         const accessToken = authHeader.slice(7);
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
         const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-        supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+        const tokenClient = createServerClient(supabaseUrl, supabaseAnonKey, {
           cookies: {
             getAll() { return []; },
             setAll() { /* noop */ },
           },
-          global: {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          },
         });
-        const { data } = await supabase.auth.getUser(accessToken);
+        const { data } = await tokenClient.auth.getUser(accessToken);
         user = data.user;
       }
     }
@@ -51,9 +48,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Create or retrieve customer
+    // Create or retrieve customer (use admin client to bypass RLS)
     let customerId: string;
-    const { data: subscription } = await supabase
+    const { data: subscription } = await supabaseAdmin
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', user.id)
@@ -70,11 +67,11 @@ export async function POST(request: NextRequest) {
       });
       customerId = customer.id;
 
-      // Save customer ID to database
-      await supabase.from('subscriptions').upsert({
-        user_id: user.id,
-        stripe_customer_id: customerId,
-      });
+      // Update existing row with customer ID
+      await supabaseAdmin
+        .from('subscriptions')
+        .update({ stripe_customer_id: customerId })
+        .eq('user_id', user.id);
     }
 
     // Create checkout session

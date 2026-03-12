@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { createClient } from '@/lib/supabase-server';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import Stripe from 'stripe';
 
 function getPlanIdFromPriceId(priceId: string): string {
@@ -48,8 +48,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  const supabase = await createClient();
-
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -77,7 +75,7 @@ export async function POST(request: NextRequest) {
         const period = getSubscriptionPeriod(subscription);
 
         // Update subscription in database
-        await supabase.from('subscriptions').upsert({
+        await supabaseAdmin.from('subscriptions').upsert({
           user_id: userId,
           stripe_customer_id: session.customer as string,
           stripe_subscription_id: subscriptionId,
@@ -97,7 +95,7 @@ export async function POST(request: NextRequest) {
         const planId = getPlanIdFromPriceId(priceId);
         const period = getSubscriptionPeriod(subscription);
 
-        await supabase
+        await supabaseAdmin
           .from('subscriptions')
           .update({
             status: subscription.status,
@@ -113,7 +111,7 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
 
-        await supabase
+        await supabaseAdmin
           .from('subscriptions')
           .update({
             status: 'canceled',
@@ -131,7 +129,7 @@ export async function POST(request: NextRequest) {
         const subscriptionId = invoice.subscription as string;
 
         if (subscriptionId) {
-          await supabase
+          await supabaseAdmin
             .from('subscriptions')
             .update({ status: 'past_due' })
             .eq('stripe_subscription_id', subscriptionId);
