@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
 import { useToast } from '@/contexts/ToastContext';
 import { PLANS } from '@/lib/plans';
+import { supabase } from '@/lib/supabase';
 
 export function PricingPage() {
   const router = useRouter();
@@ -24,11 +25,21 @@ export function PricingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+    return headers;
+  };
+
   const handleSubscribe = async (planId: string) => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ planId }),
       });
 
@@ -43,8 +54,10 @@ export function PricingPage() {
 
   const handleManageSubscription = async () => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch('/api/create-portal-session', {
         method: 'POST',
+        headers,
       });
 
       const data = await response.json();
@@ -174,11 +187,11 @@ export function PricingPage() {
         </div>
       )}
 
-      <div className='mt-8 flex justify-center'>
+      <div className='mt-8 pb-8 flex justify-center'>
         <Button
           onClick={() => router.back()}
-          variant='ghost'
-          className='flex items-center gap-2 text-slate-600 hover:text-slate-800'
+          variant='outline'
+          className='flex items-center gap-2 text-slate-600 hover:text-slate-800 border-slate-300'
         >
           <ArrowLeft size={18} />
           Back
