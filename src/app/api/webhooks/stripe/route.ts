@@ -75,15 +75,25 @@ export async function POST(request: NextRequest) {
         const period = getSubscriptionPeriod(subscription);
 
         // Update subscription in database
-        await supabaseAdmin.from('subscriptions').upsert({
-          user_id: userId,
-          stripe_customer_id: session.customer as string,
-          stripe_subscription_id: subscriptionId,
-          stripe_price_id: priceId,
-          status: subscription.status,
-          plan_id: planId,
-          ...period,
-        });
+        const { error: upsertError } = await supabaseAdmin
+          .from('subscriptions')
+          .update({
+            stripe_customer_id: session.customer as string,
+            stripe_subscription_id: subscriptionId,
+            stripe_price_id: priceId,
+            status: subscription.status,
+            plan_id: planId,
+            ...period,
+          })
+          .eq('user_id', userId);
+
+        if (upsertError) {
+          console.error('Failed to update subscription:', upsertError);
+          return NextResponse.json(
+            { error: 'Database update failed', details: upsertError.message },
+            { status: 500 }
+          );
+        }
 
         break;
       }
