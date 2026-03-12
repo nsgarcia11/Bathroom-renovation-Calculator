@@ -160,10 +160,13 @@ CREATE POLICY "Users can insert own exports" ON pdf_exports
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- 6. AUTO-CREATE SUBSCRIPTION TRIGGER FOR NEW SIGNUPS
-CREATE OR REPLACE FUNCTION create_default_subscription()
+-- NOTE: SET search_path = public is required because GoTrue runs as
+-- supabase_auth_admin. Without it, the SECURITY DEFINER function cannot
+-- resolve the subscriptions table in the trigger context.
+CREATE OR REPLACE FUNCTION public.create_default_subscription()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO subscriptions (user_id, status, plan_id)
+  INSERT INTO public.subscriptions (user_id, status, plan_id)
   VALUES (
     NEW.id,
     'inactive',
@@ -171,7 +174,9 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+GRANT EXECUTE ON FUNCTION public.create_default_subscription() TO supabase_auth_admin;
 
 DROP TRIGGER IF EXISTS on_user_created_subscription ON auth.users;
 CREATE TRIGGER on_user_created_subscription

@@ -2,65 +2,56 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Subscription, PdfExport } from '@/types';
 import { PLANS, FREE_PDF_EXPORT_LIMIT } from '@/lib/plans';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useSubscription() {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ['subscription'],
+    queryKey: ['subscription', user?.id],
     queryFn: async (): Promise<Subscription | null> => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) return null;
+      if (!user) return null;
 
-        const { data, error } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('Subscription fetch error:', error);
-          return null;
-        }
-
-        return data;
-      } catch (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Subscription fetch error:', error);
         return null;
       }
+
+      return data;
     },
+    enabled: !!user,
     staleTime: 30_000,
     retry: false,
   });
 }
 
 export function usePdfExports() {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ['pdf-exports'],
+    queryKey: ['pdf-exports', user?.id],
     queryFn: async (): Promise<PdfExport[]> => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) return [];
+      if (!user) return [];
 
-        const { data, error } = await supabase
-          .from('pdf_exports')
-          .select('*')
-          .eq('user_id', user.id);
+      const { data, error } = await supabase
+        .from('pdf_exports')
+        .select('*')
+        .eq('user_id', user.id);
 
-        if (error) {
-          console.error('PDF exports fetch error:', error);
-          return [];
-        }
-
-        return data || [];
-      } catch (error) {
+      if (error) {
         console.error('PDF exports fetch error:', error);
         return [];
       }
+
+      return data || [];
     },
+    enabled: !!user,
     retry: false,
   });
 }

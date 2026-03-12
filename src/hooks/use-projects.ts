@@ -1,33 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Project } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useProjects() {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ['projects'],
+    queryKey: ['projects', user?.id],
     queryFn: async (): Promise<Project[]> => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) return [];
+      if (!user) return [];
 
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Projects fetch error:', error);
-          return [];
-        }
-        return data || [];
-      } catch (error) {
+      if (error) {
         console.error('Projects fetch error:', error);
         return [];
       }
+      return data || [];
     },
+    enabled: !!user,
     retry: false,
   });
 }

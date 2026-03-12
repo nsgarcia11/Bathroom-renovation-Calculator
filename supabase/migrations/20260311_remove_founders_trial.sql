@@ -14,10 +14,10 @@ ALTER TABLE subscriptions
   CHECK (plan_id IN ('free', 'starter', 'pro'));
 
 -- 3. Update trigger to create free subscriptions for new signups
-CREATE OR REPLACE FUNCTION create_default_subscription()
+CREATE OR REPLACE FUNCTION public.create_default_subscription()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO subscriptions (user_id, status, plan_id)
+  INSERT INTO public.subscriptions (user_id, status, plan_id)
   VALUES (
     NEW.id,
     'inactive',
@@ -25,4 +25,6 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+GRANT EXECUTE ON FUNCTION public.create_default_subscription() TO supabase_auth_admin;

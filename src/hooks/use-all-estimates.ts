@@ -10,17 +10,17 @@ import {
   StructuralWorkflow,
   TradesWorkflow,
 } from '@/types/estimate';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useAllEstimates() {
-  return useQuery({
-    queryKey: ['all-estimates'],
-    queryFn: async (): Promise<EstimateData[]> => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) return [];
+  const { user } = useAuth();
 
+  return useQuery({
+    queryKey: ['all-estimates', user?.id],
+    queryFn: async (): Promise<EstimateData[]> => {
+      if (!user) return [];
+
+      try {
         // First get all projects for the user
         const { data: projects, error: projectsError } = await supabase
           .from('projects')
@@ -162,6 +162,7 @@ export function useAllEstimates() {
         return [];
       }
     },
+    enabled: !!user,
     retry: false,
   });
 }

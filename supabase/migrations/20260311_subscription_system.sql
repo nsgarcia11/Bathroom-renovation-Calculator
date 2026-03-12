@@ -44,10 +44,10 @@ LEFT JOIN subscriptions s ON s.user_id = u.id
 WHERE s.id IS NULL;
 
 -- 4. Create trigger to auto-create subscription for new signups
-CREATE OR REPLACE FUNCTION create_default_subscription()
+CREATE OR REPLACE FUNCTION public.create_default_subscription()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO subscriptions (user_id, status, plan_id)
+  INSERT INTO public.subscriptions (user_id, status, plan_id)
   VALUES (
     NEW.id,
     'inactive',
@@ -55,10 +55,12 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+GRANT EXECUTE ON FUNCTION public.create_default_subscription() TO supabase_auth_admin;
 
 DROP TRIGGER IF EXISTS on_user_created_subscription ON auth.users;
 CREATE TRIGGER on_user_created_subscription
   AFTER INSERT ON auth.users
   FOR EACH ROW
-  EXECUTE FUNCTION create_default_subscription();
+  EXECUTE FUNCTION public.create_default_subscription();
