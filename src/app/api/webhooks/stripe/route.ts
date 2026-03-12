@@ -74,25 +74,45 @@ export async function POST(request: NextRequest) {
 
         const period = getSubscriptionPeriod(subscription);
 
-        // Update subscription in database
-        const { error: upsertError } = await supabaseAdmin
-          .from('subscriptions')
-          .update({
-            stripe_customer_id: session.customer as string,
-            stripe_subscription_id: subscriptionId,
-            stripe_price_id: priceId,
-            status: subscription.status,
-            plan_id: planId,
-            ...period,
-          })
-          .eq('user_id', userId);
+        // Update or insert subscription in database
+        const subscriptionData = {
+          user_id: userId,
+          stripe_customer_id: session.customer as string,
+          stripe_subscription_id: subscriptionId,
+          stripe_price_id: priceId,
+          status: subscription.status,
+          plan_id: planId,
+          ...period,
+        };
 
-        if (upsertError) {
-          console.error('Failed to update subscription:', upsertError);
+        // Try update first (row exists)
+        const { data: updated, error: updateError } = await supabaseAdmin
+          .from('subscriptions')
+          .update(subscriptionData)
+          .eq('user_id', userId)
+          .select();
+
+        if (updateError) {
+          console.error('Failed to update subscription:', updateError);
           return NextResponse.json(
-            { error: 'Database update failed', details: upsertError.message },
+            { error: 'Database update failed', details: updateError.message },
             { status: 500 }
           );
+        }
+
+        // If no row was updated, insert a new one
+        if (!updated || updated.length === 0) {
+          const { error: insertError } = await supabaseAdmin
+            .from('subscriptions')
+            .insert(subscriptionData);
+
+          if (insertError) {
+            console.error('Failed to insert subscription:', insertError);
+            return NextResponse.json(
+              { error: 'Database insert failed', details: insertError.message },
+              { status: 500 }
+            );
+          }
         }
 
         break;
