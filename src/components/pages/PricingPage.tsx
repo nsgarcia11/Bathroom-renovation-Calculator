@@ -222,7 +222,7 @@ export function PricingPage() {
 
       <div className='mt-8 pb-8 flex justify-center'>
         <Button
-          onClick={() => router.back()}
+          onClick={() => router.push('/')}
           variant='outline'
           className='flex items-center gap-2 text-slate-600 hover:text-slate-800 border-slate-300'
         >
