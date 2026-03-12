@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Switch the plan by updating the subscription item's price
-    await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+    const updated = await stripe.subscriptions.update(subscription.stripe_subscription_id, {
       items: [
         {
           id: currentItem.id,
@@ -84,6 +84,24 @@ export async function POST(request: NextRequest) {
       ],
       proration_behavior: 'create_prorations',
     });
+
+    // Update DB immediately so the UI reflects the change without waiting for webhook
+    const updatedItem = updated.items.data[0];
+    const sub = updated as unknown as Record<string, unknown>;
+    const itemRecord = updatedItem as unknown as Record<string, unknown>;
+    const periodStart = (sub.current_period_start as number) ?? (itemRecord?.current_period_start as number);
+    const periodEnd = (sub.current_period_end as number) ?? (itemRecord?.current_period_end as number);
+
+    await supabaseAdmin
+      .from('subscriptions')
+      .update({
+        plan_id: planId,
+        stripe_price_id: newPriceId,
+        status: updated.status,
+        ...(periodStart && { current_period_start: new Date(periodStart * 1000).toISOString() }),
+        ...(periodEnd && { current_period_end: new Date(periodEnd * 1000).toISOString() }),
+      })
+      .eq('user_id', user.id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
