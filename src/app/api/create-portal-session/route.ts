@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { createClient } from '@/lib/supabase-server';
 import { createServerClient } from '@supabase/ssr';
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get customer ID (use admin client to bypass RLS)
-    const { data: subscription } = await supabaseAdmin
+    const { data: subscription } = await getSupabaseAdmin()
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', user.id)

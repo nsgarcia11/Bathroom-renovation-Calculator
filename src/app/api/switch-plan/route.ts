@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { createClient } from '@/lib/supabase-server';
 import { createServerClient } from '@supabase/ssr';
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get current subscription
-    const { data: subscription } = await supabaseAdmin
+    const { data: subscription } = await getSupabaseAdmin()
       .from('subscriptions')
       .select('stripe_subscription_id')
       .eq('user_id', user.id)
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     const periodStart = (sub.current_period_start as number) ?? (itemRecord?.current_period_start as number);
     const periodEnd = (sub.current_period_end as number) ?? (itemRecord?.current_period_end as number);
 
-    await supabaseAdmin
+    await getSupabaseAdmin()
       .from('subscriptions')
       .update({
         plan_id: planId,

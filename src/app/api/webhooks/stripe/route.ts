@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import Stripe from 'stripe';
 
 function getPlanIdFromPriceId(priceId: string): string {
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         };
 
         // Try update first (row exists)
-        const { data: updated, error: updateError } = await supabaseAdmin
+        const { data: updated, error: updateError } = await getSupabaseAdmin()
           .from('subscriptions')
           .update(subscriptionData)
           .eq('user_id', userId)
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 
         // If no row was updated, insert a new one
         if (!updated || updated.length === 0) {
-          const { error: insertError } = await supabaseAdmin
+          const { error: insertError } = await getSupabaseAdmin()
             .from('subscriptions')
             .insert(subscriptionData);
 
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
         const planId = getPlanIdFromPriceId(priceId);
         const period = getSubscriptionPeriod(subscription);
 
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('subscriptions')
           .update({
             status: subscription.status,
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
 
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('subscriptions')
           .update({
             status: 'canceled',
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
         const subscriptionId = invoice.subscription as string;
 
         if (subscriptionId) {
-          await supabaseAdmin
+          await getSupabaseAdmin()
             .from('subscriptions')
             .update({ status: 'past_due' })
             .eq('stripe_subscription_id', subscriptionId);
