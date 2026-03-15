@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
         },
       ],
       proration_behavior: 'create_prorations',
+      automatic_tax: { enabled: true },
     });
 
     // Update DB immediately so the UI reflects the change without waiting for webhook

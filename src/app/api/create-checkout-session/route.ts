@@ -86,6 +86,9 @@ export async function POST(request: NextRequest) {
       ],
       mode: 'subscription',
       allow_promotion_codes: true,
+      automatic_tax: { enabled: true },
+      billing_address_collection: 'required',
+      customer_update: { address: 'auto' },
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
       metadata: {
