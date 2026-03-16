@@ -202,11 +202,7 @@ export function HomePage() {
       <UpgradeModal
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
-        message={
-          limits.currentPlan.id === 'starter'
-            ? `You've used all ${limits.currentPlan.estimateLimit} estimates for this billing period. Upgrade to Pro for unlimited estimates.`
-            : `You've reached your ${limits.currentPlan.estimateLimit}-estimate limit on the Free plan. Upgrade to create more estimates.`
-        }
+        message={`You've reached your ${limits.currentPlan.estimateLimit}-estimate limit on the Free plan. Upgrade to create more estimates and reports.`}
       />
     </div>
   );

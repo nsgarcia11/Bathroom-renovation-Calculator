@@ -2166,7 +2166,11 @@ export default function EstimatesOverview({
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         title='PDF Export Limit Reached'
-        message={`You've used all 3 free PDF exports. Subscribe to a plan for unlimited exports.`}
+        message={
+          limits.currentPlan.id === 'starter'
+            ? `You've used all ${limits.reportLimit} PDF exports for this billing period. Upgrade to Pro for unlimited exports.`
+            : `You've used all ${limits.reportLimit} free PDF exports. Subscribe to a plan for unlimited exports.`
+        }
       />
     </div>
   );

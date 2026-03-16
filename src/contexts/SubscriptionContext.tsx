@@ -11,7 +11,10 @@ import {
 import { useProjects } from '@/hooks/use-projects';
 import { Subscription, PdfExport } from '@/types';
 import { supabase } from '@/lib/supabase';
-import { FREE_PDF_EXPORT_LIMIT } from '@/lib/plans';
+import {
+  FREE_REPORT_LIMIT,
+  STARTER_REPORT_LIMIT,
+} from '@/lib/plans';
 
 interface SubscriptionContextType {
   subscription: Subscription | null;
@@ -63,14 +66,32 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         (planId === 'starter' || planId === 'pro') &&
         sub.status === 'active';
 
-      if (!isPaid) {
-        // Free plan: check 3 export limit (every download counts)
+      if (planId === 'pro' && isPaid) {
+        // Pro plan: unlimited reports, just record and allow
+      } else if (planId === 'starter' && isPaid) {
+        // Starter plan: 8 reports per billing period
+        let query = supabase
+          .from('pdf_exports')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        if (sub.current_period_start) {
+          query = query.gte('created_at', sub.current_period_start);
+        }
+
+        const { count } = await query;
+
+        if ((count || 0) >= STARTER_REPORT_LIMIT) {
+          return { allowed: false };
+        }
+      } else {
+        // Free plan: 3 reports total (lifetime)
         const { count } = await supabase
           .from('pdf_exports')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id);
 
-        if ((count || 0) >= FREE_PDF_EXPORT_LIMIT) {
+        if ((count || 0) >= FREE_REPORT_LIMIT) {
           return { allowed: false };
         }
       }

@@ -1,7 +1,12 @@
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Subscription, PdfExport } from '@/types';
-import { PLANS, FREE_PDF_EXPORT_LIMIT } from '@/lib/plans';
+import {
+  PLANS,
+  FREE_REPORT_LIMIT,
+  STARTER_REPORT_LIMIT,
+} from '@/lib/plans';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function useSubscription() {
@@ -88,8 +93,9 @@ export interface SubscriptionLimits {
   canExportPdf: boolean;
   estimatesUsed: number;
   estimatesRemaining: number | null;
-  pdfExportsUsed: number;
-  freePdfRemaining: number;
+  reportsUsed: number;
+  reportsRemaining: number | null;
+  reportLimit: number | null;
   needsUpgrade: boolean;
   isLoading: boolean;
 }
@@ -104,39 +110,75 @@ export function useSubscriptionLimits(
 
   const planId = subscription?.plan_id || 'free';
   const plan = PLANS[planId] || PLANS.free;
-  const pdfExportsUsed = pdfExports?.length || 0;
 
   const isPaidPlan =
     (planId === 'starter' || planId === 'pro') &&
     subscription?.status === 'active';
 
-  const pdfLimitReached =
-    !isPaidPlan && pdfExportsUsed >= FREE_PDF_EXPORT_LIMIT;
-  const freePdfRemaining = isPaidPlan
-    ? Infinity
-    : Math.max(0, FREE_PDF_EXPORT_LIMIT - pdfExportsUsed);
+  // Count reports (PDF exports) based on plan type
+  // - Free: count ALL exports (lifetime limit)
+  // - Starter: count only exports within current billing period (monthly limit)
+  // - Pro: unlimited
+  const reportsUsed = useMemo(() => {
+    const allExports = pdfExports || [];
 
-  // Estimate limits
+    if (planId === 'pro' && isPaidPlan) {
+      return allExports.length;
+    }
+
+    if (
+      planId === 'starter' &&
+      isPaidPlan &&
+      subscription?.current_period_start
+    ) {
+      const periodStart = new Date(subscription.current_period_start);
+      return allExports.filter(
+        (e) => new Date(e.created_at) >= periodStart
+      ).length;
+    }
+
+    // Free plan: all exports count
+    return allExports.length;
+  }, [pdfExports, planId, isPaidPlan, subscription?.current_period_start]);
+
+  // Report (PDF export) limits per plan
+  let canExportPdf = true;
+  let reportsRemaining: number | null = null;
+  let reportLimit: number | null = null;
+
+  if (planId === 'pro' && isPaidPlan) {
+    // Pro: unlimited
+    canExportPdf = true;
+    reportsRemaining = null;
+    reportLimit = null;
+  } else if (planId === 'starter' && isPaidPlan) {
+    // Starter: 8 reports per billing period
+    reportLimit = STARTER_REPORT_LIMIT;
+    reportsRemaining = Math.max(0, STARTER_REPORT_LIMIT - reportsUsed);
+    canExportPdf = reportsRemaining > 0;
+  } else {
+    // Free: 3 reports total (lifetime)
+    reportLimit = FREE_REPORT_LIMIT;
+    reportsRemaining = Math.max(0, FREE_REPORT_LIMIT - reportsUsed);
+    canExportPdf = reportsRemaining > 0;
+  }
+
+  // Estimate (project creation) limits
   let canCreateEstimate = true;
   let estimatesRemaining: number | null = null;
 
-  if (planId === 'pro' && isPaidPlan) {
+  if (isPaidPlan) {
+    // Starter & Pro: unlimited project creation
     canCreateEstimate = true;
     estimatesRemaining = null;
-  } else if (planId === 'starter' && isPaidPlan) {
+  } else {
+    // Free tier: 3 total
     estimatesRemaining = Math.max(
       0,
-      (plan.estimateLimit || 8) - projectCount
+      (plan.estimateLimit || 3) - projectCount
     );
     canCreateEstimate = estimatesRemaining > 0;
-  } else {
-    // Free tier: 2 total
-    estimatesRemaining = Math.max(0, (plan.estimateLimit || 2) - projectCount);
-    canCreateEstimate = estimatesRemaining > 0;
   }
-
-  // PDF export limits — paid plans: unlimited, everyone else: 3 free exports
-  const canExportPdf = isPaidPlan || !pdfLimitReached;
 
   const needsUpgrade = !canCreateEstimate || !canExportPdf;
 
@@ -146,8 +188,9 @@ export function useSubscriptionLimits(
     canExportPdf,
     estimatesUsed: projectCount,
     estimatesRemaining,
-    pdfExportsUsed,
-    freePdfRemaining,
+    reportsUsed,
+    reportsRemaining,
+    reportLimit,
     needsUpgrade,
     isLoading,
   };
